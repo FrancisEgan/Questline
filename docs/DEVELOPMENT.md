@@ -2,13 +2,15 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.19**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.20**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
 Minimap rotation is optional: `GetPlayerFacing` does not imply the client has a `rotateMinimap` CVar. Read that setting with `pcall`, because unknown CVars can throw. Missing or disabled rotation uses north-up positioning without requiring a client extension or another addon. Runtime tests cover a throwing lookup, nil results, absent facing API, and rotation becoming available again.
 
 The renamed addon uses a new per-character saved-settings file. Existing settings from before the rename are not automatically loaded. To preserve them, fully exit WoW, copy the previous addon's per-character file from `WTF/Account/<account>/<realm>/<character>/SavedVariables/` to `Questline.lua`, and change its top-level settings variable to `QuestlineSettings`. Otherwise Questline starts with default preferences and records completion history normally; the previous saved file remains untouched.
 
 ## First test
+
+Both trackers can be resized from the bottom-right corner. The 16-pixel handle is invisible until hovered and stays visible during a drag. Width reflows titles/objectives; height determines page capacity, keeping each quest together. Before any manual resize, the original five-entry automatic-height layout remains. A quest taller than the requested height expands its page to avoid clipping details. HUD and map sizes are saved independently in `trackerSize`/`mapSize`; collapsing preserves the expanded size, and `/ql reset` clears both sizes and positions. Dragging uses native Vanilla `StartSizing`, minimum 258x140 and maximum requested 700x900, with layout guarded against recursive size-change callbacks. The page arrows leave room for the handle. Tests cover hover/drag/release, reflow, pagination reachability, independent sizes, refresh persistence, collapse/expand, oversized objectives, hiding mid-drag, and reset. In game, check live resizing and release outside the handle, plus the map tracker with a windowed map.
 
 1. Fully restart WoW so the new `Questline` addon folder is discovered. Enable **Questline** in the character selection AddOns menu.
 2. Log in with quests in your quest log and open their zone map, such as the Barrens.

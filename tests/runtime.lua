@@ -30,6 +30,10 @@ function GetPlayerMapPosition() return playerX,playerY end
 function GetMinimapShape() return minimapShape end
 function methods:GetZoom() return tonumber(cvars[minimapIndoor and "minimapInsideZoom" or "minimapZoom"]) end
 function methods:SetZoom(value) cvars[minimapIndoor and "minimapInsideZoom" or "minimapZoom"]=tostring(value);zoomWrites=zoomWrites+1 end
+function methods:SetResizable(v) self.resizable=v end
+function methods:SetMinResize(w,h) self.minResize={w,h} end
+function methods:SetMaxResize(w,h) self.maxResize={w,h} end
+function methods:StartSizing(point) self.sizing=point end
 function methods:SetWidth(v) self.width=v end
 function methods:SetHeight(v) self.height=v end
 function methods:GetWidth() return self.width or (self.allPoints and self.allPoints:GetWidth()) or 100 end
@@ -204,6 +208,52 @@ local function quest(id,objectives,complete)
   return {id=id,title=data.title,level=data.level,summary=data.summary,description=data.description,objectives=objectives or {},complete=complete}
 end
 
+local function trackerResizeTests(Q)
+  local original,mode=Q.quests,QuestlineSettings.trackerMode
+  local entries={}
+  for i=1,12 do entries[i]={key="resize:"..i,title="Resize quest "..i,level=i,summary="",objectives={{text="Collect quest items: 0/8",done=false}}} end
+  Q:SetEntries(entries);Q:SetTrackerMode("world");Q:Command("reset")
+  local panel=Q.tracker
+  expect(panel:GetWidth()==258 and panel.pages==3,"unresized tracker retains five quests per page")
+  expect(not panel.grip.texture:IsShown(),"resize grip is invisible by default")
+  this=panel.grip;panel.grip.scripts.OnEnter()
+  expect(panel.grip.texture:IsShown(),"resize grip appears on corner hover")
+  arg1="RightButton";panel.grip.scripts.OnMouseDown()
+  expect(not panel.resizing,"right click does not resize")
+  arg1="LeftButton";panel.grip.scripts.OnMouseDown()
+  expect(panel.resizing and panel.sizing=="BOTTOMRIGHT" and panel.point[1]=="TOPLEFT","resize fixes the top-left corner and starts bottom-right sizing")
+  panel:SetWidth(420);panel:SetHeight(600);this=panel;panel.scripts.OnSizeChanged()
+  expect(panel.rows[1]:GetWidth()==400 and panel.rows[1].detail:GetWidth()==365,"rows and objective wrapping follow resized width")
+  expect(panel.pages<3 and QuestlineSettings.trackerSize.height==600,"taller tracker fits more quests and saves dimensions")
+  this=panel.grip;panel.grip.scripts.OnLeave()
+  expect(panel.grip.texture:IsShown(),"grip remains visible while dragging outside the corner")
+  panel.grip.scripts.OnMouseUp()
+  expect(not panel.resizing and not panel.grip.texture:IsShown(),"releasing resize stops sizing and hides grip")
+  expect(QuestlineSettings.trackerPosition.x==panel:GetLeft(),"resize saves the new top-left anchor")
+  Q:RefreshTrackers();expect(panel:GetWidth()==420 and panel:GetHeight()==600,"ordinary refresh retains saved dimensions")
+  expect(Q.mapTracker:GetWidth()==258 and not QuestlineSettings.mapSize,"HUD resize does not resize map tracker")
+  click(panel.toggle);expect(panel:GetHeight()==33 and not panel.grip:IsShown(),"collapsed tracker hides resize handle")
+  click(panel.toggle);expect(panel:GetWidth()==420 and panel:GetHeight()==600,"expansion restores expanded dimensions")
+  QuestlineSettings.trackerSize={width=258,height=180};Q:RefreshTrackers()
+  local seen={}
+  for page=1,panel.pages do
+    panel.page=page;Q:RefreshTrackers()
+    for _,row in ipairs(panel.rows) do if row:IsShown() then
+      expect(not seen[row.entry.key],"resized pagination does not duplicate quests");seen[row.entry.key]=true
+    end end
+  end
+  for _,entry in ipairs(entries) do expect(seen[entry.key],"resized pagination keeps every quest reachable") end
+  entries[1].objectives={{text=string.rep("Long objective text ",70),done=false}}
+  panel.page=1;Q:RefreshTrackers()
+  expect(panel:GetHeight()>=37+panel.rows[1]:GetHeight()+28,"single oversized quest expands panel rather than clipping objectives")
+  local map=Q.mapTracker
+  this=map.grip;arg1="LeftButton";map.grip.scripts.OnMouseDown()
+  map:SetWidth(350);map:SetHeight(400);this=map;map.scripts.OnSizeChanged();map.scripts.OnHide()
+  expect(not map.resizing and QuestlineSettings.mapSize.width==350,"hiding map during resize finalizes its independent size")
+  Q:Command("reset")
+  expect(not QuestlineSettings.trackerSize and not QuestlineSettings.mapSize and panel:GetWidth()==258,"reset restores automatic tracker sizing")
+  Q:SetEntries(original);Q:SetTrackerMode(mode)
+end
 local function trackerModeTests(Q)
   local original,selected=Q.quests,QuestlineSettings.selected
   local targets={}
@@ -1145,6 +1195,7 @@ function runTests()
   questLevelAndRateTests(Q)
   partySyncTests(Q)
   multiSelectionTests(Q)
+  trackerResizeTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
   print("Runtime: "..checks.." assertions passed.")
