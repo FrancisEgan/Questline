@@ -511,18 +511,12 @@ local function npcQuestTests(Q)
   arg1="A Putrid Task completed.";fire("CHAT_MSG_SYSTEM")
   expect(not QuestlineSettings.completedQuests[404],"unrelated or expired completion names cannot mark unknown quests completed")
 
-  local oldGet,oldQuery=GetQuestsCompleted,QueryQuestsCompleted
-  GetQuestsCompleted=function(buffer) buffer[404]=true end
-  Q:ReadCompletedQuests();expect(QuestlineSettings.completedQuests[404],"native completion API may fill an output table")
-  GetQuestsCompleted=function() return {[426]=true,[999999]=false} end
-  local queries=0;QueryQuestsCompleted=function() queries=queries+1 end
-  local oldImported=QuestlineSettings.importedQuestHistory
-  local oldPf=pfQuest_history;pfQuest_history={[860]={123,12}};QuestlineSettings.importedQuestHistory=nil
-  Q:InitializeNPCQuests();fire("QUEST_QUERY_COMPLETE")
-  expect(queries==1 and QuestlineSettings.completedQuests[426] and QuestlineSettings.completedQuests[860],"login imports existing history and queries supported server completion APIs")
-  expect(not QuestlineSettings.completedQuests[999999] and pfQuest_history[860][1]==123,"native false entries and upstream history remain untouched")
-  pfQuest_history=oldPf;QuestlineSettings.importedQuestHistory=oldImported;GetQuestsCompleted=oldGet;QueryQuestsCompleted=oldQuery
-
+  local oldImported,oldPf=QuestlineSettings.importedQuestHistory,pfQuest_history
+  pfQuest_history={[860]={123,12},[404]={123,12},[999999]=false};QuestlineSettings.importedQuestHistory=nil
+  Q:InitializeNPCQuests()
+  expect(QuestlineSettings.completedQuests[860] and not QuestlineSettings.completedQuests[999999],"login imports valid local pfQuest history")
+  expect(pfQuest_history[860][1]==123,"history import leaves pfQuest settings untouched")
+  pfQuest_history=oldPf;QuestlineSettings.importedQuestHistory=oldImported
   local synthetic={title="Restricted offer",level=12,minLevel=10,raceMask=2,classMask=1,prerequisites={},blockedBy={}}
   DB.quests[990011]=synthetic
   expect(Q:IsQuestAvailable(990011),"matching race/class can receive an unrestricted quest")
@@ -622,6 +616,33 @@ local function giverMapTests(Q)
   minimapShape="SQUARE";expect(Q:MinimapGiverPosition(p,.522,.31,size,466.6667),"square minimap retains visible corner markers");minimapShape="ROUND"
   local accepted=quest(844,{{text="Plainstrider Beak: 0/7",kind="item"}});accepted.key="844";accepted.data=QuestlineDB.quests[844]
   Q:SetEntries({accepted});Q:RefreshQuestGivers();expect(not find(Q.minimapGivers,3338),"accepting the giver's only available quest immediately removes its minimap marker")
+  accepted.complete=true;Q:SetEntries({accepted});Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and pin.texture.textureValue[1]=="Interface\\GossipFrame\\ActiveQuestIcon","ready quest creates a matching gold question mark on the minimap")
+  expect(#pin.giver.turnins==1 and #pin.giver.quests==0,"turn-in marker appears even without available pickup quests")
+  this=pin;pin.scripts.OnEnter()
+  expect(GameTooltip:GetText():find("Ready for turn-in",1,true) and GameTooltip:GetText():find("Plainstrider Menace",1,true),"turn-in hover lists the ready quest")
+  local delivery=quest(842,{},1);delivery.key="842";delivery.data=QuestlineDB.quests[842];delivery.complete=true
+  Q:SetEntries({accepted,delivery});Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and #pin.giver.turnins==2,"multiple completed quests share the NPC's question mark")
+  local onlyFinisher={id=990022,key="990022",title="Delivery only",complete=true,objectives={},data={objectives={},finishers={{kind="unit",id=990023,name="A turn-in-only NPC",key="turnin:unit:3338"}}}}
+  Q:SetEntries({accepted,onlyFinisher});Q:RefreshQuestGivers()
+  local finishPin=find(Q.minimapGivers,990023)
+  expect(finishPin and finishPin.texture.textureValue[1]:find("ActiveQuestIcon",1,true),"finishers absent from the pickup-NPC index still receive a question mark")
+  this=finishPin;finishPin.scripts.OnEnter()
+  expect(GameTooltip:GetText():find("Delivery only",1,true) and GameTooltip:GetText():find("Plainstrider Menace",1,true),"clustered turn-in tooltips include neighboring NPCs and ready quests")
+  onlyFinisher.failed=true;Q:SetEntries({accepted,onlyFinisher});Q:RefreshQuestGivers()
+  expect(not find(Q.minimapGivers,990023),"failed quests never create turn-in question marks")
+  Q:SetEntries({accepted});Q:RefreshQuestGivers()
+  Q.npcOffers[Q:Normalize("Sergra Darkthorn")]={time=GetTime(),quests={{title="Another available quest",level=12}}}
+  Q:InvalidateQuestAvailability();Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and #pin.giver.quests==1 and pin.texture.textureValue[1]:find("ActiveQuestIcon",1,true),"turn-in question mark wins when the NPC also offers another quest")
+  this=pin;pin.scripts.OnEnter()
+  expect(GameTooltip:GetText():find("Another available quest",1,true) and GameTooltip:GetText():find("Ready for turn-in",1,true),"combined tooltip retains both pickup and turn-in information")
+  local count=0;for _,p in ipairs(Q.minimapGivers) do if p:IsShown() and p.giver.id==3338 then count=count+1 end end
+  expect(count==1,"one NPC never receives stacked pickup and turn-in minimap icons")
+  accepted.complete=false;Q:SetEntries({accepted});Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and pin.texture.textureValue[1]:find("AvailableQuestIcon",1,true),"reused marker switches back to exclamation when turn-in readiness is lost")
+  Q.npcOffers={};Q:InvalidateQuestAvailability()
   QuestlineSettings.completedQuests[844]=true;Q:SetEntries({});Q:InvalidateQuestAvailability();Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
   expect(pin and pin.giver.quests[1].title=="The Zhevra","turn-in unlocks next offer and restores the giver marker")
   playerX,playerY=0,0;Q:RefreshQuestGivers();expect(not find(Q.minimapGivers,3338),"invalid player coordinates hide minimap pins")
@@ -1075,6 +1096,17 @@ function runTests()
   Q:Command("tracker off");expect(QuestWatchFrame:IsShown(),"old tracker restored")
 
   -- pfQuest pins: existing/future nodes, explicit restore, no saved config writes.
+  Q.minimapBlipsApplied=nil
+  Q:ApplyCompatibility()
+  expect(not Q.minimapBlipsApplied,"clients without SetBlipTexture remain supported")
+  local blipCalls=0
+  Minimap.SetBlipTexture=function(self,texture)
+    blipCalls=blipCalls+1
+    expect(texture=="Interface\\AddOns\\Questline\\Textures\\minimap-blips","native atlas replaced with turn-in-free texture")
+  end
+  Q:ApplyCompatibility();Q:ApplyCompatibility()
+  expect(blipCalls==1,"native atlas applied once without repeated overrides")
+  Minimap.SetBlipTexture=nil
   pfQuest_config={showspawn="1"}
   pfMap={pins={CreateFrame("Button",nil,WorldMapButton)}}
   function pfMap:BuildNode(name,parent) local pin=CreateFrame("Button",name,parent);return pin end

@@ -10,6 +10,30 @@ try { fengari=require('fengari'); } catch (_) { fengari=require(path.join(root,'
 const {lua:Lapi,lauxlib,lualib,to_luastring,to_jsstring}=fengari;
 let checks=0;
 const check=(value,message)=>{checks++;assert.ok(value,message);};
+const originalBlips=fs.readFileSync(path.join(root,'tools/sources/minimap-objecticons.blp'));
+const hiddenBlips=fs.readFileSync(path.join(root,'Textures/minimap-blips.blp'));
+const {hideTurnIn}=require('../tools/minimap-blips');
+check(hiddenBlips.equals(hideTurnIn(originalBlips)),'shipped minimap atlas matches reproducible build');
+assert.throws(()=>hideTurnIn(Buffer.alloc(100)),/Unexpected native/);checks++;
+const allowedChanges=new Set();
+let removedAlpha=0;
+for(let mip=0;mip<16;mip++) {
+  const offset=originalBlips.readUInt32LE(20+mip*4),width=Math.max(1,128>>>mip);
+  if(!offset||width<4) continue;
+  for(let y=0;y<width;y++) for(let x=0;x<width;x++) {
+    const pixel=(y%4)*4+x%4;
+    const byte=offset+(Math.floor(y/4)*Math.ceil(width/4)+Math.floor(x/4))*16+Math.floor(pixel/2);
+    const shift=(pixel%2)*4,oldAlpha=(originalBlips[byte]>>>shift)&15,newAlpha=(hiddenBlips[byte]>>>shift)&15;
+    if(x>=width*3/4&&y<width/4) {
+      assert.equal(newAlpha,0,'turn-in alpha cleared at mip '+mip);
+      removedAlpha+=oldAlpha;allowedChanges.add(byte);
+    } else assert.equal(newAlpha,oldAlpha,'other sprite alpha preserved at mip '+mip);
+  }
+}
+check(removedAlpha>0,'native turn-in dot had visible pixels to remove');
+check(originalBlips.length===hiddenBlips.length,'native atlas size preserved');
+for(let i=0;i<originalBlips.length;i++) if(!allowedChanges.has(i)) assert.equal(hiddenBlips[i],originalBlips[i],'non-turn-in bytes preserved at '+i);
+checks++;
 const read=k=>JSON.parse(fs.readFileSync(path.join(root,'database',k+'.json'),'utf8'));
 const quests=read('quests'),units=read('units'),items=read('items');
 check(Object.keys(quests).length>6000,'merged quests retained');

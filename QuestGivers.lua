@@ -27,6 +27,32 @@ function Q:GetAvailableGivers(zone)
   self.giverCache[zone]={entries=entries,expires=GetTime()+2}
   return entries
 end
+function Q:GetMinimapQuestNPCs(zone)
+  local entries,byID={},{}
+  for _,giver in ipairs(self:GetAvailableGivers(zone)) do
+    local entry={id=giver.id,name=giver.name,quests=giver.quests,points=giver.points,turnins={}}
+    insert(entries,entry);byID[entry.id]=entry
+  end
+  if not zone then return entries end
+  for _,quest in ipairs(self.quests) do if quest.complete and not quest.failed and quest.data then
+    local seen={}
+    for _,target in ipairs(quest.data.finishers or {}) do if target.kind=="unit" and not seen[target.id] then
+      seen[target.id]=true
+      local location=DB.locations[target.key] and DB.locations[target.key][zone]
+      if location then
+        local entry=byID[target.id]
+        if not entry then
+          local points=location.points or {}
+          if getn(points)==0 and location.anchor then points={location.anchor} end
+          entry={id=target.id,name=target.name,quests={},points=points,turnins={}}
+          insert(entries,entry);byID[target.id]=entry
+        end
+        insert(entry.turnins,quest)
+      end
+    end end
+  end end
+  return entries
+end
 function Q:GetNearbyGivers(pin,minimap)
   local pool=minimap and self.minimapGivers or self.mapGivers
   local nearby,seen={pin.giver},{[pin.giver.id]=true}
@@ -48,11 +74,18 @@ function Q:ShowGiverTooltip(pin,minimap)
   local tip=minimap and GameTooltip or WorldMapTooltip
   tip:SetOwner(pin,"ANCHOR_RIGHT")
   if getn(nearby)==1 then
-    tip:SetText(pin.giver.name,1,.82,.32);tip:AddLine("Available",.8,.85,.9)
-  else tip:SetText("Available Quests",1,.82,.32) end
+    tip:SetText(pin.giver.name,1,.82,.32)
+  else tip:SetText("Quests",1,.82,.32) end
   for _,giver in ipairs(nearby) do
     if getn(nearby)>1 then tip:AddLine(giver.name,1,.82,.32) end
-    for _,quest in ipairs(giver.quests) do tip:AddLine("  "..self:QuestTitle(quest),.9,.88,.8,true) end
+    if getn(giver.turnins or {})>0 then
+      tip:AddLine("Ready for turn-in",.8,.85,.9)
+      for _,quest in ipairs(giver.turnins) do tip:AddLine("  "..self:QuestTitle(quest),1,.85,.4,true) end
+    end
+    if getn(giver.quests)>0 then
+      tip:AddLine("Available",.8,.85,.9)
+      for _,quest in ipairs(giver.quests) do tip:AddLine("  "..self:QuestTitle(quest),.9,.88,.8,true) end
+    end
   end
   tip:Show()
 end
@@ -151,7 +184,7 @@ function Q:RefreshGiverMinimap()
     facing=GetPlayerFacing()
   end
   local count=0
-  local entries=self:GetAvailableGivers(zone)
+  local entries=self:GetMinimapQuestNPCs(zone)
   for _,giver in ipairs(entries) do
     local bestX,bestY,distance
     for _,point in ipairs(giver.points) do
@@ -161,6 +194,7 @@ function Q:RefreshGiverMinimap()
     if bestX then
       count=count+1
       local pin=self:GetGiverPin(count,true);pin.giver=giver
+      pin.texture:SetTexture("Interface\\GossipFrame\\"..(getn(giver.turnins)>0 and "ActiveQuestIcon" or "AvailableQuestIcon"))
       pin.giverX=bestX;pin.giverY=bestY
       pin:ClearAllPoints();pin:SetPoint("CENTER",Minimap,"CENTER",bestX,bestY);pin:Show()
     end

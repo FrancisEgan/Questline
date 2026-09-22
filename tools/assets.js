@@ -31,3 +31,4 @@ for(const name of ['circle','circle-selected','kill','loot','interact','talk','e
 }
 console.log('Built 8 original TGA symbols.');
 require('./contour-assets').build();
+require('./minimap-blips').build();

@@ -10,6 +10,12 @@ end
 local function hideLegacyPins() return QuestlineSettings and not QuestlineSettings.legacy end
 local function hideLegacyTracker() return QuestlineSettings and QuestlineSettings.tracker end
 function Q:ApplyCompatibility()
+  -- Native turn-in dots share an atlas with resource and party blips.
+  -- Replace it once, without fighting other addons that set their own atlas.
+  if not self.minimapBlipsApplied and Minimap and Minimap.SetBlipTexture then
+    Minimap:SetBlipTexture("Interface\\AddOns\\Questline\\Textures\\minimap-blips")
+    self.minimapBlipsApplied=true
+  end
   if pfMap then
     if not self.oldBuildNode and pfMap.BuildNode then
       self.oldBuildNode=pfMap.BuildNode

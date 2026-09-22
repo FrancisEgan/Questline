@@ -13,6 +13,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - Ctrl-click to highlight multiple quests and move the group to the top, sorted by level
 - Precise action icons for single-location objectives and question marks for turn-ins
 - Questgiver markers on the map and minimap, with combined tooltips for nearby NPCs
+- Minimap question marks for ready turn-ins, taking priority over an NPC's available quests and hiding the duplicate native yellow dot
 - Creature tooltips with quest objectives, item drop rates, and live progress
 - Shared quest progress from party members running Questline, with class-colored names
 - NPC tooltips showing available, in-progress, and completed quests

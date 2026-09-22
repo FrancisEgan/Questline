@@ -4,19 +4,15 @@ local getn,insert=table.getn,table.insert
 function Q:InvalidateQuestAvailability()
   self.giverCache={};self.mapDirty=true
 end
-function Q:ReadCompletedQuests()
+function Q:ImportCompletedQuests()
   local history=QuestlineSettings.completedQuests
-  if not GetQuestsCompleted then return end
-  local buffer={}
-  local ok,result=pcall(GetQuestsCompleted,buffer)
-  if not ok then return end
-  if type(result)~="table" then result=buffer end
-  local changed=false
-  for id,done in pairs(result) do
+  local added=0
+  for id,done in pairs(pfQuest_history or {}) do
     id=tonumber(id)
-    if id and done and done~=0 and not history[id] then history[id]=true;changed=true end
+    if id and done and done~=0 and not history[id] then history[id]=true;added=added+1 end
   end
-  if changed then self:InvalidateQuestAvailability() end
+  QuestlineSettings.importedQuestHistory=true
+  return added
 end
 function Q:UpdateNPCQuestState()
   self.recentQuests=self.recentQuests or {}
@@ -29,21 +25,15 @@ function Q:UpdateNPCQuestState()
   table.sort(keys)
   local signature=table.concat(keys,";")
   if signature~=self.npcLogSignature then
-    self.npcOffers={};self.npcLogSignature=signature;self:ReadCompletedQuests();self:InvalidateQuestAvailability()
+    self.npcOffers={};self.npcLogSignature=signature;self:InvalidateQuestAvailability()
   end
 end
 function Q:InitializeNPCQuests()
   QuestlineSettings.completedQuests=QuestlineSettings.completedQuests or {}
   if not QuestlineSettings.importedQuestHistory then
-    for id,done in pairs(pfQuest_history or {}) do
-      if tonumber(id) and done then QuestlineSettings.completedQuests[tonumber(id)]=true end
-    end
-    QuestlineSettings.importedQuestHistory=true
+    self:ImportCompletedQuests()
   end
-  self.npcOffers={};self:ReadCompletedQuests();self:InvalidateQuestAvailability()
-  if QueryQuestsCompleted and GetQuestsCompleted then
-    self.npcEvents:RegisterEvent("QUEST_QUERY_COMPLETE");pcall(QueryQuestsCompleted)
-  end
+  self.npcOffers={};self:InvalidateQuestAvailability()
 end
 local function escapePattern(text) return string.gsub(text,"([%(%)%.%%%+%-%*%?%[%]%^%$])","%%%1") end
 function Q:ObserveQuestCompletion(message)
@@ -60,7 +50,7 @@ function Q:ObserveQuestCompletion(message)
   local found,count=nil,0
   for id in pairs(matches) do found=id;count=count+1 end
   if count==1 then QuestlineSettings.completedQuests[found]=true end
-  self.npcOffers={};self:ReadCompletedQuests();self:InvalidateQuestAvailability()
+  self.npcOffers={};self:InvalidateQuestAvailability()
 end
 function Q:ObserveNPCOffers(gossip)
   local name=UnitName("npc")
@@ -194,8 +184,7 @@ Q.npcEvents=events
 for _,name in ipairs({"GOSSIP_SHOW","QUEST_GREETING","CHAT_MSG_SYSTEM","PLAYER_LEVEL_UP","SKILL_LINES_CHANGED"}) do events:RegisterEvent(name) end
 events:SetScript("OnEvent",function()
   if not Q.ready then return end
-  if event=="QUEST_QUERY_COMPLETE" then Q:ReadCompletedQuests();Q.npcOffers={}
-  elseif event=="GOSSIP_SHOW" then Q:ObserveNPCOffers(true)
+  if event=="GOSSIP_SHOW" then Q:ObserveNPCOffers(true)
   elseif event=="QUEST_GREETING" then Q:ObserveNPCOffers(false)
   elseif event=="CHAT_MSG_SYSTEM" then Q:ObserveQuestCompletion(arg1)
   else Q.npcOffers={};Q.npcSkills=nil end
