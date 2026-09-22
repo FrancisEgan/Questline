@@ -1,12 +1,12 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.14", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.15", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
 local classBits = { WARRIOR=1, PALADIN=2, HUNTER=4, ROGUE=8, PRIEST=16, SHAMAN=64, MAGE=128, WARLOCK=256, DRUID=1024 }
 local function present(value) return value == true or value == 1 end
 function Q:Print(message)
-  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff78c6ffQuestline:|r " .. message) end
+  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff8cccffQuestline:|r " .. message) end
 end
 function Q:Normalize(text)
   text = string.lower(text or "")
@@ -180,6 +180,7 @@ function Q:IsSelected(key)
   return QuestlineSettings.selected==key
 end
 function Q:PrioritizeSelected(entries)
+  if type(QuestlineSettings.selectedKeys)~="table" then return entries end
   -- Input is already in level order. Keep quest numbers stable while moving
   -- highlighted entries to the front of each filtered tracker.
   local result={}
@@ -209,8 +210,10 @@ function Q:Select(key,toggle)
     QuestlineSettings.selectedKeys=nil
     QuestlineSettings.selected=key
   end
-  if self.tracker then self.tracker.page=1 end
-  if self.mapTracker then self.mapTracker.page=1 end
+  if toggle then
+    if self.tracker then self.tracker.page=1 end
+    if self.mapTracker then self.mapTracker.page=1 end
+  end
   -- Rows may move under the cursor; do not retain the previous row's tooltip.
   self.partyQuestTooltip=nil;GameTooltip:Hide();WorldMapTooltip:Hide()
   self.mapDirty = true
@@ -381,7 +384,7 @@ events:SetScript("OnEvent",function()
   if event=="PLAYER_LOGIN" or (event=="PLAYER_ENTERING_WORLD" and not Q.ready) then
     QuestlineSettings=QuestlineSettings or {}
     if QuestlineSettings.tracker==nil then QuestlineSettings.tracker=true end
-    if QuestlineSettings.trackerMode~="zone" then QuestlineSettings.trackerMode="world" end
+    if QuestlineSettings.trackerMode~="zone" and QuestlineSettings.trackerMode~="world" then QuestlineSettings.trackerMode="zone" end
     Q:BuildIndexes();Q:CreateTrackers();Q:CreateMap();Q.ready=true;Q.dirty=true
     Q:InitializeNPCQuests()
     Q:ApplyCompatibility()

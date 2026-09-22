@@ -207,19 +207,19 @@ function Q:GetPartyQuestMembers(entry)
   if not state or not entry then return result end
   for _,member in ipairs(state.members) do
     local peer=state.peers[member.name];local quest=peer and entry.id and peer.quests[entry.id]
-    local shared=entry.partyMembers and entry.partyMembers[member.name]
-    if peer and entry.id and peer.manifest and GetTime()-(peer.manifestTime or 0)<=90 and not peer.manifest[entry.id]
-      and not (quest and (peer.revisions[entry.id] or 0)>(peer.manifestRevision or 0)) then shared=false end
-    if quest or shared then
-      local status
-      if not member.connected then status="Offline"
-      elseif not quest then status="On this quest; progress unavailable"
-      elseif GetTime()-quest.time>90 then status="Progress outdated"
-      elseif quest.status=="F" then status="Quest failed" end
-      insert(result,{name=member.name,quest=quest,status=status})
+    -- Missing, disconnected or expired progress is omitted from tooltips.
+    if quest and member.connected and GetTime()-quest.time<=90 then
+      insert(result,{name=member.name,unit=member.unit,quest=quest,status=quest.status=="F" and "Quest failed" or nil})
     end
   end
   return result
+end
+function Q:PartyMemberName(member)
+  local class
+  if member.unit and UnitClass then local localized;localized,class=UnitClass(member.unit) end
+  local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
+  if not color then return member.name end
+  return string.format("|cff%02x%02x%02x%s|r",math.floor(color.r*255+.5),math.floor(color.g*255+.5),math.floor(color.b*255+.5),member.name)
 end
 function Q:PartyObjectiveLines(entry,index,text,done,indent)
   local members=self:GetPartyQuestMembers(entry)
@@ -236,17 +236,18 @@ function Q:PartyObjectiveLines(entry,index,text,done,indent)
         status=objective.current and (objective.current.."/"..objective.required) or (objective.done and "Complete" or "Incomplete")
         finished=member.quest.status=="C" or objective.done or (objective.current and objective.current>=objective.required)
       elseif member.quest.status=="C" then status="Ready for turn-in";finished=true
-      else status="Progress unavailable" end
+      end
     end
-    insert(lines,{text=indent.."  "..member.name..": "..status,done=finished})
+    if status then insert(lines,{text=indent.."  "..self:PartyMemberName(member)..": "..status,done=finished}) end
   end
+  if getn(lines)==2 then return {{text=indent..text,done=done}} end
   return lines
 end
 function Q:PartyStatusLines(entry,indent)
   local lines={}
   for _,member in ipairs(self:GetPartyQuestMembers(entry)) do
     local complete=not member.status and member.quest.status=="C"
-    insert(lines,{text=indent..member.name..": "..(member.status or (complete and "Ready for turn-in" or "In progress")),done=complete})
+    insert(lines,{text=indent..self:PartyMemberName(member)..": "..(member.status or (complete and "Ready for turn-in" or "In progress")),done=complete})
   end
   return lines
 end

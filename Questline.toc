@@ -1,8 +1,8 @@
 ## Interface: 11200
-## Title: |cff78c6ffQuest|cffffd46bline
+## Title: |cff8cccffQuestline|r
 ## Author: Questline contributors
 ## Notes: Quest tracker, NPC tooltips, questgiver map/minimap markers and selected-quest areas. Standalone Octo-first database.
-## Version: 0.1.14
+## Version: 0.1.15
 ## OptionalDeps: pfQuest, pfQuest-octo, pfQuest-turtle, Magnify, ModernMapMarkers-octo
 ## SavedVariablesPerCharacter: QuestlineSettings
 

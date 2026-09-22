@@ -28,13 +28,13 @@ Payload fragments contain at most 180 bytes, with at most 34 fragments and 6,000
 - Send at most one packet per 0.25 seconds; the normal update tick can increase this interval.
 - Coalesce unsent changes per quest and send full snapshots every 60 seconds.
 - Refresh native shared-quest membership every 15 seconds, using temporarily expanded live log indices.
-- Mark counters older than 90 seconds as outdated. On reconnect, clear previous progress until fresh data arrives.
+- Omit counters older than 90 seconds from tooltips. On reconnect, clear previous progress until fresh data arrives.
 - Accept at most 80 packets per sender per five seconds, 100 quest records, and 20 objectives per quest. Bound numeric values, fragment counts, and text lengths before use.
 
-Only quest IDs, objective labels, counters, and completion flags are sent. Vanilla's `IsUnitOnQuest` provides the fallback shared-quest indicator for members without compatible messages; it does not supply their counters. Other addons' protocols are not implemented.
+Only quest IDs, objective labels, counters, and completion flags are sent. Vanilla's `IsUnitOnQuest` can identify shared quests, but does not supply counters; members without usable synchronized data are omitted from tooltips. Other addons' protocols are not implemented.
 
 ## Validation
 
 Run `node Questline/tests/run.js` from `Interface/AddOns`. The runtime suite passes emitted packets to a second simulated client and checks throttling, coalescing, manifest ordering, fragmented updates, timeout/retry, quest removal, reloads, disconnects, stale progress, invalid messages, and tooltip refresh/fade behavior.
 
-In game, fully restart both clients after installing this version. Join a party with the same collection quest, hover its mob and tracker row, and collect an item on one character. Check both tooltips, then complete or abandon the quest and confirm the other client updates. Repeat with one party member without Questline to verify the shared-quest fallback. Actual server transport and tooltip layout still require this two-client smoke test.
+In game, fully restart both clients after installing this version. Join a party with the same collection quest, hover its mob and tracker row, and collect an item on one character. Check both tooltips, then complete or abandon the quest and confirm the other client updates. Repeat with one party member without Questline to verify that unavailable progress is omitted. Actual server transport and tooltip layout still require this two-client smoke test.
