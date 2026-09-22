@@ -1,0 +1,204 @@
+local Q,DB=Questline,QuestlineDB
+local getn,insert=table.getn,table.insert
+
+function Q:InvalidateQuestAvailability()
+  self.giverCache={};self.mapDirty=true
+end
+function Q:ReadCompletedQuests()
+  local history=QuestlineSettings.completedQuests
+  if not GetQuestsCompleted then return end
+  local buffer={}
+  local ok,result=pcall(GetQuestsCompleted,buffer)
+  if not ok then return end
+  if type(result)~="table" then result=buffer end
+  local changed=false
+  for id,done in pairs(result) do
+    id=tonumber(id)
+    if id and done and done~=0 and not history[id] then history[id]=true;changed=true end
+  end
+  if changed then self:InvalidateQuestAvailability() end
+end
+function Q:UpdateNPCQuestState()
+  self.recentQuests=self.recentQuests or {}
+  local keys={}
+  for _,entry in ipairs(self.quests) do
+    insert(keys,entry.key)
+    if entry.id then self.recentQuests[entry.id]={title=self:Normalize(entry.title),time=GetTime()} end
+  end
+  for id,record in pairs(self.recentQuests) do if GetTime()-record.time>10 then self.recentQuests[id]=nil end end
+  table.sort(keys)
+  local signature=table.concat(keys,";")
+  if signature~=self.npcLogSignature then
+    self.npcOffers={};self.npcLogSignature=signature;self:ReadCompletedQuests();self:InvalidateQuestAvailability()
+  end
+end
+function Q:InitializeNPCQuests()
+  QuestlineSettings.completedQuests=QuestlineSettings.completedQuests or {}
+  if not QuestlineSettings.importedQuestHistory then
+    for id,done in pairs(pfQuest_history or {}) do
+      if tonumber(id) and done then QuestlineSettings.completedQuests[tonumber(id)]=true end
+    end
+    QuestlineSettings.importedQuestHistory=true
+  end
+  self.npcOffers={};self:ReadCompletedQuests();self:InvalidateQuestAvailability()
+  if QueryQuestsCompleted and GetQuestsCompleted then
+    self.npcEvents:RegisterEvent("QUEST_QUERY_COMPLETE");pcall(QueryQuestsCompleted)
+  end
+end
+local function escapePattern(text) return string.gsub(text,"([%(%)%.%%%+%-%*%?%[%]%^%$])","%%%1") end
+function Q:ObserveQuestCompletion(message)
+  local format=ERR_QUEST_COMPLETE_S or "%s completed."
+  local first,last=string.find(format,"%s",1,true)
+  if not first then return end
+  local pattern="^"..escapePattern(string.sub(format,1,first-1)).."(.-)"..escapePattern(string.sub(format,last+1)).."$"
+  local _,_,title=string.find(message or "",pattern)
+  if not title then return end
+  title=self:Normalize(title)
+  local matches={}
+  for _,entry in ipairs(self.quests) do if entry.id and self:Normalize(entry.title)==title then matches[entry.id]=true end end
+  for id,record in pairs(self.recentQuests or {}) do if record.title==title and GetTime()-record.time<=10 then matches[id]=true end end
+  local found,count=nil,0
+  for id in pairs(matches) do found=id;count=count+1 end
+  if count==1 then QuestlineSettings.completedQuests[found]=true end
+  self.npcOffers={};self:ReadCompletedQuests();self:InvalidateQuestAvailability()
+end
+function Q:ObserveNPCOffers(gossip)
+  local name=UnitName("npc")
+  if not name then return end
+  local offers={}
+  if gossip and GetGossipAvailableQuests then
+    -- Vanilla returns title/level pairs (not the tuples used by modern clients).
+    local values={GetGossipAvailableQuests()}
+    for index=1,getn(values),2 do insert(offers,{title=values[index],level=values[index+1]}) end
+  elseif not gossip and GetNumAvailableQuests and GetAvailableTitle then
+    for index=1,GetNumAvailableQuests() do insert(offers,{title=GetAvailableTitle(index),level=GetAvailableLevel and GetAvailableLevel(index)}) end
+  else return end
+  self.npcOffers[self:Normalize(name)]={quests=offers,time=GetTime()}
+  self:InvalidateQuestAvailability()
+end
+function Q:IsQuestAvailable(id)
+  local data=DB.quests[id]
+  local completed=QuestlineSettings.completedQuests or {}
+  if not data or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
+  if completed[id] and not data.repeatable then return false end
+  for _,other in ipairs(data.blockedBy or {}) do if completed[other] or self.byKey[tostring(other)] then return false end end
+  if getn(data.prerequisites or {})>0 then
+    local unlocked=false
+    for _,previous in ipairs(data.prerequisites) do if completed[previous] then unlocked=true;break end end
+    if not unlocked then return false end
+  end
+  -- Holiday availability needs an actual offer from the NPC, not a calendar guess.
+  if data.event then return false end
+  if data.skill then
+    if not self.npcSkills then
+      self.npcSkills={}
+      if GetNumSkillLines and GetSkillLineInfo then for i=1,GetNumSkillLines() do
+        local name,header,expanded,rank=GetSkillLineInfo(i)
+        if name and not header and rank and rank>0 then self.npcSkills[name]=true end
+      end end
+    end
+    if not self.npcSkills[data.skill] then return false end
+  end
+  return true
+end
+-- Shared by NPC tooltips and both maps. Recently observed server offers take
+-- precedence over database predictions, including an explicitly empty list.
+function Q:GetAvailableNPCQuests(name,ids)
+  local available={}
+  local offer=self.npcOffers and self.npcOffers[self:Normalize(name)]
+  if offer and GetTime()-offer.time<=60 then
+    for _,q in ipairs(offer.quests) do insert(available,{title=q.title,level=q.level,objectives={}}) end
+  else
+    for _,id in ipairs(ids or {}) do
+      if self:IsQuestAvailable(id) then insert(available,{id=id,title=DB.quests[id].title,level=DB.quests[id].level,objectives={}}) end
+    end
+  end
+  self:SortQuests(available)
+  return available
+end
+local function includes(list,id)
+  for _,value in ipairs(list or {}) do if value==id then return true end end
+  return false
+end
+local function talksTo(text,name)
+  text=Q:Normalize(text)
+  for _,verb in ipairs({"speak to ","speak with ","talk to ","talk with "}) do
+    local start,finish=string.find(text,verb..name,1,true)
+    if start and (start==1 or not string.find(string.sub(text,start-1,start-1),"%a"))
+      and not string.find(string.sub(text,finish+1,finish+1),"%w") then return true end
+  end
+  return text==name.." spoken to"
+end
+local function talkObjectives(entry,name)
+  local matches={};local related=false
+  for index,objective in ipairs(entry.objectives) do
+    local text=string.gsub(Q:Normalize(objective.text),":%s*%d+%s*/%s*%d+.*$","")
+    if talksTo(text,name) then matches[index]=true;related=true end
+  end
+  if entry.data then for _,target in ipairs(entry.data.objectives) do
+    if target.kind=="unit" and Q:Normalize(target.name)==name and talksTo(entry.summary,name) then
+      for index,objective in ipairs(entry.objectives) do
+        local label=string.gsub(Q:Normalize(objective.text),":%s*%d+%s*/%s*%d+.*$","")
+        if label==name then matches[index]=true;related=true end
+      end
+      if getn(entry.objectives)==0 then related=true end
+    end
+  end end
+  return related,matches
+end
+local function activeGroup(entry,name,talkOnly,talkMatches)
+  local group={key=entry.key,title=entry.title,level=entry.level,number=entry.number,objectives={}}
+  for index,objective in ipairs(entry.objectives) do
+    if not talkOnly or talkMatches[index] then
+      local _,_,label,current,required=string.find(objective.text,"^(.-):%s*(%d+)%s*/%s*(%d+)%s*$")
+      local text=label and (label.." - "..current.."/"..required) or objective.text
+      if talkMatches[index] then text="Talk to "..name..(current and (" - "..current.."/"..required) or "") end
+      insert(group.objectives,{objectiveIndex=index,text=text,done=objective.done,name=Q:Normalize(label or text),current=tonumber(current),required=tonumber(required)})
+    end
+  end
+  if getn(group.objectives)==0 then insert(group.objectives,{text=talkOnly and ("Talk to "..name) or Q:ExpandText(entry.summary)}) end
+  return group
+end
+function Q:GetNPCSections(name)
+  local key=self:Normalize(name)
+  local profile=DB.npcQuests[key]
+  local offer=self.npcOffers and self.npcOffers[key]
+  if offer and GetTime()-offer.time>60 then offer=nil end
+  local available,progress,complete={},{},{}
+  local used,hasTalk={},false
+  for _,entry in ipairs(self.quests) do
+    local starter=profile and includes(profile.starters,entry.id)
+    local finisher=profile and includes(profile.finishers,entry.id)
+    local talk,matches=talkObjectives(entry,key)
+    if talk then hasTalk=true end
+    if not entry.failed then
+      if entry.complete and finisher then insert(complete,{key=entry.key,title=entry.title,level=entry.level,objectives={}});used[entry.key]=true
+      elseif not entry.complete and (starter or finisher or talk) then
+        insert(progress,activeGroup(entry,name,not (starter or finisher),matches));used[entry.key]=true
+      end
+    end
+  end
+  if not profile and not hasTalk and not offer then return nil end
+  available=self:GetAvailableNPCQuests(name,profile and profile.starters)
+  -- A questgiver can also be an objective or item source for another active quest.
+  for _,group in ipairs(self:GetMobProgress(name)) do
+    local first=group.objectives[1];local entry=first and self.byKey[first.questKey]
+    if entry and not entry.complete and not used[entry.key] then insert(progress,group);used[entry.key]=true end
+  end
+  table.sort(progress,function(a,b) return a.number<b.number end)
+  return {{title="Available",groups=available},{title="In Progress",groups=progress},{title="Complete",groups=complete}}
+end
+
+local events=CreateFrame("Frame","QuestlineNPCEvents")
+Q.npcEvents=events
+for _,name in ipairs({"GOSSIP_SHOW","QUEST_GREETING","CHAT_MSG_SYSTEM","PLAYER_LEVEL_UP","SKILL_LINES_CHANGED"}) do events:RegisterEvent(name) end
+events:SetScript("OnEvent",function()
+  if not Q.ready then return end
+  if event=="QUEST_QUERY_COMPLETE" then Q:ReadCompletedQuests();Q.npcOffers={}
+  elseif event=="GOSSIP_SHOW" then Q:ObserveNPCOffers(true)
+  elseif event=="QUEST_GREETING" then Q:ObserveNPCOffers(false)
+  elseif event=="CHAT_MSG_SYSTEM" then Q:ObserveQuestCompletion(arg1)
+  else Q.npcOffers={};Q.npcSkills=nil end
+  Q:InvalidateQuestAvailability()
+  if event=="PLAYER_LEVEL_UP" then Q.dirty=true end
+end)

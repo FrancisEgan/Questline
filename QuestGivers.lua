@@ -1,0 +1,173 @@
+local Q,DB=Questline,QuestlineDB
+local getn,insert=table.getn,table.insert
+local iconSize,hoverRadius=14,22
+local outside={[0]=466.6667,400,333.3333,266.6667,200,133.3333}
+local inside={[0]=300,240,180,120,80,50}
+
+local function hide(pool,first)
+  for i=first or 1,getn(pool or {}) do pool[i]:Hide() end
+end
+function Q:GetAvailableGivers(zone)
+  if not zone then return {} end
+  self.giverCache=self.giverCache or {}
+  local cached=self.giverCache[zone]
+  if cached and cached.expires>GetTime() then return cached.entries end
+  local entries={}
+  for _,id in ipairs(DB.zoneGivers[zone] or {}) do
+    local giver=DB.givers[id]
+    local quests=self:GetAvailableNPCQuests(giver.name,giver.quests)
+    if getn(quests)>0 then
+      local points={}
+      for _,point in ipairs(giver.coordinates) do if point[3]==zone then insert(points,point) end end
+      if getn(points)>0 then insert(entries,{id=id,name=giver.name,quests=quests,points=points}) end
+    end
+  end
+  -- Only the displayed zones are queried. A short expiry also retires NPC
+  -- dialogue observations; quest, skill and level events invalidate immediately.
+  self.giverCache[zone]={entries=entries,expires=GetTime()+2}
+  return entries
+end
+function Q:GetNearbyGivers(pin,minimap)
+  local pool=minimap and self.minimapGivers or self.mapGivers
+  local nearby,seen={pin.giver},{[pin.giver.id]=true}
+  local radius=hoverRadius*pin:GetWidth()/iconSize
+  for _,other in ipairs(pool) do
+    if other:IsVisible() and other.giver and not seen[other.giver.id] and other.giverX and other.giverY then
+      local dx,dy=other.giverX-pin.giverX,other.giverY-pin.giverY
+      if dx*dx+dy*dy<=radius*radius then
+        insert(nearby,other.giver);seen[other.giver.id]=true
+      end
+    end
+  end
+  table.sort(nearby,function(a,b) if a.name~=b.name then return a.name<b.name end;return a.id<b.id end)
+  return nearby
+end
+function Q:ShowGiverTooltip(pin,minimap)
+  if not pin.giver then return end
+  local nearby=self:GetNearbyGivers(pin,minimap)
+  local tip=minimap and GameTooltip or WorldMapTooltip
+  tip:SetOwner(pin,"ANCHOR_RIGHT")
+  if getn(nearby)==1 then
+    tip:SetText(pin.giver.name,1,.82,.32);tip:AddLine("Available",.8,.85,.9)
+  else tip:SetText("Available Quests",1,.82,.32) end
+  for _,giver in ipairs(nearby) do
+    if getn(nearby)>1 then tip:AddLine(giver.name,1,.82,.32) end
+    for _,quest in ipairs(giver.quests) do tip:AddLine("  "..self:QuestTitle(quest),.9,.88,.8,true) end
+  end
+  tip:Show()
+end
+function Q:GetGiverPin(index,minimap)
+  local pool=minimap and self.minimapGivers or self.mapGivers
+  if not pool[index] then
+    local parent=minimap and Minimap or self.pinLayer
+    local pin=CreateFrame("Button",nil,parent)
+    pin:SetWidth(iconSize);pin:SetHeight(iconSize);pin:SetFrameLevel(parent:GetFrameLevel()+1)
+    pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
+    pin.texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+    pin:SetScript("OnEnter",function() Q:ShowGiverTooltip(this,minimap) end)
+    pin:SetScript("OnLeave",function() GameTooltip:Hide();WorldMapTooltip:Hide() end)
+    pool[index]=pin
+  end
+  return pool[index]
+end
+function Q:RefreshGiverMap()
+  if not self.pinLayer or not WorldMapFrame:IsVisible() then hide(self.mapGivers);self.giverMapLayout=nil;return end
+  local zone=self:GetMapZone()
+  local entries=self:GetAvailableGivers(zone)
+  local width,height=WorldMapButton:GetWidth(),WorldMapButton:GetHeight()
+  local scale=WorldMapFrame:GetEffectiveScale()/WorldMapButton:GetEffectiveScale()
+  local key=tostring(zone)..":"..width..":"..height..":"..scale
+  if self.giverMapLayout==key and self.giverMapEntries==entries then return end
+  self.giverMapLayout=key;self.giverMapEntries=entries
+  local count=0
+  if width>0 and height>0 then for _,giver in ipairs(entries) do
+    count=count+1
+    local pin=self:GetGiverPin(count,false);pin.giver=giver
+    pin:SetWidth(iconSize*scale);pin:SetHeight(iconSize*scale)
+    pin.giverX=giver.points[1][1]/100*width;pin.giverY=-giver.points[1][2]/100*height
+    -- One marker per NPC in the zone, even if it has several quests/spawns.
+    self:PlacePin(pin,giver.points[1],width,height)
+  end end
+  hide(self.mapGivers,count+1)
+end
+function Q:MinimapDiameter()
+  local zoom=Minimap:GetZoom()
+  local a,b=tonumber(GetCVar("minimapZoom")),tonumber(GetCVar("minimapInsideZoom"))
+  local key=tostring(zoom)..":"..tostring(a)..":"..tostring(b)
+  if self.minimapDiameterKey==key then return self.minimapDiameterValue end
+  local indoor
+  if IsIndoors then indoor=IsIndoors() else
+    if not a or not b then return nil end
+    if a==b then
+      -- Vanilla exposes two zoom CVars, but no active indoor/outdoor flag.
+      -- Probe the active one and restore the user's zoom in the same call.
+      local probe=zoom<5 and zoom+1 or zoom-1
+      Minimap:SetZoom(probe)
+      indoor=tonumber(GetCVar("minimapInsideZoom"))==probe
+      Minimap:SetZoom(zoom)
+    else indoor=zoom==b end
+  end
+  self.minimapDiameterKey=key;self.minimapDiameterValue=(indoor and inside or outside)[zoom]
+  return self.minimapDiameterValue
+end
+function Q:MinimapGiverPosition(point,x,y,size,diameter,facing)
+  local dx=(point[1]/100-x)*size[1]
+  local dy=(y-point[2]/100)*size[2]
+  if facing then
+    local cosine,sine=math.cos(facing),math.sin(facing)
+    dx,dy=dx*cosine+dy*sine,-dx*sine+dy*cosine
+  end
+  dx=dx*Minimap:GetWidth()/diameter;dy=dy*Minimap:GetHeight()/diameter
+  local rx,ry=Minimap:GetWidth()/2-iconSize/2,Minimap:GetHeight()/2-iconSize/2
+  if rx<=0 or ry<=0 then return nil end
+  local square=GetMinimapShape and GetMinimapShape()=="SQUARE"
+  if (square and math.abs(dx)<=rx and math.abs(dy)<=ry) or
+    (not square and dx*dx/(rx*rx)+dy*dy/(ry*ry)<=1) then return dx,dy end
+end
+function Q:RefreshGiverMinimap()
+  -- GetPlayerMapPosition uses the currently browsed map in Vanilla. Never
+  -- reset that map while the player is looking at it, or use wrong-zone coords.
+  if not Minimap or not Minimap:IsVisible() or not GetPlayerMapPosition then hide(self.minimapGivers);return end
+  local zone=self:GetPlayerZone()
+  local size=zone and DB.zones[zone] and DB.zones[zone].mapSize
+  if not size or not size[1] or not size[2] or size[1]<=0 or size[2]<=0 then hide(self.minimapGivers);return end
+  if self:GetMapZone()~=zone and not WorldMapFrame:IsVisible() and SetMapToCurrentZone then SetMapToCurrentZone() end
+  local x,y
+  if self:GetMapZone()==zone then
+    x,y=GetPlayerMapPosition("player")
+    if not x or not y or (x==0 and y==0) then self.minimapPlayerPosition=nil;hide(self.minimapGivers);return end
+    self.minimapPlayerPosition={zone=zone,x=x,y=y}
+  else
+    -- Keep nearby pins visible while a windowed map browses another zone.
+    -- Its coordinates cannot locate the player: reuse only a same-zone sample.
+    local last=self.minimapPlayerPosition
+    if not last or last.zone~=zone then hide(self.minimapGivers);return end
+    x,y=last.x,last.y
+  end
+  local diameter=self:MinimapDiameter()
+  if not diameter then hide(self.minimapGivers);return end
+  local facing
+  if GetPlayerFacing and GetCVar("rotateMinimap")=="1" then
+    facing=GetPlayerFacing()
+  end
+  local count=0
+  local entries=self:GetAvailableGivers(zone)
+  for _,giver in ipairs(entries) do
+    local bestX,bestY,distance
+    for _,point in ipairs(giver.points) do
+      local dx,dy=self:MinimapGiverPosition(point,x,y,size,diameter,facing)
+      if dx and (not distance or dx*dx+dy*dy<distance) then bestX,bestY,distance=dx,dy,dx*dx+dy*dy end
+    end
+    if bestX then
+      count=count+1
+      local pin=self:GetGiverPin(count,true);pin.giver=giver
+      pin.giverX=bestX;pin.giverY=bestY
+      pin:ClearAllPoints();pin:SetPoint("CENTER",Minimap,"CENTER",bestX,bestY);pin:Show()
+    end
+  end
+  hide(self.minimapGivers,count+1)
+end
+function Q:RefreshQuestGivers()
+  self.mapGivers=self.mapGivers or {};self.minimapGivers=self.minimapGivers or {}
+  self:RefreshGiverMap();self:RefreshGiverMinimap()
+end

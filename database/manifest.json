@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "locale": "enUS",
+  "profile": "octo",
+  "precedence": [
+    "pfQuest",
+    "pfQuest-turtle",
+    "pfQuest-octo"
+  ],
+  "inputs": [
+    {
+      "file": "pfQuest/db/quests.lua",
+      "sha256": "2cc49447b4c18f0a680612a79b4c199f0c46a1dbebdc6f4d78a27035e99c0d93"
+    },
+    {
+      "file": "pfQuest/db/units.lua",
+      "sha256": "b8de09aa33fd4b16edb2287b8c4224c86e6ee420e717a4d428e2935c22c4a922"
+    },
+    {
+      "file": "pfQuest/db/objects.lua",
+      "sha256": "be4846e2f2049cafba7da5ed18d6422bde35ed0e6f6ac34cb1215c1bbafd306e"
+    },
+    {
+      "file": "pfQuest/db/items.lua",
+      "sha256": "b173e338ff04fdece3b4bfcbb1b66aff4bb9d23fa7a13890311ea2cbc447d808"
+    },
+    {
+      "file": "pfQuest/db/zones.lua",
+      "sha256": "1706d986e1715a305a9aec51f56b68f7c30287190d62b51f4a37463d32a64de6"
+    },
+    {
+      "file": "pfQuest/db/areatrigger.lua",
+      "sha256": "3d79a84d6c0e96c31203e4c7f99c7b8b3306c437a7560121e46cbd8764b05927"
+    },
+    {
+      "file": "pfQuest/db/refloot.lua",
+      "sha256": "5e4bd7d8480a45c1d450ab1090693b532d9ac8bc3e524d63046a34d6b0f796cf"
+    },
+    {
+      "file": "pfQuest/db/quests-itemreq.lua",
+      "sha256": "ed2e35b7e72c93dacba0d747375bfc9510c7b8c428e67b4733c494fef283ecd2"
+    },
+    {
+      "file": "pfQuest/db/enUS/quests.lua",
+      "sha256": "1acb03547187637cf797926ca8d31700371856df835b561b6775b86eb375a699"
+    },
+    {
+      "file": "pfQuest/db/enUS/units.lua",
+      "sha256": "f2ae827b04668c0236919f702485038a4d56330be00652d7c2970dc7e27e2922"
+    },
+    {
+      "file": "pfQuest/db/enUS/objects.lua",
+      "sha256": "2d22e4f71913a2a9f47fac23bb38129106e41646d00e2dac5611cf97bc327fe5"
+    },
+    {
+      "file": "pfQuest/db/enUS/items.lua",
+      "sha256": "98bbd02ed910f528f744162c9e0b993f04a0215e48afa88c78711b6f634f137d"
+    },
+    {
+      "file": "pfQuest/db/enUS/zones.lua",
+      "sha256": "e22652ad92ebbf33c99f5e0b51ea08a0a3526d7e23813799f36aa68226782add"
+    },
+    {
+      "file": "pfQuest/db/enUS/professions.lua",
+      "sha256": "799ea6ee95f9d65260affb413dcba8bdaa1c297cf45b637246438085f29d30ae"
+    },
+    {
+      "file": "pfQuest/db/meta.lua",
+      "sha256": "0f6dfef398946112d8220688c29d33025aad02677b43e21e2387550d9f9e760e"
+    },
+    {
+      "file": "pfQuest/db/minimap.lua",
+      "sha256": "465b0332de8cda9d9d1cf226a1bbfa2977a18839489e66816a4d430ac5a8b174"
+    },
+    {
+      "file": "pfQuest/overwrites.lua",
+      "sha256": "f6bd48b5fb3bb95224bf72b12770df3435d7335102e0619c0a9e53b7e8bd754c"
+    },
+    {
+      "file": "pfQuest-turtle/db/quests-turtle.lua",
+      "sha256": "5a686e22f770fb441c63c60189320a0153f9ffe6d13a6bf0f62e2bf7bfd67c30"
+    },
+    {
+      "file": "pfQuest-turtle/db/units-turtle.lua",
+      "sha256": "850b4a01a088154ea234a644d1a9b419f5bd045e3e9119005443483f057b1c50"
+    },
+    {
+      "file": "pfQuest-turtle/db/objects-turtle.lua",
+      "sha256": "014c2e68c086081630d053102a38d4f90f77a447d591ea0a28188ebe5e161169"
+    },
+    {
+      "file": "pfQuest-turtle/db/items-turtle.lua",
+      "sha256": "4b1f898fa48678bf4aa3143b55dc11ab84e61929678bad6a7e2d8885a58e9bfe"
+    },
+    {
+      "file": "pfQuest-turtle/db/zones-turtle.lua",
+      "sha256": "019a49b39f0fa87352f2fb0dcdb3adbe8c8b28c155786b1e2152bf1e47760b61"
+    },
+    {
+      "file": "pfQuest-turtle/db/areatrigger-turtle.lua",
+      "sha256": "968cfdc08f2e4c953f5f340e361b8755e22544f5f3fc316509f3b60299d53e21"
+    },
+    {
+      "file": "pfQuest-turtle/db/refloot-turtle.lua",
+      "sha256": "a6ced07f9187116cfb1fb4c93e162d1380c7e55b7eb1189123bab963e3b20cc2"
+    },
+    {
+      "file": "pfQuest-turtle/db/quests-itemreq-turtle.lua",
+      "sha256": "00be0a6d788f6f7226579e2d796f04b7ac9fed72cd182f7f97aae21e00c8020c"
+    },
+    {
+      "file": "pfQuest-turtle/db/enUS/quests-turtle.lua",
+      "sha256": "193416f103ee5a079cc3db0a6ab07700d89883638c6eeac3284ea4ea3d58c1e5"
+    },
+    {
+      "file": "pfQuest-turtle/db/enUS/units-turtle.lua",
+      "sha256": "2ed6078728c0664a6e8605147da5de13c0139bcaa921eafa1746e97d0bea8049"
+    },
+    {
+      "file": "pfQuest-turtle/db/enUS/objects-turtle.lua",
+      "sha256": "ea8cdff8d6cc89e4b165e984d864a9071d1cbf7e4f3dd6a36dbfb48051ca1156"
+    },
+    {
+      "file": "pfQuest-turtle/db/enUS/items-turtle.lua",
+      "sha256": "f156430edf9964b73c218ad9602a77170f48157acff657d9ff82072b515be6a1"
+    },
+    {
+      "file": "pfQuest-turtle/db/enUS/zones-turtle.lua",
+      "sha256": "1718dc0a73bec247371cd84ce177451f852e54bec69aec1f2f2ef032c90852c8"
+    },
+    {
+      "file": "pfQuest-turtle/db/enUS/professions-turtle.lua",
+      "sha256": "0b9fb1613a3f47fd14f75e7b3bf0ee317fedac1f52e6a0e39d2620d8108ea69e"
+    },
+    {
+      "file": "pfQuest-turtle/db/meta-turtle.lua",
+      "sha256": "fa45f8074bce6625b72a4d05a02feb66efc3146ec3d5d6298e43b4f7fb0c19ba"
+    },
+    {
+      "file": "pfQuest-turtle/db/minimap-turtle.lua",
+      "sha256": "0ec842d9d9d900f2bbb47ebc99bceaf964bb4dfe45cb1cf794d3aa8bd674c508"
+    },
+    {
+      "file": "pfQuest-turtle/db/patches-turtle.lua",
+      "sha256": "d06f7a611d31b59a149ffc1d271ab59f4c2993842fe7ed22d30923a1dddfd38c"
+    },
+    {
+      "file": "pfQuest-turtle/overwrites.lua",
+      "sha256": "f28c4d789ceade927dd8c650ba891fd47e5d46a160b4b48c178212220af5d1e4"
+    },
+    {
+      "file": "pfQuest-octo/db/quests-turtle.lua",
+      "sha256": "2db79fd04ccc081ac987b22731a81c247a21a3c77a83ecb151494ef05e74938c"
+    },
+    {
+      "file": "pfQuest-octo/db/units-turtle.lua",
+      "sha256": "a8327518c83885583cf1f86646de4b03115ac0819b88af9e0b8448eaa34c713e"
+    },
+    {
+      "file": "pfQuest-octo/db/objects-turtle.lua",
+      "sha256": "5ad42b446c0f956db50479f243d1fed864ce7c68497956cc50d332ebb73bf2af"
+    },
+    {
+      "file": "pfQuest-octo/db/items-turtle.lua",
+      "sha256": "ba96dcebec1c1fd60275a6272115846c8c80f6373b6ce3a9167835a34f7eaf20"
+    },
+    {
+      "file": "pfQuest-octo/db/zones-turtle.lua",
+      "sha256": "68f28b9cd76f429125bb5e7516cac5018ededa086af6f6c1948dc5cd0440cafc"
+    },
+    {
+      "file": "pfQuest-octo/db/areatrigger-turtle.lua",
+      "sha256": "05051ab2d5ac3897bd7f8010d78f9d61f927580206d2e286677d5c68f9dd2797"
+    },
+    {
+      "file": "pfQuest-octo/db/refloot-turtle.lua",
+      "sha256": "e1c7d669494647c892f4ef18b5d144b815742c6f4f2600e3eab032cbcd9a589b"
+    },
+    {
+      "file": "pfQuest-octo/db/quests-itemreq-turtle.lua",
+      "sha256": "26b0a2f1dd89b09a36505ccbe81b96b4d01fe2edd65f928b04a4ff4059a1f684"
+    },
+    {
+      "file": "pfQuest-octo/db/enUS/quests-turtle.lua",
+      "sha256": "42c0a6820dce3e8ab2e35a4f555ef6cf437415537636b6421ea9c71547424dcd"
+    },
+    {
+      "file": "pfQuest-octo/db/enUS/units-turtle.lua",
+      "sha256": "5b0f100f3826e96a56497897f856f048ff9b9cb53cc09d1a4d8f4c741b8aa0be"
+    },
+    {
+      "file": "pfQuest-octo/db/enUS/objects-turtle.lua",
+      "sha256": "6662baa0d6aea7ce82b9d1ebb4d4c89ec20c2207828f308242e0acca5ac02604"
+    },
+    {
+      "file": "pfQuest-octo/db/enUS/items-turtle.lua",
+      "sha256": "af88bf0c43b4abd30d1824c1f7fb4f412e2ffe827e60a21453598827071e1859"
+    },
+    {
+      "file": "pfQuest-octo/db/enUS/zones-turtle.lua",
+      "sha256": "890df18166a61ce5acf6ebafd60c246e59db8686295174509f716f9ecb25d084"
+    },
+    {
+      "file": "pfQuest-octo/db/enUS/professions-turtle.lua",
+      "sha256": "2e9c348aa0eae367bf70ffced1f471656f645c4addbc69b48af4fdb7c28ff49b"
+    },
+    {
+      "file": "pfQuest-octo/db/meta-turtle.lua",
+      "sha256": "f5eb6caf3b32b93162fd6d6aa7d316891f85bdb6a2100c5a4a734706bcb44121"
+    },
+    {
+      "file": "pfQuest-octo/db/minimap-turtle.lua",
+      "sha256": "23546a9c6b6ad5de45ef0b9dc1a8a357ad32f0cd5208eb1c1c540aa719f47669"
+    },
+    {
+      "file": "pfQuest-octo/overwrites.lua",
+      "sha256": "0cd91d02579689b057b62e8e3219e8360b4a8655137333ac0f8470dfa9a5c08b"
+    }
+  ],
+  "counts": {
+    "quests": 6701,
+    "units": 14119,
+    "objects": 21158,
+    "items": 24862,
+    "zones": 1548,
+    "events": 498,
+    "lootGroups": 618,
+    "itemUses": 189
+  },
+  "stats": {
+    "coordinatesRead": 180468,
+    "invalidCoordinates": 0,
+    "duplicateCoordinates": 128
+  }
+}
