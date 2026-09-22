@@ -97,6 +97,10 @@ function Q:GetGiverPin(index,minimap)
     pin:SetWidth(iconSize);pin:SetHeight(iconSize);pin:SetFrameLevel(parent:GetFrameLevel()+1)
     pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
     pin.texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+    if not minimap then
+      pin:RegisterForClicks("RightButtonUp")
+      pin:SetScript("OnClick",function() if arg1=="RightButton" then Q:ShowCompletionMenu(this,false) end end)
+    end
     pin:SetScript("OnEnter",function() Q:ShowGiverTooltip(this,minimap) end)
     pin:SetScript("OnLeave",function() GameTooltip:Hide();WorldMapTooltip:Hide() end)
     pool[index]=pin

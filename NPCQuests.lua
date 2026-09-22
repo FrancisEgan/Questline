@@ -9,7 +9,7 @@ function Q:ImportCompletedQuests()
   local added=0
   for id,done in pairs(pfQuest_history or {}) do
     id=tonumber(id)
-    if id and done and done~=0 and not history[id] then history[id]=true;added=added+1 end
+    if id and done and done~=0 and not history[id] then history[id]=true;QuestlineSettings.completionSources[id]="Imported";added=added+1 end
   end
   QuestlineSettings.importedQuestHistory=true
   return added
@@ -30,10 +30,26 @@ function Q:UpdateNPCQuestState()
 end
 function Q:InitializeNPCQuests()
   QuestlineSettings.completedQuests=QuestlineSettings.completedQuests or {}
+  QuestlineSettings.completionSources=QuestlineSettings.completionSources or {}
   if not QuestlineSettings.importedQuestHistory then
     self:ImportCompletedQuests()
   end
   self.npcOffers={};self:InvalidateQuestAvailability()
+end
+function Q:SetQuestCompleted(id,source)
+  id=tonumber(id)
+  if not id or not DB.quests[id] then return false end
+  if source=="Manual" and self.byKey[tostring(id)] then return false end
+  QuestlineSettings.completedQuests[id]=true
+  QuestlineSettings.completionSources[id]=source or "Automatic"
+  self.npcOffers={};self:InvalidateQuestAvailability()
+  if self.RefreshOptions then self:RefreshOptions() end
+  return true
+end
+function Q:RestoreCompletedQuest(id)
+  QuestlineSettings.completedQuests[id]=nil;QuestlineSettings.completionSources[id]=nil
+  self.npcOffers={};self:InvalidateQuestAvailability()
+  if self.RefreshOptions then self:RefreshOptions() end
 end
 local function escapePattern(text) return string.gsub(text,"([%(%)%.%%%+%-%*%?%[%]%^%$])","%%%1") end
 function Q:ObserveQuestCompletion(message)
@@ -49,7 +65,7 @@ function Q:ObserveQuestCompletion(message)
   for id,record in pairs(self.recentQuests or {}) do if record.title==title and GetTime()-record.time<=10 then matches[id]=true end end
   local found,count=nil,0
   for id in pairs(matches) do found=id;count=count+1 end
-  if count==1 then QuestlineSettings.completedQuests[found]=true end
+  if count==1 then self:SetQuestCompleted(found,"Automatic") end
   self.npcOffers={};self:InvalidateQuestAvailability()
 end
 function Q:ObserveNPCOffers(gossip)
@@ -70,7 +86,7 @@ function Q:IsQuestAvailable(id)
   local data=DB.quests[id]
   local completed=QuestlineSettings.completedQuests or {}
   if not data or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
-  if completed[id] and not data.repeatable then return false end
+  if completed[id] and (not data.repeatable or QuestlineSettings.completionSources[id]=="Manual") then return false end
   for _,other in ipairs(data.blockedBy or {}) do if completed[other] or self.byKey[tostring(other)] then return false end end
   if getn(data.prerequisites or {})>0 then
     local unlocked=false
@@ -97,7 +113,17 @@ function Q:GetAvailableNPCQuests(name,ids)
   local available={}
   local offer=self.npcOffers and self.npcOffers[self:Normalize(name)]
   if offer and GetTime()-offer.time<=60 then
-    for _,q in ipairs(offer.quests) do insert(available,{title=q.title,level=q.level,objectives={}}) end
+    for _,q in ipairs(offer.quests) do
+      local found,count=nil,0
+      for _,id in ipairs(ids or {}) do
+        local data=DB.quests[id]
+        if data and self:Normalize(data.title)==self:Normalize(q.title) and (not q.level or data.level==q.level) then found=id;count=count+1 end
+      end
+      if count~=1 then found=nil end
+      local hidden=found and QuestlineSettings.completedQuests[found] and
+        (not DB.quests[found].repeatable or QuestlineSettings.completionSources[found]=="Manual")
+      if not hidden then insert(available,{id=found,title=q.title,level=q.level,objectives={}}) end
+    end
   else
     for _,id in ipairs(ids or {}) do
       if self:IsQuestAvailable(id) then insert(available,{id=id,title=DB.quests[id].title,level=DB.quests[id].level,objectives={}}) end

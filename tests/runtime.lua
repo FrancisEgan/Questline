@@ -31,6 +31,14 @@ function GetMinimapShape() return minimapShape end
 function methods:GetZoom() return tonumber(cvars[minimapIndoor and "minimapInsideZoom" or "minimapZoom"]) end
 function methods:SetZoom(value) cvars[minimapIndoor and "minimapInsideZoom" or "minimapZoom"]=tostring(value);zoomWrites=zoomWrites+1 end
 function methods:SetResizable(v) self.resizable=v end
+function methods:SetNormalTexture(texture) self.normalTexture=texture end
+function methods:SetBlendMode(mode) self.blendMode=mode end
+function methods:SetPushedTexture(texture) self.pushedTexture=texture end
+function methods:SetHighlightTexture(texture) self.highlightTexture=texture end
+function methods:SetParent(parent) self.parent=parent end
+function methods:SetAutoFocus(value) self.autoFocus=value end
+function methods:SetMaxLetters(value) self.maxLetters=value end
+function methods:ClearFocus() self.focused=false end
 function methods:SetMinResize(w,h) self.minResize={w,h} end
 function methods:SetMaxResize(w,h) self.maxResize={w,h} end
 function methods:StartSizing(point) self.sizing=point end
@@ -53,6 +61,9 @@ function methods:Show() self.shown=true;self.fading=false;self.showCalls=(self.s
 function methods:FadeOut() self.fading=true end
 function methods:Hide()
   local shown=self.shown;self.shown=false
+  if shown and self.scripts.OnHide then
+    local previous=this;this=self;self.scripts.OnHide();this=previous
+  end
   if shown and self==GameTooltip and QuestlineMobTooltip then
     local previous=this;this=QuestlineMobTooltip;this.scripts.OnHide();this=previous
   end
@@ -208,6 +219,69 @@ local function quest(id,objectives,complete)
   return {id=id,title=data.title,level=data.level,summary=data.summary,description=data.description,objectives=objectives or {},complete=complete}
 end
 
+local function completionHistoryTests(Q)
+  local original=Q.quests
+  local history,sources=QuestlineSettings.completedQuests,QuestlineSettings.completionSources
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={};Q:SetEntries({})
+  for i=1,12 do QuestlineDB.quests[991000+i]={title="History quest "..i,level=1,minLevel=1,objectives={},prerequisites={},blockedBy={}} end
+  expect(Q:SetQuestCompleted(991001,"Manual") and not Q:IsQuestAvailable(991001),"manual history suppresses available quests")
+  expect(QuestlineSettings.completionSources[991001]=="Manual","manual source is saved separately from compatibility history")
+  Q.npcOffers["test npc"]={time=GetTime(),quests={{title="History quest 1",level=1}}}
+  expect(#Q:GetAvailableNPCQuests("Test NPC",{991001})==0,"observed offers cannot resurrect a hidden completed quest")
+  Q:RestoreCompletedQuest(991001)
+  expect(Q:IsQuestAvailable(991001) and not QuestlineSettings.completionSources[991001],"restoring removes history and metadata and allows eligibility")
+  QuestlineDB.quests[991001].repeatable=true
+  Q:SetQuestCompleted(991001,"Automatic");expect(Q:IsQuestAvailable(991001),"automatic completion retains repeatable offers")
+  Q:SetQuestCompleted(991001,"Manual");expect(not Q:IsQuestAvailable(991001),"manual completion hides even repeatable offers until restored")
+  local active={key="991002",id=991002,title="History quest 2",level=1,objectives={}}
+  Q:SetEntries({active})
+  expect(not Q:SetQuestCompleted(991002,"Manual"),"cannot manually mark a live quest completed")
+  Q:ObserveQuestCompletion("History quest 2 completed.")
+  expect(QuestlineSettings.completionSources[991002]=="Automatic","confirmed completion records automatic provenance")
+  Q:SetEntries({});Q:InitializeNPCQuests()
+  expect(QuestlineSettings.completedQuests[991001] and QuestlineSettings.completionSources[991001]=="Manual","initialization preserves manual history")
+  for i=3,12 do Q:SetQuestCompleted(991000+i,"Manual") end
+  QuestlineSettings.completedQuests[991013]=true
+  expect(#Q:GetCompletionList("991001",true)==1 and #Q:GetCompletionList("history quest",false)==12,"history supports ID/title search and manual filtering")
+  expect(Q:GetCompletionList("991013",false)[1].source=="Existing","old completion records keep unknown provenance rather than invented sources")
+  Q:Command("");local f=Q.optionsPanel
+  expect(f.section=="home" and f.home:IsShown() and not f.history:IsShown() and not f.settings:IsShown(),"slash menu starts on clean home page")
+  expect(not f.mode,"main menu has no World/Zone control")
+  click(f.optionsLink)
+  expect(f.section=="options" and f.settings:IsShown() and not f.home:IsShown(),"options link opens separate settings page")
+  Q:ShowOptionsSection("home");click(f.completedLink)
+  expect(f and f:IsShown() and f.pages==2,"bare slash command opens paginated options/history panel")
+  f.page=2;Q:RefreshOptions();expect(f.rows[1]:IsShown(),"later history page is reachable")
+  click(f.filter);expect(f.manualOnly and f.page==1,"manual-only filter resets history page")
+  f.search:SetText("991001");this=f.search;f.search.scripts.OnTextChanged()
+  expect(f.rows[1].id==991001 and not f.rows[2]:IsShown(),"search narrows the displayed completion records")
+  click(f.rows[1].restore);expect(not f.rows[1]:IsShown(),"restore button refreshes the open list immediately")
+  expect(not Q:GetGiverPin(1,true).scripts.OnClick,"minimap markers have no completion click action")
+  local pin=Q:GetGiverPin(1,false)
+  for _,other in ipairs(Q.mapGivers) do other:Hide() end
+  pin.giver={id=991101,name="Test NPC",quests={{id=991001,title="History quest 1"},{title="Ambiguous offer"}},points={}}
+  pin.giverX=0;pin.giverY=0;pin:Show()
+  click(pin,"RightButton")
+  expect(Q.completionMenu:IsShown() and #Q.completionMenu.items==1,"right-click offers only uniquely identified available quests")
+  Q:ShowCompletionMenu(pin,false)
+  expect(Q.completionMenu:GetParent()==WorldMapFrame and Q.completionMenu:GetFrameLevel()==WorldMapFrame:GetFrameLevel()+60,"map context pane is elevated above map artwork like tracker")
+  local menu=Q.completionMenu
+  expect(menu:GetHeight()<100 and not menu.count:IsShown() and not menu.next:IsShown(),"one-quest menu is compact without page controls")
+  expect(menu.rows[1].text:GetText()=="History quest 1","context rows contain only quest names")
+  expect(menu.close:GetFrameLevel()>menu:GetFrameLevel() and menu.dismiss:GetFrameLevel()<menu:GetFrameLevel(),"close and menu controls stay above outside-click layer")
+  this=menu.dismiss;menu.dismiss.scripts.OnMouseDown()
+  expect(not menu:IsShown() and not menu.dismiss:IsShown(),"clicking outside closes menu and removes click catcher")
+  Q:ShowCompletionMenu(pin,false);click(menu.close)
+  expect(not menu:IsShown() and not menu.dismiss:IsShown(),"close button also dismisses menu and click catcher")
+  Q:ShowCompletionMenu(pin,false)
+  click(Q.completionMenu.rows[1])
+  expect(not Q.completionMenu:IsShown() and QuestlineSettings.completionSources[991001]=="Manual","context action records manual completion and closes menu")
+  Q:Command("");expect(not f:IsShown(),"slash command toggles options closed")
+  f.search:SetText("");f.manualOnly=nil
+  QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources
+  for i=1,12 do QuestlineDB.quests[991000+i]=nil end
+  Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
+end
 local function trackerResizeTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
   local entries={}
@@ -1196,6 +1270,7 @@ function runTests()
   partySyncTests(Q)
   multiSelectionTests(Q)
   trackerResizeTests(Q)
+  completionHistoryTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
   print("Runtime: "..checks.." assertions passed.")

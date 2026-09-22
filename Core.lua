@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.20", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.24", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -359,7 +359,8 @@ function Q:SetEntries(entries)
 end
 function Q:Command(message)
   local _,_,command,option=string.find(self:Normalize(message),"^(%S*)%s*(.-)$")
-  if command=="tracker" then QuestlineSettings.tracker=option~="off"; self:RefreshTrackers(); self:ApplyCompatibility()
+  if command=="" then self:ToggleOptions()
+  elseif command=="tracker" then QuestlineSettings.tracker=option~="off"; self:RefreshTrackers(); self:ApplyCompatibility()
   elseif command=="legacy" then QuestlineSettings.legacy=option=="on"; self:ApplyCompatibility(); self:Print("pfQuest map pins " .. (QuestlineSettings.legacy and "shown." or "hidden."))
   elseif command=="reset" then
     QuestlineSettings.trackerSize=nil;QuestlineSettings.mapSize=nil
@@ -389,7 +390,7 @@ events:SetScript("OnEvent",function()
     Q:BuildIndexes();Q:CreateTrackers();Q:CreateMap();Q.ready=true;Q.dirty=true
     Q:InitializeNPCQuests()
     Q:ApplyCompatibility()
-    Q:Print("Loaded. /ql shows commands.")
+    Q:Print("Loaded. /ql opens options and completed quests; /ql help shows commands.")
   elseif event=="WORLD_MAP_UPDATE" then Q.mapDirty=true
   elseif event=="ZONE_CHANGED_NEW_AREA" or event=="ZONE_CHANGED" or event=="ZONE_CHANGED_INDOORS" then
     Q.minimapDiameterKey=nil

@@ -17,13 +17,17 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - Creature tooltips with quest objectives, item drop rates, and live progress
 - Shared quest progress from party members running Questline, with class-colored names
 - NPC tooltips showing available, in-progress, and completed quests
+- Saved completion history with searchable records, manual-only filtering, and Restore actions
+- Right-click a questgiver marker on the world map to mark an individual quest completed
+- `/ql` home page with separate Options and Completed Quests screens
 - Shift-click to link a quest in open chat; right-click to open it in the quest log
 - Movable, resizable, collapsible trackers with saved sizes, positions, and highlights
 - Standalone quest database; no pfQuest dependency
 
 ## Commands
 
-- `/ql` or `/questline` — Show help
+- `/ql` or `/questline` — Open options and completed quests
+- `/ql help` — Show commands
 - `/ql tracker on` / `/ql tracker off` — Show or hide the tracker
 - `/ql legacy on` / `/ql legacy off` — Show or hide pfQuest's world-map pins
 - `/ql reset` — Reset tracker positions and sizes, and expand both panels

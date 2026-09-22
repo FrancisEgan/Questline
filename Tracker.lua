@@ -1,6 +1,22 @@
 local Q, DB = Questline, QuestlineDB
 local getn = table.getn
 local path = "Interface\\AddOns\\Questline\\Textures\\"
+function Q:StyleTextLink(button)
+  local enter,leave,hide=button:GetScript("OnEnter"),button:GetScript("OnLeave"),button:GetScript("OnHide")
+  local function paint(widget,hovered)
+    if hovered then
+      widget.text:SetTextColor(.85,.95,1)
+      widget.text:SetShadowColor(.25,.6,1,.65);widget.text:SetShadowOffset(1,-1)
+    else
+      widget.text:SetTextColor(.55,.8,1)
+      widget.text:SetShadowColor(0,0,0,0);widget.text:SetShadowOffset(0,0)
+    end
+  end
+  paint(button,false)
+  button:SetScript("OnEnter",function() paint(this,true);if enter then enter() end end)
+  button:SetScript("OnLeave",function() paint(this,false);if leave then leave() end end)
+  button:SetScript("OnHide",function() paint(this,false);if hide then hide() end end)
+end
 local function font(parent, size, red, green, blue)
   local text = parent:CreateFontString(nil, "OVERLAY")
   text:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF", size, "")
@@ -125,6 +141,7 @@ local function makePanel(name,parent,isMap)
       GameTooltip:Show()
     end)
     panel.mode:SetScript("OnLeave",hideTooltip)
+    Q:StyleTextLink(panel.mode)
     panel.header:SetScript("OnEnter",function()
       GameTooltip:SetOwner(this,"ANCHOR_LEFT");GameTooltip:SetText(this:GetParent().headingText,1,0.85,0.4)
       GameTooltip:AddLine("Drag to move the tracker",0.55,0.8,1);GameTooltip:Show()
