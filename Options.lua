@@ -55,7 +55,7 @@ function Q:RefreshOptions()
   f.count:SetText(table.getn(list).." records  -  Page "..f.page.." / "..f.pages)
   f.filter.text:SetText(f.manualOnly and "Show all records" or "Show manual only")
   f.tracker.text:SetText(QuestlineSettings.tracker and "Hide tracker" or "Show tracker")
-  f.legacy.text:SetText(QuestlineSettings.legacy and "Hide pfQuest map pins" or "Show pfQuest map pins")
+  f.mapTracker.text:SetText(QuestlineSettings.mapTracker~=false and "Hide map tracker" or "Show map tracker")
   if f.section~="completed" then return end
   for i=1,8 do
     local row=f.rows[i];local item=list[(f.page-1)*8+i]
@@ -77,7 +77,7 @@ function Q:ToggleOptions()
     f.settings=CreateFrame("Frame",nil,f);f.settings:SetAllPoints(f)
     button(f.settings,"< Home",18,-46,120,function() Q:ShowOptionsSection("home") end)
     f.tracker=button(f.settings,"",18,-90,230,function() Q:Command(QuestlineSettings.tracker and "tracker off" or "tracker on");Q:RefreshOptions() end)
-    f.legacy=button(f.settings,"",18,-130,260,function() Q:Command(QuestlineSettings.legacy and "legacy off" or "legacy on");Q:RefreshOptions() end)
+    f.mapTracker=button(f.settings,"",18,-130,260,function() Q:Command(QuestlineSettings.mapTracker~=false and "maptracker off" or "maptracker on");Q:RefreshOptions() end)
     button(f.settings,"Reset tracker layout",18,-170,230,function() Q:Command("reset") end)
     button(f.settings,"Show addon status in chat",18,-210,300,function() Q:Command("status") end)
     f.history=CreateFrame("Frame",nil,f);f.history:SetAllPoints(f)

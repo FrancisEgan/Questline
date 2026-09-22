@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.25", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.27", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -386,6 +386,7 @@ function Q:Command(message)
   local _,_,command,option=string.find(self:Normalize(message),"^(%S*)%s*(.-)$")
   if command=="" then self:ToggleOptions()
   elseif command=="tracker" then QuestlineSettings.tracker=option~="off"; self:RefreshTrackers(); self:ApplyCompatibility()
+  elseif command=="maptracker" then QuestlineSettings.mapTracker=option~="off";self:RefreshTrackers();if self.RefreshOptions then self:RefreshOptions() end
   elseif command=="legacy" then QuestlineSettings.legacy=option=="on"; self:ApplyCompatibility(); self:Print("pfQuest map pins " .. (QuestlineSettings.legacy and "shown." or "hidden."))
   elseif command=="reset" then
     QuestlineSettings.trackerSize=nil;QuestlineSettings.mapSize=nil
@@ -394,7 +395,7 @@ function Q:Command(message)
   elseif command=="status" then
     local known=0;for _,q in ipairs(self.quests) do if q.id then known=known+1 end end
     self:Print("v"..self.version.." | "..DB.profile.." | "..known.."/"..getn(self.quests).." quests identified | build "..DB.build)
-  else self:Print("/ql tracker on|off, /ql legacy on|off, /ql reset, /ql status. Click a quest to highlight it; Ctrl-click to add or remove highlights. In either tracker, Shift-click to link in open chat; right-click to open the quest log. Drag a tracker header to move it; use the arrows or mouse wheel to change pages.") end
+  else self:Print("/ql tracker on|off, /ql maptracker on|off, /ql legacy on|off, /ql reset, /ql status. Click a quest to highlight it; Ctrl-click to add or remove highlights. In either tracker, Shift-click to link in open chat; right-click to open the quest log. Drag a tracker header to move it; use the arrows or mouse wheel to change pages.") end
 end
 
 local events=CreateFrame("Frame", "QuestlineEvents")
@@ -411,6 +412,7 @@ events:SetScript("OnEvent",function()
   if event=="PLAYER_LOGIN" or (event=="PLAYER_ENTERING_WORLD" and not Q.ready) then
     QuestlineSettings=QuestlineSettings or {}
     if QuestlineSettings.tracker==nil then QuestlineSettings.tracker=true end
+    if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=true end
     if QuestlineSettings.trackerMode~="zone" and QuestlineSettings.trackerMode~="world" then QuestlineSettings.trackerMode="zone" end
     Q:BuildIndexes();Q:CreateTrackers();Q:CreateMap();Q.ready=true;Q.dirty=true
     Q:InitializeNPCQuests()

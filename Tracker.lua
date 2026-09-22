@@ -309,5 +309,5 @@ function Q:RefreshTrackers()
   self:RenderTracker(self.tracker,entries,playerZone,zoneName)
   self:RenderTracker(self.mapTracker,mapEntries,zone)
   if QuestlineSettings.tracker then self.tracker:Show() else self.tracker:Hide() end
-  self.mapTracker:Show()
+  if QuestlineSettings.mapTracker~=false then self.mapTracker:Show() else self.mapTracker:Hide() end
 end

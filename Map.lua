@@ -1,6 +1,11 @@
 local Q, DB = Questline, QuestlineDB
 local getn = table.getn
 local texturePath = "Interface\\AddOns\\Questline\\Textures\\"
+local actionTextures={
+  loot=texturePath.."action-loot",kill=texturePath.."action-kill",
+  interact=texturePath.."action-interact",explore=texturePath.."action-interact",
+  talk="Interface\\GossipFrame\\GossipGossipIcon",
+}
 local alphabet="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
 local digit={}
 for i=1,string.len(alphabet) do digit[string.byte(alphabet,i)]=i-1 end
@@ -147,7 +152,7 @@ function Q:GetPin(index,objective)
   if not pool[index] then
     local pin
     if objective then
-      pin=CreateFrame("Button",nil,self.pinLayer);pin:SetWidth(21);pin:SetHeight(21)
+      pin=CreateFrame("Button",nil,self.pinLayer);pin:SetWidth(18);pin:SetHeight(18)
       pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
     else pin=self:MakeBadge(self.pinLayer,25) end
     pin:SetScript("OnClick",function() if this.entry then Q:Select(this.entry.key,IsControlKeyDown and IsControlKeyDown()) end end)
@@ -231,8 +236,8 @@ function Q:RefreshMap()
           local faction=UnitFactionGroup("player")=="Horde" and "H" or "A"
           if string.find(target.faction,faction,1,true) then icon="talk" end
         end
-        local pin=self:GetPin(count,true);pin.entry=selected;pin.target=target;pin.texture:SetTexture(texturePath..icon)
-        pin:SetWidth(21*inverseScale);pin:SetHeight(21*inverseScale)
+        local pin=self:GetPin(count,true);pin.entry=selected;pin.target=target;pin.texture:SetTexture(actionTextures[icon] or actionTextures.interact)
+        pin:SetWidth(18*inverseScale);pin:SetHeight(18*inverseScale)
         -- Small action icons sit next to the numbered selector at shared anchors.
         self:PlacePin(pin,point,width,height)
         pin:SetFrameLevel(self.pinLayer:GetFrameLevel()+2)

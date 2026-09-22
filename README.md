@@ -30,10 +30,11 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - `/ql` or `/questline` — Open options and completed quests
 - `/ql help` — Show commands
 - `/ql tracker on` / `/ql tracker off` — Show or hide the tracker
+- `/ql maptracker on` / `/ql maptracker off` ? Show or hide the tracker on the world map
 - `/ql legacy on` / `/ql legacy off` — Show or hide pfQuest's world-map pins
 - `/ql reset` — Reset tracker positions and sizes, and expand both panels
 - `/ql status` — Show addon version and database status
 
 ## Credits
 
-Database material comes from pfQuest, pfQuest-turtle, and pfQuest-octo. Their MIT notices are included in `licenses/`.
+Database material comes from pfQuest, pfQuest-turtle, and pfQuest-octo. The bag, sword, and gear marker artwork comes from pfQuest. Their MIT notices are included in `licenses/`.
