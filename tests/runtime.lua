@@ -21,7 +21,10 @@ local minimapIndoor,playerX,playerY,playerFacing=false,.522,.31,0
 local minimapShape="ROUND"
 local cvars={minimapZoom="0",minimapInsideZoom="0",rotateMinimap="0"}
 local zoomWrites,mapResets=0,0
-function GetCVar(name) return cvars[name] end
+function GetCVar(name)
+  if cvars[name]==nil then error("Couldn't find CVar named '"..name.."'") end
+  return cvars[name]
+end
 function GetPlayerFacing() return playerFacing end
 function GetPlayerMapPosition() return playerX,playerY end
 function GetMinimapShape() return minimapShape end
@@ -604,6 +607,19 @@ local function giverMapTests(Q)
   Minimap:SetZoom(5);Q:RefreshQuestGivers();expect(not find(Q.minimapGivers,3338),"out-of-range giver is clipped rather than pinned beyond the minimap")
   Minimap:SetZoom(0);cvars.rotateMinimap="1";playerFacing=math.pi/2;Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
   expect(pin and math.abs(pin.point[4])<.01 and math.abs(pin.point[5]+30)<.01,"rotation applies player facing when the client supports it")
+  cvars.rotateMinimap=nil
+  Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and math.abs(pin.point[4]-30)<.01 and math.abs(pin.point[5])<.01,"missing rotation CVar falls back to north-up even with facing API")
+  local savedGetCVar,savedFacing=GetCVar,GetPlayerFacing
+  GetCVar=function(name) if name=="rotateMinimap" then return nil end;return savedGetCVar(name) end
+  Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and math.abs(pin.point[4]-30)<.01 and math.abs(pin.point[5])<.01,"nil rotation setting also uses north-up")
+  GetCVar=savedGetCVar;GetPlayerFacing=nil
+  Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and math.abs(pin.point[4]-30)<.01,"minimap markers work without facing API or rotation CVar")
+  GetPlayerFacing=savedFacing;cvars.rotateMinimap="1"
+  Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)
+  expect(pin and math.abs(pin.point[4])<.01 and math.abs(pin.point[5]+30)<.01,"available rotation setting is still read after fallback")
   cvars.rotateMinimap="0";playerFacing=0
   minimapIndoor=true;cvars.minimapInsideZoom="0";Q.minimapDiameterKey=nil;local writes=zoomWrites
   Q:RefreshQuestGivers();pin=find(Q.minimapGivers,3338)

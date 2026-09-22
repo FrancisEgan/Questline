@@ -2,7 +2,9 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.18**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.19**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Minimap rotation is optional: `GetPlayerFacing` does not imply the client has a `rotateMinimap` CVar. Read that setting with `pcall`, because unknown CVars can throw. Missing or disabled rotation uses north-up positioning without requiring a client extension or another addon. Runtime tests cover a throwing lookup, nil results, absent facing API, and rotation becoming available again.
 
 The renamed addon uses a new per-character saved-settings file. Existing settings from before the rename are not automatically loaded. To preserve them, fully exit WoW, copy the previous addon's per-character file from `WTF/Account/<account>/<realm>/<character>/SavedVariables/` to `Questline.lua`, and change its top-level settings variable to `QuestlineSettings`. Otherwise Questline starts with default preferences and records completion history normally; the previous saved file remains untouched.
 

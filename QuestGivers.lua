@@ -180,8 +180,11 @@ function Q:RefreshGiverMinimap()
   local diameter=self:MinimapDiameter()
   if not diameter then hide(self.minimapGivers);return end
   local facing
-  if GetPlayerFacing and GetCVar("rotateMinimap")=="1" then
-    facing=GetPlayerFacing()
+  if GetPlayerFacing and GetCVar then
+    -- Some clients expose facing without the optional rotation CVar.
+    -- GetCVar throws for unknown names; use a north-up map in that case.
+    local ok,rotation=pcall(GetCVar,"rotateMinimap")
+    if ok and rotation=="1" then facing=GetPlayerFacing() end
   end
   local count=0
   local entries=self:GetMinimapQuestNPCs(zone)
