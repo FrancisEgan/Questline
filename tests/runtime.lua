@@ -282,6 +282,34 @@ local function completionHistoryTests(Q)
   for i=1,12 do QuestlineDB.quests[991000+i]=nil end
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+local function trackerMapTests(Q)
+  local original,mode=Q.quests,QuestlineSettings.trackerMode
+  local a={key="double:objective",name="Test target",kind="unit",icon="sword"}
+  local b={key="double:finisher",id=991112,name="Test giver",kind="unit",icon="turnin"}
+  QuestlineDB.locations[a.key]={[14]={points={{50,50}},runs="",anchor={50,50}}}
+  QuestlineDB.locations[b.key]={[17]={points={{50,50}},runs="",anchor={50,50}}}
+  local entry={key="double:quest",id=991111,title="Map test",level=1,objectives={},data={objectives={a},finishers={b}}}
+  Q:SetEntries({entry});Q:SetTrackerMode("world");playerZone="The Barrens";SetMapZoom(1,1);WorldMapFrame:Hide()
+  local row=Q.tracker.rows[1]
+  click(row);expect(not WorldMapFrame:IsShown() and Q:IsSelected(entry.key),"single click highlights without opening map")
+  this=row;arg1="LeftButton";row.scripts.OnDoubleClick()
+  expect(WorldMapFrame:IsShown() and Q:GetMapZone()==14 and Q:IsSelected(entry.key),"tracker double-click opens off-zone objective map and highlights quest")
+  entry.complete=true;Q:SetEntries({entry})
+  this=Q.tracker.rows[1].badge;arg1="LeftButton";this.scripts.OnDoubleClick()
+  expect(Q:GetMapZone()==17,"badge double-click on completed quest opens turn-in zone")
+  entry.complete=false;entry.objectives={{text="Test target: 1/1",done=true}}
+  Q:SetEntries({entry});WorldMapFrame:Hide();Q:TrackerDoubleClick(entry,"LeftButton")
+  expect(not WorldMapFrame:IsShown(),"completed objective locations are not used when nothing remains mapped")
+  entry.objectives={};QuestlineDB.locations[a.key][17]=QuestlineDB.locations[b.key][17]
+  Q:TrackerDoubleClick(entry,"LeftButton");expect(Q:GetMapZone()==17,"multi-zone quest prefers physical zone")
+  shiftDown=true;WorldMapFrame:Hide();Q:TrackerDoubleClick(entry,"LeftButton");shiftDown=false
+  expect(not WorldMapFrame:IsShown(),"shift double-click preserves chat-link gesture")
+  Q:TrackerDoubleClick(entry,"RightButton");expect(not WorldMapFrame:IsShown(),"right double-click cannot trigger map navigation")
+  Q:SetEntries({});Q:TrackerDoubleClick(entry,"LeftButton")
+  expect(not WorldMapFrame:IsShown(),"stale tracker entry cannot open a quest map")
+  QuestlineDB.locations[a.key]=nil;QuestlineDB.locations[b.key]=nil
+  Q:SetEntries(original);Q:SetTrackerMode(mode);SetMapZoom(1,1)
+end
 local function trackerResizeTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
   local entries={}
@@ -1270,6 +1298,7 @@ function runTests()
   partySyncTests(Q)
   multiSelectionTests(Q)
   trackerResizeTests(Q)
+  trackerMapTests(Q)
   completionHistoryTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")

@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.24", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.25", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -317,6 +317,31 @@ function Q:TrackerClick(entry,button)
   elseif IsShiftKeyDown() and ChatFrameEditBox and ChatFrameEditBox:IsVisible() then
     self:QuestLogAction(entry,false)
   else self:Select(entry.key,IsControlKeyDown and IsControlKeyDown()) end
+end
+function Q:TrackerDoubleClick(entry,button)
+  if button~="LeftButton" or IsShiftKeyDown() or (IsControlKeyDown and IsControlKeyDown()) then return end
+  if not entry or not self.byKey[entry.key] then return end
+  entry=self.byKey[entry.key]
+  self:Select(entry.key)
+  local physical=self:GetPlayerZone()
+  local browsed=WorldMapFrame:IsVisible() and self:GetMapZone()
+  local continents=GetMapContinents and {GetMapContinents()} or {"Kalimdor","Eastern Kingdoms"}
+  local best,rank=nil,0
+  for continent=1,getn(continents) do
+    local zones={GetMapZones(continent)}
+    for index,name in ipairs(zones) do
+      local zone=self.zoneNames[self:Normalize(name)]
+      if self:HasZone(entry,zone) then
+        local score=zone==physical and 3 or (zone==browsed and 2 or 1)
+        if score>rank then best={continent,index};rank=score end
+      end
+    end
+  end
+  if not best then self:Print("No remaining mapped locations for this quest.");return end
+  if not WorldMapFrame:IsVisible() then ShowUIPanel(WorldMapFrame) end
+  -- Opening the native map can reset its zone, so navigate afterwards.
+  SetMapZoom(best[1],best[2]);self.mapDirty=true
+  self:RefreshTrackers();self:RefreshMap();self:RefreshQuestGivers()
 end
 function Q:ScanLog()
   if self.scanning then return end

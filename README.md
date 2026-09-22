@@ -20,6 +20,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - Saved completion history with searchable records, manual-only filtering, and Restore actions
 - Right-click a questgiver marker on the world map to mark an individual quest completed
 - `/ql` home page with separate Options and Completed Quests screens
+- Double-click a tracker quest to open its objective or turn-in map
 - Shift-click to link a quest in open chat; right-click to open it in the quest log
 - Movable, resizable, collapsible trackers with saved sizes, positions, and highlights
 - Standalone quest database; no pfQuest dependency

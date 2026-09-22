@@ -2,13 +2,15 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.24**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.25**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
 Minimap rotation is optional: `GetPlayerFacing` does not imply the client has a `rotateMinimap` CVar. Read that setting with `pcall`, because unknown CVars can throw. Missing or disabled rotation uses north-up positioning without requiring a client extension or another addon. Runtime tests cover a throwing lookup, nil results, absent facing API, and rotation becoming available again.
 
 The renamed addon uses a new per-character saved-settings file. Existing settings from before the rename are not automatically loaded. To preserve them, fully exit WoW, copy the previous addon's per-character file from `WTF/Account/<account>/<realm>/<character>/SavedVariables/` to `Questline.lua`, and change its top-level settings variable to `QuestlineSettings`. Otherwise Questline starts with default preferences and records completion history normally; the previous saved file remains untouched.
 
 Menu styling uses Blizzard's UI-Panel-MinimizeButton textures with Bagshui's 18-pixel size and texture crop, without requiring Bagshui. The completion count is centered; filter, Restore links, and next-page arrow share an 18-pixel right inset. The previous-page arrow mirrors the inset on the left.
+
+Unmodified left double-click on a tracker row or badge (HUD or map tracker) selects the quest and opens a zone with remaining objectives, or its turn-in zone when completed. Resolve through the client's actual continent/zone names, preferring the physical zone, then the currently visible map, then the first supported zone. Show the map before SetMapZoom because opening can reset its zone. No mapped target leaves the current map unchanged and prints a short message. Shift/Ctrl double-click does not navigate; right-click still opens the quest log.
 
 ## First test
 
