@@ -84,6 +84,64 @@ function Q:SetQuestCompleted(id,source)
   if self.RefreshOptions then self:RefreshOptions() end
   return true
 end
+function Q:BeginServerQuestHistoryImport()
+  local query=self.serverQuestHistoryQuery
+  if query and query.active then return false end
+  if not SendChatMessage then
+    self:Print("This client cannot request quest history from the server.")
+    return false
+  end
+  if not query then
+    query=CreateFrame("Frame")
+    self.serverQuestHistoryQuery=query
+    query:SetScript("OnEvent",function()
+      if arg1~="TWQUEST" or not query.active then return end
+      query.received=true
+      for token in string.gmatch(arg2 or "","%d+") do
+        local id=tonumber(token)
+        if id and DB.quests[id] then query.ids[id]=true end
+      end
+    end)
+    query:SetScript("OnUpdate",function()
+      if query.active and GetTime()>=query.deadline then Q:FinishServerQuestHistoryImport() end
+    end)
+  end
+  query.active=true;query.received=false;query.ids={};query.deadline=GetTime()+3
+  query:RegisterEvent("CHAT_MSG_ADDON")
+  self:RefreshOptions()
+  local ok=pcall(SendChatMessage,".queststatus","GUILD")
+  if not ok then
+    query.active=false;query:UnregisterEvent("CHAT_MSG_ADDON")
+    self:RefreshOptions()
+    self:Print("Could not send the quest history request.")
+    return false
+  end
+  return true
+end
+function Q:FinishServerQuestHistoryImport()
+  local query=self.serverQuestHistoryQuery
+  if not query or not query.active then return end
+  query.active=false;query:UnregisterEvent("CHAT_MSG_ADDON")
+  local added=0
+  if query.received then
+    QuestlineSettings.completedQuests=QuestlineSettings.completedQuests or {}
+    QuestlineSettings.completionSources=QuestlineSettings.completionSources or {}
+    for id in pairs(query.ids) do
+      if not QuestlineSettings.completedQuests[id] then
+        QuestlineSettings.completedQuests[id]=true
+        QuestlineSettings.completionSources[id]="Imported"
+        added=added+1
+      end
+    end
+    self:InvalidateQuestAvailability()
+    self:RefreshQuestGivers()
+    if added==0 then self:Print("Completed quests are up to date.")
+    else self:Print(added..(added==1 and " quest" or " quests").." marked as completed.") end
+  else
+    self:Print("No response to the quest history request. Check that you are in a guild and try again.")
+  end
+  self:RefreshOptions()
+end
 function Q:RestoreCompletedQuest(id)
   QuestlineSettings.completedQuests[id]=nil;QuestlineSettings.completionSources[id]=nil
   self.npcOffers={};self:InvalidateQuestAvailability()

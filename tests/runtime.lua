@@ -78,6 +78,8 @@ function methods:SetOwner(owner) self.owner=owner end
 function methods:GetLeft() return 20 end
 function methods:GetTop() return 600 end
 function methods:RegisterEvent(event) self.events[event]=true end
+function methods:UnregisterEvent(event) self.events[event]=nil end
+function methods:EnableMouse(enabled) self.mouseEnabled=enabled end
 function methods:RegisterForClicks(...) self.clicks={...} end
 function methods:SetFocus() self.focused=true end
 function methods:Insert(text)
@@ -117,7 +119,7 @@ function methods:AddLine(text,...)
   end
 end
 function methods:SetTextColor(...) self.color={...} end
-for _,key in ipairs({"SetMovable","EnableMouse","SetClampedToScreen","SetFrameStrata","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","RegisterForDrag","EnableMouseWheel","SetJustifyH","SetJustifyV","StartMoving","StopMovingOrSizing"}) do methods[key]=function() end end
+for _,key in ipairs({"SetMovable","SetClampedToScreen","SetFrameStrata","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","RegisterForDrag","EnableMouseWheel","SetJustifyH","SetJustifyV","StartMoving","StopMovingOrSizing"}) do methods[key]=function() end end
 local function widget(kind,name,parent)
   local o=setmetatable({kind=kind,name=name,parent=parent,shown=true,scripts={},events={}}, {__index=function(_,k) if methods[k] then return methods[k] end end})
   if name then _G[name]=o end
@@ -249,6 +251,7 @@ local function completionHistoryTests(Q)
   expect(not f.mode,"main menu has no World/Zone control")
   click(f.optionsLink)
   expect(f.section=="options" and f.settings:IsShown() and not f.home:IsShown(),"options link opens separate settings page")
+  expect(f:GetHeight()==300 and f.serverImport:GetParent()==f.history,"import link belongs to completed quests and options stays compact")
   local hud=QuestlineSettings.tracker
   expect(not f.legacy and f.mapTracker,"map tracker control replaces legacy pins in options")
   click(f.mapTracker)
@@ -258,8 +261,36 @@ local function completionHistoryTests(Q)
   click(f.mapTracker)
   expect(QuestlineSettings.mapTracker and Q.mapTracker:IsShown(),"options can restore map tracker")
   Q:ShowOptionsSection("home");click(f.completedLink)
+  QuestlineDB.quests[991014]={title="Imported test quest",level=1,minLevel=1,objectives={},prerequisites={},blockedBy={}}
+  local oldSend,sends=SendChatMessage,0
+  SendChatMessage=function(message,channel)
+    sends=sends+1
+    expect(message==".queststatus" and channel=="GUILD","server import uses Octo's quest history request")
+  end
+  click(f.serverImport)
+  expect(sends==1 and f.serverImport.mouseEnabled==false and not Q:BeginServerQuestHistoryImport(),"server import link cannot send another request while busy")
+  arg1="TWQUEST";arg2="991001 991014 999999";fire("CHAT_MSG_ADDON")
+  now=now+3.1;this=Q.serverQuestHistoryQuery;Q.serverQuestHistoryQuery.scripts.OnUpdate()
+  expect(QuestlineSettings.completedQuests[991014] and QuestlineSettings.completionSources[991014]=="Imported" and QuestlineSettings.completionSources[991001]=="Manual","server result imports known quests without replacing manual history")
+  expect(f.serverImport.mouseEnabled and f.serverImport.text.color[3]==1 and string.find(DEFAULT_CHAT_FRAME:GetText(),"1 quest marked as completed",1,true),"completed import restores the blue link and reports only newly added quests")
+  expect(#Q:GetCompletionList("Imported test quest",false)==1 and not string.find(f.serverImport.text:GetText(),"Done",1,true),"completed list updates with the import without a Done suffix")
+  click(f.serverImport);arg1="TWQUEST";arg2="991001 991014";fire("CHAT_MSG_ADDON")
+  now=now+3.1;this=Q.serverQuestHistoryQuery;Q.serverQuestHistoryQuery.scripts.OnUpdate()
+  expect(string.find(DEFAULT_CHAT_FRAME:GetText(),"Completed quests are up to date",1,true),"repeated server import reports no new completions")
+  Q:RestoreCompletedQuest(991014)
+  click(f.serverImport);arg1="TWQUEST";arg2="991001 991014";fire("CHAT_MSG_ADDON")
+  now=now+3.1;this=Q.serverQuestHistoryQuery;Q.serverQuestHistoryQuery.scripts.OnUpdate()
+  expect(QuestlineSettings.completedQuests[991014] and string.find(DEFAULT_CHAT_FRAME:GetText(),"1 quest marked as completed",1,true),"restored quests can be marked completed again by the server")
+  SendChatMessage=oldSend
   expect(f and f:IsShown() and f.pages==2,"bare slash command opens paginated options/history panel")
   f.page=2;Q:RefreshOptions();expect(f.rows[1]:IsShown(),"later history page is reachable")
+  local display=f.rows[1]
+  expect(#f.rows==12 and display:GetHeight()==22 and not display.source,"completed quests use compact rows without visible source labels")
+  expect(display.title:GetText()==Q:QuestTitle({title=display.fullTitle,level=QuestlineDB.quests[display.id].level}) and display.title.color[1]==1 and display.title.color[2]==.82,"completed quest title uses tracker level coloring and gold text")
+  this=display.restore;display.restore.scripts.OnEnter()
+  expect(display.hover:IsShown(),"hovering Restore highlights its entire quest row")
+  this=display.restore;display.restore.scripts.OnLeave()
+  expect(not display.hover:IsShown(),"completed quest highlight clears after leaving Restore")
   click(f.filter);expect(f.manualOnly and f.page==1,"manual-only filter resets history page")
   f.search:SetText("991001");this=f.search;f.search.scripts.OnTextChanged()
   expect(f.rows[1].id==991001 and not f.rows[2]:IsShown(),"search narrows the displayed completion records")
@@ -288,6 +319,7 @@ local function completionHistoryTests(Q)
   f.search:SetText("");f.manualOnly=nil
   QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources
   for i=1,12 do QuestlineDB.quests[991000+i]=nil end
+  QuestlineDB.quests[991014]=nil
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
 local function availabilityRegressionTests(Q)

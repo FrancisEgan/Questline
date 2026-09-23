@@ -43,27 +43,40 @@ function Q:GetCompletionList(query,manualOnly)
     if source=="Automatic" then source="Completed" end
     local title=data and data.title or ("Unknown quest "..id)
     if (not manualOnly or source=="Manual") and (query=="" or string.find(self:Normalize(title),query,1,true) or tostring(id)==query) then
-      table.insert(list,{id=id,title=title,source=source})
+      table.insert(list,{id=id,title=title,level=data and data.level,source=source})
     end
   end end
-  table.sort(list,function(a,b) if a.title~=b.title then return a.title<b.title end;return a.id<b.id end)
+  table.sort(list,function(a,b)
+    local al,bl=self:QuestLevel(a),self:QuestLevel(b)
+    if al and bl and al~=bl then return al>bl end
+    if al and not bl then return true end
+    if bl and not al then return false end
+    if a.title~=b.title then return a.title<b.title end
+    return a.id<b.id
+  end)
   return list
 end
 function Q:RefreshOptions()
   local f=self.optionsPanel;if not f then return end
   local list=self:GetCompletionList(f.search:GetText(),f.manualOnly)
-  f.pages=math.max(1,math.ceil(table.getn(list)/8));f.page=math.max(1,math.min(f.page,f.pages))
+  f.pages=math.max(1,math.ceil(table.getn(list)/12));f.page=math.max(1,math.min(f.page,f.pages))
   f.count:SetText(table.getn(list).." records  -  Page "..f.page.." / "..f.pages)
-  f.filter.text:SetText(f.manualOnly and "Show all records" or "Show manual only")
+  f.filter.text:SetText(f.manualOnly and "Show all" or "Show manually skipped")
   f.tracker.text:SetText(QuestlineSettings.tracker and "Hide tracker" or "Show tracker")
   f.mapTracker.text:SetText(QuestlineSettings.mapTracker~=false and "Hide map tracker" or "Show map tracker")
   f.spawns.text:SetText(QuestlineSettings.worldMapSpawns==true and "Hide world-map spawn markers" or "Show world-map spawn markers")
+  local importing=self.serverQuestHistoryQuery and self.serverQuestHistoryQuery.active
+  f.serverImport:EnableMouse(not importing)
+  f.serverImport.text:SetTextColor(importing and .6 or .55,importing and .65 or .8,importing and .7 or 1)
+  if importing then f.serverImport.text:SetShadowColor(0,0,0,0) end
   if f.section~="completed" then return end
-  for i=1,8 do
-    local row=f.rows[i];local item=list[(f.page-1)*8+i]
+  if table.getn(list)==0 then f.historyEmpty:Show() else f.historyEmpty:Hide() end
+  for i=1,12 do
+    local row=f.rows[i];local item=list[(f.page-1)*12+i]
+    row.hover:Hide()
     if item then
-      row.id=item.id;row.fullTitle=item.title;row.title:SetText(item.title.."  (#"..item.id..")")
-      row.source:SetText(item.source);row:Show()
+      row.id=item.id;row.fullTitle=item.title
+      row.title:SetText(self:QuestTitle(item));row:Show()
     else row.id=nil;row:Hide() end
   end
 end
@@ -90,30 +103,39 @@ function Q:ToggleOptions()
     local h=f.history
     button(h,"< Home",18,-46,120,function() Q:ShowOptionsSection("home") end)
     label(h,"Completed quests",18,-83,220)
-    label(h,"Restore removes the local record; normal eligibility rules still apply.",18,-105,514)
-    label(h,"Search title / ID:",18,-137,125)
+    f.serverImport=button(h,"Import completed quests from server",260,-83,270,function() Q:BeginServerQuestHistoryImport() end)
+    f.serverImport.text:SetJustifyH("RIGHT")
+    label(h,"Search title / ID:",18,-112,125)
     f.search=CreateFrame("EditBox",nil,h);f.search:SetWidth(200);f.search:SetHeight(24)
-    f.search:SetPoint("TOPLEFT",f,"TOPLEFT",145,-132);f.search:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",12,"")
+    f.search:SetPoint("TOPLEFT",f,"TOPLEFT",145,-107);f.search:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",12,"")
     f.search:SetAutoFocus(false);f.search:SetMaxLetters(100)
     f.search:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=8,insets={left=3,right=3,top=3,bottom=3}})
     f.search:SetBackdropColor(.1,.13,.16,1)
     f.search:SetScript("OnTextChanged",function() f.page=1;Q:RefreshOptions() end)
     f.search:SetScript("OnEscapePressed",function() this:ClearFocus() end)
-    f.filter=button(h,"",360,-137,170,function() f.manualOnly=not f.manualOnly;f.page=1;Q:RefreshOptions() end)
-    f.filter:ClearAllPoints();f.filter:SetPoint("TOPRIGHT",h,"TOPRIGHT",-18,-137);f.filter.text:SetJustifyH("RIGHT")
-    for i=1,8 do
-      local row=CreateFrame("Frame",nil,h);row:SetWidth(514);row:SetHeight(34);row:SetPoint("TOPLEFT",f,"TOPLEFT",18,-169-(i-1)*35)
-      row.title=label(row,"",0,0,395);row.title:SetHeight(16)
-      row.source=label(row,"",0,-17,395);row.source:SetTextColor(.6,.65,.7)
-      row.restore=button(row,"Restore",420,-5,85,function() Q:RestoreCompletedQuest(this:GetParent().id) end)
-      row.restore:ClearAllPoints();row.restore:SetPoint("TOPRIGHT",row,"TOPRIGHT",0,-5);row.restore.text:SetJustifyH("RIGHT")
+    f.filter=button(h,"",360,-112,170,function() f.manualOnly=not f.manualOnly;f.page=1;Q:RefreshOptions() end)
+    f.filter:ClearAllPoints();f.filter:SetPoint("TOPRIGHT",h,"TOPRIGHT",-18,-112);f.filter.text:SetJustifyH("RIGHT")
+    f.historyEmpty=label(h,"No entries to show",18,-260,514)
+    f.historyEmpty:SetJustifyH("CENTER");f.historyEmpty:SetTextColor(.62,.66,.72)
+    f.historyEmpty:Hide()
+    for i=1,12 do
+      local row=CreateFrame("Frame",nil,h);row:SetWidth(514);row:SetHeight(22);row:SetPoint("TOPLEFT",f,"TOPLEFT",18,-144-(i-1)*23)
+      row.hover=row:CreateTexture(nil,"BACKGROUND");row.hover:SetAllPoints(row);row.hover:SetTexture(.08,.3,.5,.5);row.hover:Hide()
+      row.title=label(row,"",4,-3,395);row.title:SetHeight(18);row.title:SetTextColor(1,.82,.32)
+      row.restore=button(row,"Restore",420,0,85,function() Q:RestoreCompletedQuest(this:GetParent().id) end)
+      row.restore:ClearAllPoints();row.restore:SetPoint("TOPRIGHT",row,"TOPRIGHT",0,0);row.restore:SetHeight(22)
+      row.restore.text:SetHeight(22);row.restore.text:SetJustifyH("RIGHT");row.restore.text:SetJustifyV("MIDDLE")
+      local enter,leave=row.restore:GetScript("OnEnter"),row.restore:GetScript("OnLeave")
+      row.restore:SetScript("OnEnter",function() this:GetParent().hover:Show();if enter then enter() end end)
+      row.restore:SetScript("OnLeave",function() this:GetParent().hover:Hide();if leave then leave() end end)
       row:EnableMouse(true)
       row:SetScript("OnEnter",function()
         if not this.id then return end
+        this.hover:Show()
         GameTooltip:SetOwner(this,"ANCHOR_RIGHT");GameTooltip:SetText(this.fullTitle,1,.85,.4)
-        GameTooltip:AddLine("Quest #"..this.id.." - "..this.source:GetText(),.8,.85,.9);GameTooltip:Show()
+        GameTooltip:AddLine("Quest #"..this.id,.8,.85,.9);GameTooltip:Show()
       end)
-      row:SetScript("OnLeave",function() GameTooltip:Hide() end)
+      row:SetScript("OnLeave",function() this.hover:Hide();GameTooltip:Hide() end)
       f.rows[i]=row
     end
     f.count=label(h,"",115,-459,330)
