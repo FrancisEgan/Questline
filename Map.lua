@@ -201,6 +201,16 @@ function Q:RefreshMap()
       local pin=self:GetPin(markerCount,false);pin.entry=entry;pin.target=nil
       self:SizeBadge(pin,25,inverseScale)
       self:PaintBadge(pin,entry,selected)
+      if entry.complete then
+        pin:SetWidth(14*inverseScale);pin:SetHeight(14*inverseScale)
+        pin.texture:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
+        pin.text:Hide()
+        pin.glow:SetTexture(texturePath.."turnin-glow")
+        pin.glow:SetWidth(26*inverseScale);pin.glow:SetHeight(26*inverseScale)
+      else
+        -- Pins are pooled: restore the normal badge after a turn-in used this slot.
+        pin.text:Show();pin.glow:SetTexture(texturePath.."circle-glow-v2")
+      end
       -- Fan out shared questgiver pins instead of stacking unclickable circles.
       local x,y=anchor[1]/100*width,anchor[2]/100*height
       if selected and not entry.complete then

@@ -69,6 +69,7 @@ function build() {
   const dir=path.resolve(__dirname,'../Textures');fs.mkdirSync(dir,{recursive:true});
   for(const selected of [false,true]) writeTGA(path.join(dir,selected?'circle-selected-v2.tga':'circle-v2.tga'),bitmap(64,64,(x,y)=>badge(x/32-1,y/32-1,selected),4));
   writeTGA(path.join(dir,'circle-glow-v2.tga'),bitmap(64,64,(x,y)=>glow(x/32-1,y/32-1),4));
+  writeTGA(path.join(dir,'turnin-glow.tga'),bitmap(64,64,(x,y)=>[55,165,255,glow(x/32-1,y/32-1)[3]],4));
   writeTGA(path.join(dir,'area-contours.tga'),atlas());
   const preview=bitmap(384,192,(x,y)=>{
     const background=[30,25,20,255],selected=x>=192;

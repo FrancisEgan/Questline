@@ -1263,7 +1263,11 @@ function runTests()
   Q:Select("869")
   local completedPin
   for _,pin in ipairs(Q.mapPins) do if pin.entry.id==869 then completedPin=pin end end
-  expect(completedPin and completedPin.text:GetText()=="?","completed quest gets question mark")
+  expect(completedPin and not completedPin.text:IsShown() and completedPin:GetWidth()==14 and completedPin.texture.textureValue[1]=="Interface\\GossipFrame\\ActiveQuestIcon","completed quest uses small native turn-in question mark without badge text")
+  Q:Select("869")
+  expect(completedPin.glow:IsShown() and completedPin.glow.textureValue[1]:find("turnin%-glow"),"highlighted turn-in uses blue glow")
+  Q:Select(Q.mapPins[1].entry.key)
+  expect(not completedPin.glow:IsShown(),"turn-in glow disappears when deselected")
   for _,pin in ipairs(Q.objectivePins) do expect(not pin:IsShown(),"completed quest has only turn-in selectors") end
   SetMapZoom(1,0);Q.mapDirty=true;Q:RefreshMap()
   for _,pin in ipairs(Q.mapPins) do expect(not pin:IsShown(),"continent map clears pins") end
