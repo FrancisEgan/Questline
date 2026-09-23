@@ -161,7 +161,8 @@ function Q:MinimapGiverPosition(point,x,y,size,diameter,facing)
   if (square and math.abs(dx)<=rx and math.abs(dy)<=ry) or
     (not square and dx*dx/(rx*rx)+dy*dy/(ry*ry)<=1) then return dx,dy end
 end
-function Q:RefreshGiverMinimap()
+function Q:RefreshGiverMinimap(motionOnly)
+  local previous=self.minimapSpawnContext
   self.minimapSpawnContext=nil
   -- GetPlayerMapPosition uses the currently browsed map in Vanilla. Never
   -- reset that map while the player is looking at it, or use wrong-zone coords.
@@ -184,16 +185,25 @@ function Q:RefreshGiverMinimap()
   end
   local diameter=self:MinimapDiameter()
   if not diameter then hide(self.minimapGivers);return end
-  local facing
-  if GetPlayerFacing and GetCVar then
-    -- Some clients expose facing without the optional rotation CVar.
-    -- GetCVar throws for unknown names; use a north-up map in that case.
-    local ok,rotation=pcall(GetCVar,"rotateMinimap")
-    if ok and rotation=="1" then facing=GetPlayerFacing() end
+  local data=self.minimapRenderData
+  if not motionOnly or not data or data.zone~=zone then
+    data={zone=zone,entries=self:GetMinimapQuestNPCs(zone),spawns=self:SelectedSpawns(zone)}
+    self.minimapRenderData=data
+    self.minimapRotates=false
+    if GetPlayerFacing and GetCVar then
+      local ok,rotation=pcall(GetCVar,"rotateMinimap")
+      self.minimapRotates=ok and rotation=="1"
+    end
   end
-  self.minimapSpawnContext={zone=zone,size=size,x=x,y=y,diameter=diameter,facing=facing}
+  local facing
+  if self.minimapRotates and GetPlayerFacing then facing=GetPlayerFacing() end
+  local width,height=Minimap:GetWidth(),Minimap:GetHeight()
+  local shape=GetMinimapShape and GetMinimapShape() or "ROUND"
+  self.minimapSpawnContext={zone=zone,size=size,x=x,y=y,diameter=diameter,facing=facing,width=width,height=height,shape=shape}
+  if motionOnly and previous and previous.zone==zone and previous.x==x and previous.y==y and
+    previous.diameter==diameter and previous.facing==facing and previous.width==width and previous.height==height and previous.shape==shape then return false end
   local count=0
-  local entries=self:GetMinimapQuestNPCs(zone)
+  local entries=data.entries
   for _,giver in ipairs(entries) do
     local bestX,bestY,distance
     for _,point in ipairs(giver.points) do
@@ -209,6 +219,10 @@ function Q:RefreshGiverMinimap()
     end
   end
   hide(self.minimapGivers,count+1)
+end
+function Q:RefreshMinimapMotion()
+  self.minimapGivers=self.minimapGivers or {}
+  if self:RefreshGiverMinimap(true)~=false then self:RefreshSpawnMinimap() end
 end
 function Q:RefreshQuestGivers()
   self.mapGivers=self.mapGivers or {};self.minimapGivers=self.minimapGivers or {}

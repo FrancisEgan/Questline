@@ -224,7 +224,7 @@ function Q:RefreshSpawnMap(zone,width,height,inverseScale)
 end
 function Q:RefreshSpawnMinimap()
   self.minimapSpawns=self.minimapSpawns or {};local count=0;local c=self.minimapSpawnContext
-  if c then for _,point in ipairs(self:SelectedSpawns(c.zone)) do
+  if c then for _,point in ipairs(self.minimapRenderData and self.minimapRenderData.spawns or self:SelectedSpawns(c.zone)) do
     local x,y=self:MinimapGiverPosition(point,c.x,c.y,c.size,c.diameter,c.facing)
     if x then
       count=count+1;local pin=self:SpawnPin(self.minimapSpawns,count,Minimap,true);pin.spawn=point

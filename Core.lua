@@ -435,7 +435,7 @@ end)
 events:SetScript("OnUpdate",function()
   if not Q.ready then return end
   Q.elapsed=(Q.elapsed or 0)+(arg1 or 0)
-  if Q.elapsed<0.15 then return end
+  if Q.elapsed<0.15 then Q:RefreshMinimapMotion();return end
   Q.elapsed=0
   -- Header expansion generates log events; this fallback catches a real change
   -- arriving during the short suppression window without creating an event loop.
