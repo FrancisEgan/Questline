@@ -57,7 +57,7 @@ function Q:RefreshOptions()
   f.filter.text:SetText(f.manualOnly and "Show all records" or "Show manual only")
   f.tracker.text:SetText(QuestlineSettings.tracker and "Hide tracker" or "Show tracker")
   f.mapTracker.text:SetText(QuestlineSettings.mapTracker~=false and "Hide map tracker" or "Show map tracker")
-  f.spawns.text:SetText(QuestlineSettings.worldMapSpawns~=false and "Hide world-map spawn markers" or "Show world-map spawn markers")
+  f.spawns.text:SetText(QuestlineSettings.worldMapSpawns==true and "Hide world-map spawn markers" or "Show world-map spawn markers")
   if f.section~="completed" then return end
   for i=1,8 do
     local row=f.rows[i];local item=list[(f.page-1)*8+i]
@@ -81,7 +81,7 @@ function Q:ToggleOptions()
     f.tracker=button(f.settings,"",18,-90,230,function() Q:Command(QuestlineSettings.tracker and "tracker off" or "tracker on");Q:RefreshOptions() end)
     f.mapTracker=button(f.settings,"",18,-130,260,function() Q:Command(QuestlineSettings.mapTracker~=false and "maptracker off" or "maptracker on");Q:RefreshOptions() end)
     f.spawns=button(f.settings,"",18,-170,320,function()
-      QuestlineSettings.worldMapSpawns=QuestlineSettings.worldMapSpawns==false
+      QuestlineSettings.worldMapSpawns=not QuestlineSettings.worldMapSpawns
       Q.mapDirty=true;Q:RefreshMap();Q:RefreshOptions()
     end)
     button(f.settings,"Reset tracker layout",18,-210,230,function() Q:Command("reset") end)

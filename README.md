@@ -12,7 +12,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - Click a quest to highlight its map area without changing your tracker page or sorting
 - Ctrl-click to highlight multiple quests and move the group to the top, sorted by level
 - Precise action icons for single-location objectives and question marks for turn-ins
-- Bag, sword, and gear spawn markers for highlighted quests on both maps; world-map spawn markers can be toggled in Options
+- Bag, sword, and gear spawn markers for highlighted quests on both maps; world-map spawn markers are off by default and can be enabled in Options
 - Questgiver markers on the map and minimap, with combined tooltips for nearby NPCs
 - Minimap question marks for ready turn-ins, taking priority over an NPC's available quests and hiding the duplicate native yellow dot
 - Creature tooltips with quest objectives, item drop rates, and live progress

@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.33", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.36", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -416,7 +416,7 @@ events:SetScript("OnEvent",function()
     QuestlineSettings=QuestlineSettings or {}
     if QuestlineSettings.tracker==nil then QuestlineSettings.tracker=true end
     if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=true end
-    if QuestlineSettings.worldMapSpawns==nil then QuestlineSettings.worldMapSpawns=true end
+    if QuestlineSettings.worldMapSpawns==nil then QuestlineSettings.worldMapSpawns=false end
     if QuestlineSettings.trackerMode~="zone" and QuestlineSettings.trackerMode~="world" then QuestlineSettings.trackerMode="zone" end
     Q:BuildIndexes();Q:CreateTrackers();Q:CreateMap();Q.ready=true;Q.dirty=true
     Q:InitializeNPCQuests()

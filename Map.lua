@@ -17,7 +17,7 @@ function Q:CreateMap()
   -- Child of the actual map canvas, so Magnify scaling and scroll clipping apply.
   self.selectorLayer=CreateFrame("Frame","QuestlineMapSelectors",WorldMapButton)
   self.selectorLayer:SetAllPoints(WorldMapButton);self.selectorLayer:EnableMouse(false)
-  self.selectorLayer:SetFrameLevel(WorldMapButton:GetFrameLevel()+1)
+  self.selectorLayer:SetFrameLevel(WorldMapButton:GetFrameLevel()+5)
   self.overlay=CreateFrame("Frame","QuestlineMapAreas",WorldMapButton)
   self.overlay:SetAllPoints(WorldMapButton);self.overlay:EnableMouse(false)
   self.overlay:SetFrameLevel(WorldMapButton:GetFrameLevel()+4)
@@ -157,7 +157,7 @@ function Q:GetPin(index,objective)
     if objective then
       pin=CreateFrame("Button",nil,self.pinLayer);pin:SetWidth(18);pin:SetHeight(18)
       pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
-    else pin=self:MakeBadge(self.selectorLayer,25) end
+    else pin=self:MakeBadge(self.pinLayer,25) end
     pin:SetScript("OnClick",function() if this.entry then Q:Select(this.entry.key,IsControlKeyDown and IsControlKeyDown()) end end)
     pin:SetScript("OnEnter",function() if this.entry then Q:ShowQuestTooltip(this,this.entry,this.target) end end)
     pin:SetScript("OnLeave",tooltipLeave)
@@ -213,7 +213,7 @@ function Q:SpawnPin(pool,index,parent,minimap)
 end
 function Q:RefreshSpawnMap(zone,width,height,inverseScale)
   self.mapSpawns=self.mapSpawns or {};local count=0
-  if zone and QuestlineSettings.worldMapSpawns~=false then
+  if zone and QuestlineSettings.worldMapSpawns==true then
     for _,point in ipairs(self:SelectedSpawns(zone)) do
       count=count+1;local pin=self:SpawnPin(self.mapSpawns,count,self.pinLayer,false);pin.spawn=point
       pin.texture:SetTexture(actionTextures[point.icon or point.target.icon] or actionTextures.interact)
@@ -238,10 +238,10 @@ function Q:RefreshMap()
   if not self.overlay or not WorldMapFrame:IsVisible() then return end
   -- Reassert ordering even on cached renders: map addons/clicks can raise frames.
   local base=WorldMapButton:GetFrameLevel()
-  self.selectorLayer:SetFrameLevel(base+1)
+  self.selectorLayer:SetFrameLevel(base+5)
   self.overlay:SetFrameLevel(base+4)
   self.pinLayer:SetFrameLevel(base+8)
-  for _,pin in ipairs(self.mapPins) do pin:SetFrameLevel(pin.entry and pin.entry.complete and base+11 or base+2) end
+  for _,pin in ipairs(self.mapPins) do pin:SetFrameLevel(pin.entry and pin.entry.complete and base+11 or base+9) end
   local zone=self:GetMapZone()
   local width,height=WorldMapButton:GetWidth(),WorldMapButton:GetHeight()
   local scale=WorldMapButton:GetEffectiveScale()
@@ -327,13 +327,15 @@ function Q:RefreshMap()
         pin:SetWidth(18*inverseScale);pin:SetHeight(18*inverseScale)
         -- Small action icons sit next to the numbered selector at shared anchors.
         self:PlacePin(pin,point,width,height)
-        pin:SetFrameLevel(self.pinLayer:GetFrameLevel()+2)
+        pin:SetFrameLevel(self.pinLayer:GetFrameLevel()+4)
       end
     end end
   end end end
-  -- Number badges stay below shading and spawn icons. Small turn-in icons stay above.
+  -- Badges share the pin layer with objective icons: areas are behind both,
+  -- objective icons sit above badges, and turn-in icons remain above all.
   for i=1,markerCount do
     local pin=self.mapPins[i]
-    pin:SetFrameLevel(pin.entry.complete and base+11 or base+2)
+    pin:SetFrameLevel(pin.entry.complete and base+13 or base+9)
   end
+  for _,pin in ipairs(self.mapSpawns or {}) do pin:SetFrameLevel(base+12) end
 end

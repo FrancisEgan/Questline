@@ -374,9 +374,9 @@ local function spawnDotTests(Q)
   QuestlineSettings.worldMapSpawns=true;WorldMapFrame:Show();SetMapZoom(1,1);Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
   local function shown(pool) local n=0;for _,p in ipairs(pool or {}) do if p:IsShown() then n=n+1 end end;return n end
   expect(shown(Q.mapSpawns)==3 and shown(Q.minimapSpawns)==2,"world map shows all selected spawns; minimap clips distant ones")
-  expect(Q.mapPins[1]:GetFrameLevel()<Q.overlay:GetFrameLevel() and Q.overlay:GetFrameLevel()<Q.mapSpawns[1]:GetFrameLevel(),"number badges render behind blue areas and spawn icons")
+  expect(Q.overlay:GetFrameLevel()<Q.mapPins[1]:GetFrameLevel() and Q.mapPins[1]:GetFrameLevel()<Q.mapSpawns[1]:GetFrameLevel() and Q.mapPins[1].parent==Q.pinLayer,"badges share the foreground pin layer above areas and below spawn icons")
   Q.mapPins[1]:SetFrameLevel(500);Q:RefreshMap()
-  expect(Q.mapPins[1]:GetFrameLevel()<Q.overlay:GetFrameLevel(),"cached map refresh repairs a raised number badge")
+  expect(Q.overlay:GetFrameLevel()<Q.mapPins[1]:GetFrameLevel() and Q.mapPins[1]:GetFrameLevel()<Q.mapSpawns[1]:GetFrameLevel(),"cached map refresh repairs marker layering")
   expect(Q.mapSpawns[1]:GetWidth()==14 and Q.minimapSpawns[1]:GetWidth()==14,"spawn action icons are compact")
   expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-kill") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-kill"),"mob spawns use sword artwork on both maps")
   local oldCandidates,oldSpawns,oldScan=Q.GetMinimapQuestNPCs,Q.SelectedSpawns,Q.ScanLog
