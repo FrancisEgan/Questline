@@ -15,10 +15,23 @@ function Q:ImportCompletedQuests()
   return added
 end
 function Q:UpdateNPCQuestState()
+  local repaired=false
+  local pending=self.pendingTurnIn
+  if pending then
+    if GetTime()-pending.time>30 then self.pendingTurnIn=nil
+    elseif not self.byKey[tostring(pending.id)] then
+      self.pendingTurnIn=nil;self:SetQuestCompleted(pending.id,"Automatic")
+    end
+  end
   self.recentQuests=self.recentQuests or {}
   local keys={}
   for _,entry in ipairs(self.quests) do
     insert(keys,entry.key)
+    if entry.id and entry.data and not entry.data.repeatable and QuestlineSettings.completedQuests and
+      QuestlineSettings.completedQuests[entry.id] and not QuestlineSettings.completionSources[entry.id] then
+      QuestlineSettings.completedQuests[entry.id]=nil
+      repaired=true
+    end
     if entry.id then self.recentQuests[entry.id]={title=self:Normalize(entry.title),time=GetTime()} end
   end
   for id,record in pairs(self.recentQuests) do if GetTime()-record.time>10 then self.recentQuests[id]=nil end end
@@ -27,6 +40,7 @@ function Q:UpdateNPCQuestState()
   if signature~=self.npcLogSignature then
     self.npcOffers={};self.npcLogSignature=signature;self:InvalidateQuestAvailability()
   end
+  if repaired then self:InvalidateQuestAvailability();if self.RefreshOptions then self:RefreshOptions() end end
 end
 function Q:InitializeNPCQuests()
   QuestlineSettings.completedQuests=QuestlineSettings.completedQuests or {}
@@ -35,6 +49,30 @@ function Q:InitializeNPCQuests()
     self:ImportCompletedQuests()
   end
   self.npcOffers={};self:InvalidateQuestAvailability()
+  if GetQuestReward and not self.rewardHooked then
+    local original=GetQuestReward
+    GetQuestReward=function(choice)
+      -- Snapshot before the native call can remove this quest and offer its successor.
+      Q:CaptureTurnIn()
+      if Q.turnInDialog then Q.pendingTurnIn={id=Q.turnInDialog.id,title=Q.turnInDialog.title,time=GetTime()} end
+      return original(choice)
+    end
+    self.rewardHooked=true
+  end
+  if AbandonQuest and not self.abandonHooked then
+    local original=AbandonQuest
+    AbandonQuest=function() Q.pendingTurnIn=nil;return original() end
+    self.abandonHooked=true
+  end
+end
+function Q:CaptureTurnIn()
+  self.turnInDialog=nil
+  if not GetTitleText then return end
+  local title=self:Normalize(GetTitleText());local found,count=nil,0
+  for _,entry in ipairs(self.quests) do
+    if entry.id and entry.complete and not entry.failed and self:Normalize(entry.title)==title then found=entry.id;count=count+1 end
+  end
+  if count==1 then self.turnInDialog={id=found,title=title} end
 end
 function Q:SetQuestCompleted(id,source)
   id=tonumber(id)
@@ -60,6 +98,10 @@ function Q:ObserveQuestCompletion(message)
   local _,_,title=string.find(message or "",pattern)
   if not title then return end
   title=self:Normalize(title)
+  local pending=self.pendingTurnIn
+  if pending and pending.title==title and GetTime()-pending.time<=30 then
+    self.pendingTurnIn=nil;self:SetQuestCompleted(pending.id,"Automatic");return
+  end
   local matches={}
   for _,entry in ipairs(self.quests) do if entry.id and self:Normalize(entry.title)==title then matches[entry.id]=true end end
   for id,record in pairs(self.recentQuests or {}) do if record.title==title and GetTime()-record.time<=10 then matches[id]=true end end
@@ -114,15 +156,20 @@ function Q:GetAvailableNPCQuests(name,ids)
   local offer=self.npcOffers and self.npcOffers[self:Normalize(name)]
   if offer and GetTime()-offer.time<=60 then
     for _,q in ipairs(offer.quests) do
-      local found,count=nil,0
+      local found,count,known=nil,0,false
       for _,id in ipairs(ids or {}) do
         local data=DB.quests[id]
-        if data and self:Normalize(data.title)==self:Normalize(q.title) and (not q.level or data.level==q.level) then found=id;count=count+1 end
+        if data and self:Normalize(data.title)==self:Normalize(q.title) then
+          known=true
+          local completed=QuestlineSettings.completedQuests[id] and
+            (not data.repeatable or QuestlineSettings.completionSources[id]=="Manual")
+          if not completed and not self.byKey[tostring(id)] and self:MeetsQuestRestrictions(data) and (not q.level or data.level==q.level) then found=id;count=count+1 end
+        end
       end
       if count~=1 then found=nil end
       local hidden=found and QuestlineSettings.completedQuests[found] and
         (not DB.quests[found].repeatable or QuestlineSettings.completionSources[found]=="Manual")
-      if not hidden then insert(available,{id=found,title=q.title,level=q.level,objectives={}}) end
+      if not hidden and (not known or count>0) and not (found and self.byKey[tostring(found)]) then insert(available,{id=found,title=q.title,level=q.level,objectives={}}) end
     end
   else
     for _,id in ipairs(ids or {}) do
@@ -207,11 +254,12 @@ end
 
 local events=CreateFrame("Frame","QuestlineNPCEvents")
 Q.npcEvents=events
-for _,name in ipairs({"GOSSIP_SHOW","QUEST_GREETING","CHAT_MSG_SYSTEM","PLAYER_LEVEL_UP","SKILL_LINES_CHANGED"}) do events:RegisterEvent(name) end
+for _,name in ipairs({"GOSSIP_SHOW","QUEST_GREETING","QUEST_COMPLETE","CHAT_MSG_SYSTEM","PLAYER_LEVEL_UP","SKILL_LINES_CHANGED"}) do events:RegisterEvent(name) end
 events:SetScript("OnEvent",function()
   if not Q.ready then return end
   if event=="GOSSIP_SHOW" then Q:ObserveNPCOffers(true)
   elseif event=="QUEST_GREETING" then Q:ObserveNPCOffers(false)
+  elseif event=="QUEST_COMPLETE" then Q:CaptureTurnIn()
   elseif event=="CHAT_MSG_SYSTEM" then Q:ObserveQuestCompletion(arg1)
   else Q.npcOffers={};Q.npcSkills=nil end
   Q:InvalidateQuestAvailability()

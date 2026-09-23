@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.27", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.28", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -31,7 +31,8 @@ function Q:ExpandText(text)
   return text
 end
 function Q:MaskAllows(mask, flag)
-  if not mask or mask == 0 or not flag then return true end
+  if not mask or mask == 0 then return true end
+  if not flag then return false end
   return math.mod(math.floor(mask / flag), 2) == 1
 end
 function Q:MeetsQuestRestrictions(data)
@@ -84,14 +85,16 @@ function Q:BuildIndexes()
   end
 end
 function Q:ResolveQuest(index, title, level, description, summary)
-  if GetQuestLink then
-    local ok, link = pcall(GetQuestLink, index)
+  local linkAPI=GetQuestLinkForLogIndex or GetQuestLink
+  if linkAPI then
+    local ok, link = pcall(linkAPI, index)
     if ok and link then
       local _, _, id = string.find(link, "quest:(%d+)")
       id = tonumber(id)
       if id then
-        if DB.quests[id] then return id end
-        return nil, "unknown-id"
+        local data=DB.quests[id]
+        if not data then return nil, "unknown-id" end
+        if self:Normalize(data.title)==self:Normalize(title) and self:MeetsQuestRestrictions(data) then return id end
       end
     end
   end

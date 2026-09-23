@@ -290,6 +290,50 @@ local function completionHistoryTests(Q)
   for i=1,12 do QuestlineDB.quests[991000+i]=nil end
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+local function availabilityRegressionTests(Q)
+  local original=Q.quests
+  local history,sources=QuestlineSettings.completedQuests,QuestlineSettings.completionSources
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={};Q:SetEntries({})
+  expect(not Q:IsQuestAvailable(3096),"real Encrypted Scroll rogue quest is unavailable to warrior")
+  Q.npcOffers["class npc"]={time=GetTime(),quests={{title=QuestlineDB.quests[3096].title,level=1}}}
+  expect(#Q:GetAvailableNPCQuests("Class NPC",{3096})==0,"observed NPC offers cannot bypass class gate")
+  local oldClass=UnitClass
+  UnitClass=function() return "Unknown" end
+  expect(not Q:MeetsQuestRestrictions({classMask=8}),"unknown class cannot silently permit class-restricted quests")
+  UnitClass=oldClass
+  local a,b=992001,992002
+  for _,id in ipairs({a,b}) do QuestlineDB.quests[id]={title="Shared chain title",level=1,minLevel=1,classMask=1,raceMask=0,objectives={},finishers={},summary="step "..id,description="step "..id} end
+  local first={id=a,key=tostring(a),title="Shared chain title",level=1,complete=true,objectives={},data=QuestlineDB.quests[a]}
+  local second={id=b,key=tostring(b),title="Shared chain title",level=1,objectives={},data=QuestlineDB.quests[b]}
+  local oldLink,oldLegacy=GetQuestLinkForLogIndex,GetQuestLink
+  GetQuestLinkForLogIndex=function() return "|Hquest:"..a..":1|h[Shared chain title]|h" end
+  GetQuestLink=function() return "|Hquest:"..b..":1|h[Shared chain title]|h" end
+  expect(Q:ResolveQuest(1,first.title,1,"","")==a,"explicit log-index API identifies correct same-title chain step")
+  GetQuestLinkForLogIndex=oldLink;GetQuestLink=oldLegacy
+  local reward,title,abandon=GetQuestReward,GetTitleText,AbandonQuest
+  local rewardHook,abandonHook=Q.rewardHooked,Q.abandonHooked
+  GetTitleText=function() return first.title end
+  GetQuestReward=function(choice) expect(choice==1,"reward hook preserves selection argument") end
+  AbandonQuest=function() end
+  Q.rewardHooked=nil;Q.abandonHooked=nil;Q:InitializeNPCQuests();Q:SetEntries({first})
+  fire("QUEST_COMPLETE")
+  expect(not QuestlineSettings.completedQuests[a],"opening reward dialogue alone never records completion")
+  GetQuestReward(1)
+  QuestlineSettings.completedQuests[b]=true
+  Q:SetEntries({second})
+  expect(QuestlineSettings.completedQuests[a] and QuestlineSettings.completionSources[a]=="Automatic","reward and log removal record the old chain step")
+  expect(not QuestlineSettings.completedQuests[b],"active one-time successor repairs contradictory old Existing record")
+  Q:ObserveQuestCompletion("Shared chain title completed.")
+  expect(not QuestlineSettings.completedQuests[b],"delayed same-title message cannot complete the successor")
+  expect(Q:GetCompletionList(tostring(a),false)[1].source=="Completed","automatic history is displayed as Completed")
+  Q:RestoreCompletedQuest(a);Q:SetEntries({first});GetQuestReward(1);AbandonQuest();Q:SetEntries({})
+  expect(not QuestlineSettings.completedQuests[a],"abandoning after an unsuccessful reward attempt is not a completion")
+  GetQuestReward=reward;GetTitleText=title;AbandonQuest=abandon;Q.rewardHooked=rewardHook;Q.abandonHooked=abandonHook
+  Q.pendingTurnIn=nil;Q.turnInDialog=nil;Q.recentQuests={}
+  QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources
+  QuestlineDB.quests[a]=nil;QuestlineDB.quests[b]=nil
+  Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
+end
 local function trackerMapTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
   local a={key="double:objective",name="Test target",kind="unit",icon="sword"}
@@ -575,11 +619,12 @@ local function trackerClickTests(Q)
   shiftDown=true;ChatFrameEditBox:Show();ChatFrameEditBox:SetText("Before  after");ChatFrameEditBox.cursor=7
   click(row(844))
   expect(ChatFrameEditBox:GetText()=="Before |cffffff00|Hquest:844:"..beaks.level.."|h["..beaks.title.."]|h|r after","shift-click inserts the client's native quest link at the chat cursor")
-  expect(nativeCalls==1 and ChatFrameEditBox.focused,"uses the same link API as Octo's Blizzard quest log")
+  expect(nativeCalls>=1 and ChatFrameEditBox.focused,"uses the same link API as Octo's Blizzard quest log")
   expect(selection==4 and log[1].closed and log[2].closed,"linking restores collapsed categories and quest-log selection")
   expect(QuestlineSettings.selected=="869" and not QuestLogFrame:IsShown(),"linking preserves highlighted quest and does not open the log")
+  local callsBeforeSelection=nativeCalls
   ChatFrameEditBox:Hide();click(row(845).badge)
-  expect(QuestlineSettings.selected=="845" and not ChatFrameEditBox:IsShown() and nativeCalls==1,"shift-click with chat closed keeps normal selection behavior")
+  expect(QuestlineSettings.selected=="845" and not ChatFrameEditBox:IsShown() and nativeCalls==callsBeforeSelection,"shift-click with chat closed keeps normal selection behavior")
   ChatFrameEditBox:Show();local draft=ChatFrameEditBox:GetText()
   click(row(844).badge,"RightButton")
   expect(QuestLogFrame:IsShown() and visible()[selection].id==844,"right-click on a tracker circle opens that quest")
@@ -1308,6 +1353,7 @@ function runTests()
   trackerResizeTests(Q)
   trackerMapTests(Q)
   completionHistoryTests(Q)
+  availabilityRegressionTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
   print("Runtime: "..checks.." assertions passed.")

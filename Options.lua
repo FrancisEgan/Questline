@@ -40,6 +40,7 @@ function Q:GetCompletionList(query,manualOnly)
   local list={};query=self:Normalize(query or "")
   for id,done in pairs(QuestlineSettings.completedQuests) do if done then
     local data=DB.quests[id];local source=QuestlineSettings.completionSources[id] or "Existing"
+    if source=="Automatic" then source="Completed" end
     local title=data and data.title or ("Unknown quest "..id)
     if (not manualOnly or source=="Manual") and (query=="" or string.find(self:Normalize(title),query,1,true) or tostring(id)==query) then
       table.insert(list,{id=id,title=title,source=source})

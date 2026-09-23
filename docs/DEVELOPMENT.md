@@ -2,7 +2,7 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.27**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.28**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
 Minimap rotation is optional: `GetPlayerFacing` does not imply the client has a `rotateMinimap` CVar. Read that setting with `pcall`, because unknown CVars can throw. Missing or disabled rotation uses north-up positioning without requiring a client extension or another addon. Runtime tests cover a throwing lookup, nil results, absent facing API, and rotation becoming available again.
 
@@ -15,6 +15,8 @@ Unmodified left double-click on a tracker row or badge (HUD or map tracker) sele
 Map action markers (0.1.26) use the shipped pfQuest bag/sword/gear cluster artwork at 18 pixels, maintaining screen size under map zoom. Loot uses the bag, kill uses swords, interact/explore uses the gear, and friendly talk targets use the native GossipGossipIcon. Copies are maintained in Textures/action-*.tga; provenance is in Textures/README.md and the existing pfQuest MIT notice is retained. No runtime pfQuest dependency. The old generated action symbols are no longer used for these markers.
 
 Map tracker visibility is saved per character in `QuestlineSettings.mapTracker`, defaulting to true only when unset. Options and `/ql maptracker on|off` change it independently of the HUD, map markers, and highlighted areas. Refreshes and layout reset preserve the visibility preference. The pfQuest pin switch is no longer on the Options page; `/ql legacy on|off` retains the compatibility override.
+
+Availability fixes (0.1.28): Known NPC offers now obey class/race/level restrictions and exclude live/completed entries before resolving same-title candidates; unavailable class identity cannot allow a restricted mask. Quest identification prefers GetQuestLinkForLogIndex over generic GetQuestLink and validates linked titles/restrictions. Reward handling snapshots a uniquely identified completed live quest before GetQuestReward, then records it only after removal from the log or a matching completion message. Pending snapshots expire after 30 seconds; AbandonQuest clears them. Opening the reward dialog alone does not mark completion. Only legacy records with no source metadata are cleared when contradicted by a live non-repeatable quest; manual and known-source records are retained. Automatic is retained as an internal source value for saved-data compatibility but displayed as Completed. Tests include a real rogue-only quest, observed-offer filtering, same-title chain transitions, delayed completion messages, incorrect legacy live history, and failed reward followed by abandonment. Historical entries cannot be broadly corrected without evidence or user-supplied quest IDs.
 
 ## First test
 

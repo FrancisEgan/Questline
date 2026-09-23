@@ -1,6 +1,6 @@
 {
   "name": "questline",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "private": true,
   "description": "Questline offline database and validation tools; Node is not required in game.",
   "scripts": {
