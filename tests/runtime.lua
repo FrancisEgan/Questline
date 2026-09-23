@@ -379,6 +379,23 @@ local function spawnDotTests(Q)
   expect(Q.mapPins[1]:GetFrameLevel()<Q.overlay:GetFrameLevel(),"cached map refresh repairs a raised number badge")
   expect(Q.mapSpawns[1]:GetWidth()==14 and Q.minimapSpawns[1]:GetWidth()==14,"spawn action icons are compact")
   expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-kill") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-kill"),"mob spawns use sword artwork on both maps")
+  local oldCandidates,oldSpawns,oldScan=Q.GetMinimapQuestNPCs,Q.SelectedSpawns,Q.ScanLog
+  Q.GetMinimapQuestNPCs=function() error("motion frame rebuilt questgiver eligibility") end
+  Q.SelectedSpawns=function() error("motion frame rebuilt selected spawns") end
+  Q.ScanLog=function() error("motion frame scanned quest log") end
+  Q.minimapRenderData.entries={{id=993999,name="Motion NPC",points={{52.2,31}},quests={},turnins={}}}
+  Q.elapsed=0
+  local previousX=Q.minimapSpawns[1].point[4]
+  for frame=1,3 do
+    playerX=playerX-.0001;tick(.016)
+    expect(Q.minimapSpawns[1].point[4]>previousX,"objective markers move on consecutive frames below quest refresh interval")
+    previousX=Q.minimapSpawns[1].point[4]
+    expect(Q.minimapGivers[1].point[4]==previousX,"questgiver and objective markers use the same per-frame position")
+  end
+  local shows=Q.minimapSpawns[1].showCalls;tick(.016)
+  expect(Q.minimapSpawns[1].showCalls==shows,"stationary frames skip redundant marker rendering")
+  Q.GetMinimapQuestNPCs=oldCandidates;Q.SelectedSpawns=oldSpawns;Q.ScanLog=oldScan
+  playerX=.522;Q:RefreshQuestGivers()
   target.icon="loot";Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
   expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-loot") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-loot"),"pooled item-source markers switch to bags")
   target.icon="interact";Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
@@ -403,6 +420,28 @@ local function spawnDotTests(Q)
   QuestlineDB.locations[target.key]=nil;Q.spawnCache=nil
   QuestlineSettings.worldMapSpawns=setting;playerX,playerY,playerZone=oldX,oldY,oldPlayerZone
   Q:SetEntries(original);SetMapZoom(1,1);Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+end
+local function objectTooltipTests(Q)
+  local original=Q.quests
+  local oldFocus,oldWorld=GetMouseFocus,WorldFrame
+  WorldFrame=WorldFrame or CreateFrame("Frame",nil,UIParent)
+  local focus=WorldFrame;GetMouseFocus=function() return focus end
+  for _,id in ipairs({365,5481,5482}) do
+    local data=QuestlineDB.quests[id];local target=data.objectives[1]
+    local entry={id=id,key=tostring(id),title=data.title,level=data.level,data=data,objectives={{text=target.name..": 2/10",kind="item",done=false}}}
+    Q:SetEntries({entry});mouseoverName=nil;mouseoverPlayer=false;focus=WorldFrame
+    GameTooltip:Hide();GameTooltip:SetOwner(UIParent,"ANCHOR_NONE");GameTooltip:SetText(target.name);GameTooltip:Show()
+    Q:RefreshMobTooltip()
+    expect(GameTooltip:NumLines()==3 and GameTooltipTextLeft2:GetText()==Q:QuestTitle(entry),"quest object tooltip adds quest heading for "..target.name)
+    expect(GameTooltipTextLeft3:GetText()=="  "..target.name.." - 2/10","quest object tooltip adds item count without mob drop rate")
+    local shows=GameTooltip.showCalls;Q:RefreshMobTooltip()
+    expect(GameTooltip:NumLines()==3 and GameTooltip.showCalls==shows,"object tooltip updates do not duplicate lines or restart tooltip")
+    focus=UIParent;GameTooltip:FadeOut();Q:RefreshMobTooltip()
+    expect(GameTooltipTextLeft3:IsShown() and GameTooltip.fading,"object progress persists through native fade")
+    GameTooltip:Hide();GameTooltip:SetText(target.name);GameTooltip:Show();Q:RefreshMobTooltip()
+    expect(GameTooltip:NumLines()==1,"same-name inventory tooltip does not get world-object details")
+  end
+  GameTooltip:Hide();GetMouseFocus=oldFocus;WorldFrame=oldWorld;Q:SetEntries(original)
 end
 local function trackerMapTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
@@ -1429,6 +1468,7 @@ function runTests()
   completionHistoryTests(Q)
   availabilityRegressionTests(Q)
   spawnDotTests(Q)
+  objectTooltipTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
   print("Runtime: "..checks.." assertions passed.")

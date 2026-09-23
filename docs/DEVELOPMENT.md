@@ -2,7 +2,11 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.32**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.33**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Minimap movement (0.1.33): marker projection runs every frame using cached questgiver and selected-objective lists. Quest scans, eligibility checks, list rebuilds, and optional rotation-CVar reads retain the slower refresh schedule. An unchanged position/zoom/facing/size/shape skips redundant marker updates. Existing cross-zone map-browsing coordinate limitations still apply. Tests verify successive movement frames update both giver and objective positions without scanning or rebuilding their lists.
+
+World-object tooltips (0.1.33): the compiler adds objectObjectives to Data/MobObjectives.lua for direct object objectives and object sources of quest items, including reference loot. Vanilla world objects have no mouseover unit; match their normalized tooltip title only when GetMouseFocus is WorldFrame and there is no mouseover unit. Inventory/UI tooltips with the same title must not match. Use the existing grouped objective and party-progress rendering, preserving other addons' lines and native fading. Object sources omit mob drop percentages. Regression cases use Fields of Grief / Tirisfal Pumpkin, Gordo's Task / Gloom Weed, and Doom Weed, including lingering fades, repeated refreshes, and same-name inventory tooltips.
 
 Minimap rotation is optional: `GetPlayerFacing` does not imply the client has a `rotateMinimap` CVar. Read that setting with `pcall`, because unknown CVars can throw. Missing or disabled rotation uses north-up positioning without requiring a client extension or another addon. Runtime tests cover a throwing lookup, nil results, absent facing API, and rotation becoming available again.
 

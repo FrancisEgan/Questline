@@ -95,12 +95,13 @@ function writeTable(file,field,records,append=false) {
   fs[append?'appendFileSync':'writeFileSync'](path.join(output,file),lines.join('\n')+'\n');
 }
 const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).digest('hex').slice(0,16);
-fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
+fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
 writeTable('Quests.lua','quests',runtimeQuests);
 writeTable('Locations.lua','locations',locations);
 writeTable('Zones.lua','zones',Object.fromEntries(Object.entries(db.zones).map(([id,zone])=>[id,{...zone,mapSize:db.reference.minimap[id]}])));
 writeTable('ZoneQuests.lua','zoneQuests',Object.fromEntries(Object.entries(zoneIndex).map(([k,v])=>[k,[...v].sort((a,b)=>a-b)])));
 writeTable('MobObjectives.lua','mobObjectives',mobObjectives(db));
+writeTable('MobObjectives.lua','objectObjectives',mobObjectives(db,true),true);
 writeTable('MobObjectives.lua','mobDropRates',mobDropRates(db),true);
 writeTable('NPCQuests.lua','npcQuests',npcQuests(db));
 const giverData=questGivers(db);

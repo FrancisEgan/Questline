@@ -8,13 +8,13 @@ function Q:BuildTooltipProgress()
     if entry.data and not entry.failed then
       for objectiveIndex,objective in ipairs(entry.objectives) do
         local _,_,name,current,required=string.find(objective.text,"^(.-):%s*(%d+)%s*/%s*(%d+)%s*$")
-        if name and (objective.kind=="item" or objective.kind=="monster") then
+        if name and (objective.kind=="item" or objective.kind=="monster" or objective.kind=="object") then
           name=self:Normalize(name)
           if objective.kind=="monster" then
             name=string.gsub(name,"%s+slain$","");name=string.gsub(name,"%s+killed$","")
           end
           for _,target in ipairs(entry.data.objectives) do
-            local kind=objective.kind=="item" and "item" or "unit"
+            local kind=objective.kind=="item" and "item" or (objective.kind=="object" and "object" or "unit")
             if target.kind==kind and self:Normalize(target.name)==name then
               local progress={text=target.name.." - "..current.."/"..required,name=name,
                 questKey=entry.key,questTitle=entry.title,questLevel=entry.level,questNumber=entry.number,objectiveIndex=objectiveIndex,
@@ -28,11 +28,12 @@ function Q:BuildTooltipProgress()
     end
   end
 end
-function Q:GetMobProgress(name)
+function Q:GetMobProgress(name,object)
   local groups,byQuest={},{}
   local mobName=self:Normalize(name)
-  local rates=DB.mobDropRates and DB.mobDropRates[mobName] or {}
-  for _,key in ipairs(DB.mobObjectives[mobName] or {}) do
+  local rates=not object and DB.mobDropRates and DB.mobDropRates[mobName] or {}
+  local index=object and (DB.objectObjectives or {}) or DB.mobObjectives
+  for _,key in ipairs(index[mobName] or {}) do
     for _,progress in ipairs((self.tooltipProgress or {})[key] or {}) do
       local group=byQuest[progress.questKey]
       if not group then
@@ -98,6 +99,11 @@ function Q:RefreshMobTooltip()
   -- identify a lingering tooltip; use owner identity only on clients exposing it.
   local owner=GameTooltip.GetOwner and GameTooltip:GetOwner()
   local hovering=name and not UnitIsPlayer("mouseover") and title==self:Normalize(name)
+  -- World objects have no mouseover unit on Vanilla. Only use the world
+  -- tooltip title while the cursor is over the world, never inventory/UI items.
+  local object=not name and title and DB.objectObjectives and DB.objectObjectives[title] and
+    WorldFrame and GetMouseFocus and GetMouseFocus()==WorldFrame
+  if object then name=first:GetText();hovering=true end
   -- Track only lines we appended. Other addons retain their own tooltip content.
   local owned,slots={},{}
   local count=GameTooltip:NumLines()
@@ -120,8 +126,8 @@ function Q:RefreshMobTooltip()
   self.mobTooltipOwner=hovering and owner or nil
   local desired,sections={},nil
   if hovering then
-    sections=self:GetNPCSections(name)
-    if not sections then desired=self:GetMobProgress(name) end
+    if not object then sections=self:GetNPCSections(name) end
+    if not sections then desired=self:GetMobProgress(name,object) end
   end
   local lines={}
   if sections then for _,section in ipairs(sections) do

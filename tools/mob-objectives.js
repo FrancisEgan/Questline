@@ -1,14 +1,14 @@
 // A small tooltip index, compiled from our owned database. No spawn tables needed.
-function mobObjectives(db) {
+function mobObjectives(db,objectMode=false) {
   const byName=new Map(), visited=new Set();
   function add(unitId,key) {
-    const name=db.units[unitId]?.name?.trim().toLowerCase().replace(/\s+/g,' ');
+    const name=(objectMode?db.objects:db.units)?.[unitId]?.name?.trim().toLowerCase().replace(/\s+/g,' ');
     if(!name) return;
     if(!byName.has(name)) byName.set(name,new Set());
     byName.get(name).add(key);
   }
   function drops(record,key,groups) {
-    for(const [id,chance] of Object.entries(record?.units||{})) if(Number(chance)>=0) add(id,key);
+    for(const [id,chance] of Object.entries((objectMode?record?.objects:record?.units)||{})) if(Number(chance)>=0) add(id,key);
     for(const [id,chance] of Object.entries(record?.groups||{})) {
       if(Number(chance)<0 || groups.has(id)) continue;
       groups.add(id);drops(db.lootGroups[id],key,groups);
@@ -18,8 +18,8 @@ function mobObjectives(db) {
     const key=target.kind+':'+target.id;
     if(visited.has(key)) continue;
     visited.add(key);
-    if(target.kind==='unit') add(target.id,key);
-    // Vendors and containers are not mobs that drop the required item.
+    if(target.kind===(objectMode?'object':'unit')) add(target.id,key);
+    // Follow loot sources, not vendors or inventory-container contents.
     if(target.kind==='item') drops(db.items[target.id]?.drops,key,new Set());
   }
   return Object.fromEntries([...byName].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([name,keys])=>[name,[...keys].sort()]));
