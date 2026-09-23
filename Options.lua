@@ -57,6 +57,7 @@ function Q:RefreshOptions()
   f.filter.text:SetText(f.manualOnly and "Show all records" or "Show manual only")
   f.tracker.text:SetText(QuestlineSettings.tracker and "Hide tracker" or "Show tracker")
   f.mapTracker.text:SetText(QuestlineSettings.mapTracker~=false and "Hide map tracker" or "Show map tracker")
+  f.spawns.text:SetText(QuestlineSettings.worldMapSpawns~=false and "Hide world-map spawn markers" or "Show world-map spawn markers")
   if f.section~="completed" then return end
   for i=1,8 do
     local row=f.rows[i];local item=list[(f.page-1)*8+i]
@@ -79,8 +80,12 @@ function Q:ToggleOptions()
     button(f.settings,"< Home",18,-46,120,function() Q:ShowOptionsSection("home") end)
     f.tracker=button(f.settings,"",18,-90,230,function() Q:Command(QuestlineSettings.tracker and "tracker off" or "tracker on");Q:RefreshOptions() end)
     f.mapTracker=button(f.settings,"",18,-130,260,function() Q:Command(QuestlineSettings.mapTracker~=false and "maptracker off" or "maptracker on");Q:RefreshOptions() end)
-    button(f.settings,"Reset tracker layout",18,-170,230,function() Q:Command("reset") end)
-    button(f.settings,"Show addon status in chat",18,-210,300,function() Q:Command("status") end)
+    f.spawns=button(f.settings,"",18,-170,320,function()
+      QuestlineSettings.worldMapSpawns=QuestlineSettings.worldMapSpawns==false
+      Q.mapDirty=true;Q:RefreshMap();Q:RefreshOptions()
+    end)
+    button(f.settings,"Reset tracker layout",18,-210,230,function() Q:Command("reset") end)
+    button(f.settings,"Show addon status in chat",18,-250,300,function() Q:Command("status") end)
     f.history=CreateFrame("Frame",nil,f);f.history:SetAllPoints(f)
     local h=f.history
     button(h,"< Home",18,-46,120,function() Q:ShowOptionsSection("home") end)
@@ -127,7 +132,7 @@ function Q:ShowOptionsSection(section)
   local f=self.optionsPanel;f.section=section
   f.home:Hide();f.settings:Hide();f.history:Hide();f.search:ClearFocus();GameTooltip:Hide()
   if section=="completed" then f.history:Show();f:SetHeight(510);f.title:SetText("Questline - Completed quests")
-  elseif section=="options" then f.settings:Show();f:SetHeight(260);f.title:SetText("Questline - Options")
+  elseif section=="options" then f.settings:Show();f:SetHeight(300);f.title:SetText("Questline - Options")
   else f.home:Show();f:SetHeight(195);f.title:SetText("Questline") end
   self:RefreshOptions()
 end

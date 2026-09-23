@@ -94,7 +94,7 @@ function Q:GetGiverPin(index,minimap)
   if not pool[index] then
     local parent=minimap and Minimap or self.pinLayer
     local pin=CreateFrame("Button",nil,parent)
-    pin:SetWidth(iconSize);pin:SetHeight(iconSize);pin:SetFrameLevel(parent:GetFrameLevel()+1)
+    pin:SetWidth(iconSize);pin:SetHeight(iconSize);pin:SetFrameLevel(parent:GetFrameLevel()+3)
     pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
     pin.texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
     if not minimap then
@@ -162,6 +162,7 @@ function Q:MinimapGiverPosition(point,x,y,size,diameter,facing)
     (not square and dx*dx/(rx*rx)+dy*dy/(ry*ry)<=1) then return dx,dy end
 end
 function Q:RefreshGiverMinimap()
+  self.minimapSpawnContext=nil
   -- GetPlayerMapPosition uses the currently browsed map in Vanilla. Never
   -- reset that map while the player is looking at it, or use wrong-zone coords.
   if not Minimap or not Minimap:IsVisible() or not GetPlayerMapPosition then hide(self.minimapGivers);return end
@@ -190,6 +191,7 @@ function Q:RefreshGiverMinimap()
     local ok,rotation=pcall(GetCVar,"rotateMinimap")
     if ok and rotation=="1" then facing=GetPlayerFacing() end
   end
+  self.minimapSpawnContext={zone=zone,size=size,x=x,y=y,diameter=diameter,facing=facing}
   local count=0
   local entries=self:GetMinimapQuestNPCs(zone)
   for _,giver in ipairs(entries) do
@@ -211,4 +213,5 @@ end
 function Q:RefreshQuestGivers()
   self.mapGivers=self.mapGivers or {};self.minimapGivers=self.minimapGivers or {}
   self:RefreshGiverMap();self:RefreshGiverMinimap()
+  self:RefreshSpawnMinimap()
 end

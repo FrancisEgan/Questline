@@ -23,6 +23,7 @@ Runtime `QuestlineDB.locations[targetKey][zoneId]` contains:
 
 - `anchor`: `[x,y]`, an actual spawn near the largest cluster's center, used for the quest selector.
 - `points`: arrays of `[x,y]` for precise markers.
+- `spawnPoints`: optional packed source positions for selected-quest spawn markers. Four characters per point encode x then y as two base64-pairs integers, each representing percent multiplied by 40 (range 0?4000). Deduplicated after quantization and sorted by x/y; absent for turn-ins, zone centers, and exploration triggers.
 - `runs`: runtime schema 2 packs zero-based `[row, startColumn, exclusiveEndColumn]` triples into strings. Each integer occupies two characters from `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_`; its value is `firstDigit * 64 + secondDigit`. Each triple is six characters. `tools/packed-runs.js` encodes/decodes this generated representation. `QuestlineDB.grid` is 1280. The normalized JSON remains schema 1 and is unchanged by this runtime encoding.
 - `spawns`: number of unique source points in that zone.
 
@@ -39,3 +40,5 @@ Turn-in location keys are prefixed `turnin:` and always use point geometry. Ordi
 Runtime zones have an optional `mapSize = {widthYards,heightYards}`, extracted from `reference.minimap`, for converting zone percentages to minimap distance. These are map dimensions, not pixel sizes. Unknown dimensions disable minimap markers for that zone.
 
 `QuestlineSettings.completedQuests[questID] = true` is per-character history, separate from all generated database tables. Native server history, a one-time pfQuest history import, and confirmed quest-completion messages can add entries. Recent NPC offers and availability caches remain session-only.
+
+Item-target locations may include `spawnKinds`, one character per packed spawn: `g` for a world-object interaction and `l` for other item sources. Source types survive direct and reference-loot traversal; coincident object/item sources prefer the gear. Missing metadata falls back to the target icon.

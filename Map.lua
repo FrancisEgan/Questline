@@ -15,9 +15,12 @@ end
 function Q:CreateMap()
   if self.overlay then return end
   -- Child of the actual map canvas, so Magnify scaling and scroll clipping apply.
+  self.selectorLayer=CreateFrame("Frame","QuestlineMapSelectors",WorldMapButton)
+  self.selectorLayer:SetAllPoints(WorldMapButton);self.selectorLayer:EnableMouse(false)
+  self.selectorLayer:SetFrameLevel(WorldMapButton:GetFrameLevel()+1)
   self.overlay=CreateFrame("Frame","QuestlineMapAreas",WorldMapButton)
   self.overlay:SetAllPoints(WorldMapButton);self.overlay:EnableMouse(false)
-  self.overlay:SetFrameLevel(WorldMapButton:GetFrameLevel()+1)
+  self.overlay:SetFrameLevel(WorldMapButton:GetFrameLevel()+4)
   self.pinLayer=CreateFrame("Frame","QuestlineMapPins",WorldMapButton)
   self.pinLayer:SetAllPoints(WorldMapButton);self.pinLayer:EnableMouse(false)
   self.pinLayer:SetFrameLevel(WorldMapButton:GetFrameLevel()+8)
@@ -154,7 +157,7 @@ function Q:GetPin(index,objective)
     if objective then
       pin=CreateFrame("Button",nil,self.pinLayer);pin:SetWidth(18);pin:SetHeight(18)
       pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
-    else pin=self:MakeBadge(self.pinLayer,25) end
+    else pin=self:MakeBadge(self.selectorLayer,25) end
     pin:SetScript("OnClick",function() if this.entry then Q:Select(this.entry.key,IsControlKeyDown and IsControlKeyDown()) end end)
     pin:SetScript("OnEnter",function() if this.entry then Q:ShowQuestTooltip(this,this.entry,this.target) end end)
     pin:SetScript("OnLeave",tooltipLeave)
@@ -165,8 +168,80 @@ end
 function Q:PlacePin(pin,point,width,height)
   pin:ClearAllPoints();pin:SetPoint("CENTER",self.pinLayer,"TOPLEFT",point[1]/100*width,-point[2]/100*height);pin:Show()
 end
+function Q:SelectedSpawns(zone)
+  local keys={tostring(zone)};local targets={}
+  for _,entry in ipairs(self.quests) do if self:IsSelected(entry.key) and not entry.complete and not entry.failed then
+    for _,target in ipairs(self:Targets(entry)) do
+      table.insert(keys,entry.key..":"..target.key);table.insert(targets,{entry=entry,target=target})
+    end
+  end end
+  local key=table.concat(keys,";")
+  self.spawnCache=self.spawnCache or {}
+  local cached=self.spawnCache[zone or 0]
+  if cached and cached.key==key then return cached.points end
+  local points,seen={},{}
+  for _,item in ipairs(targets) do
+    local location=DB.locations[item.target.key] and DB.locations[item.target.key][zone]
+    local packed=location and location.spawnPoints or ""
+    for i=1,string.len(packed),4 do
+      local identity=item.target.key..":"..string.sub(packed,i,i+3)
+      if not seen[identity] then
+        seen[identity]=true
+        local kind=location.spawnKinds and string.sub(location.spawnKinds,(i-1)/4+1,(i-1)/4+1)
+        table.insert(points,{coordinate(packed,i)/40,coordinate(packed,i+2)/40,entry=item.entry,target=item.target,icon=kind=="g" and "interact" or (kind=="l" and "loot" or nil)})
+      end
+    end
+  end
+  -- Only keep the currently browsed and physical zones in memory.
+  local playerZone=self:GetPlayerZone()
+  for old in pairs(self.spawnCache) do if old~=zone and old~=playerZone then self.spawnCache[old]=nil end end
+  self.spawnCache[zone or 0]={key=key,points=points};return points
+end
+function Q:SpawnPin(pool,index,parent,minimap)
+  if not pool[index] then
+    local pin=CreateFrame("Button",nil,parent);pool[index]=pin
+    pin:SetFrameLevel(parent:GetFrameLevel()+1)
+    pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
+    pin:SetScript("OnEnter",function()
+      local p=this.spawn
+      local entry=p and Q.byKey[p.entry.key]
+      if entry then Q:ShowQuestTooltip(this,entry,p.target) end
+    end)
+    pin:SetScript("OnLeave",tooltipLeave)
+  end
+  return pool[index]
+end
+function Q:RefreshSpawnMap(zone,width,height,inverseScale)
+  self.mapSpawns=self.mapSpawns or {};local count=0
+  if zone and QuestlineSettings.worldMapSpawns~=false then
+    for _,point in ipairs(self:SelectedSpawns(zone)) do
+      count=count+1;local pin=self:SpawnPin(self.mapSpawns,count,self.pinLayer,false);pin.spawn=point
+      pin.texture:SetTexture(actionTextures[point.icon or point.target.icon] or actionTextures.interact)
+      pin:SetWidth(14*inverseScale);pin:SetHeight(14*inverseScale);self:PlacePin(pin,point,width,height)
+    end
+  end
+  for i=count+1,getn(self.mapSpawns) do self.mapSpawns[i]:Hide() end
+end
+function Q:RefreshSpawnMinimap()
+  self.minimapSpawns=self.minimapSpawns or {};local count=0;local c=self.minimapSpawnContext
+  if c then for _,point in ipairs(self:SelectedSpawns(c.zone)) do
+    local x,y=self:MinimapGiverPosition(point,c.x,c.y,c.size,c.diameter,c.facing)
+    if x then
+      count=count+1;local pin=self:SpawnPin(self.minimapSpawns,count,Minimap,true);pin.spawn=point
+      pin.texture:SetTexture(actionTextures[point.icon or point.target.icon] or actionTextures.interact)
+      pin:SetWidth(14);pin:SetHeight(14);pin:ClearAllPoints();pin:SetPoint("CENTER",Minimap,"CENTER",x,y);pin:Show()
+    end
+  end end
+  for i=count+1,getn(self.minimapSpawns) do self.minimapSpawns[i]:Hide() end
+end
 function Q:RefreshMap()
   if not self.overlay or not WorldMapFrame:IsVisible() then return end
+  -- Reassert ordering even on cached renders: map addons/clicks can raise frames.
+  local base=WorldMapButton:GetFrameLevel()
+  self.selectorLayer:SetFrameLevel(base+1)
+  self.overlay:SetFrameLevel(base+4)
+  self.pinLayer:SetFrameLevel(base+8)
+  for _,pin in ipairs(self.mapPins) do pin:SetFrameLevel(pin.entry and pin.entry.complete and base+11 or base+2) end
   local zone=self:GetMapZone()
   local width,height=WorldMapButton:GetWidth(),WorldMapButton:GetHeight()
   local scale=WorldMapButton:GetEffectiveScale()
@@ -176,10 +251,12 @@ function Q:RefreshMap()
   for _,pool in ipairs({self.mapPins,self.objectivePins}) do for _,element in ipairs(pool) do element:Hide() end end
   if zoneChanged then self.mapTracker.page=1;self:RefreshTrackers() end
   if not zone or width<=0 or height<=0 then
+    self:RefreshSpawnMap(nil)
     for _,pool in ipairs({self.fills,self.edges}) do for _,texture in ipairs(pool) do texture:Hide() end end
     self.areaLayoutKey=nil;return
   end
   local inverseScale=WorldMapFrame:GetEffectiveScale()/scale
+  self:RefreshSpawnMap(zone,width,height,inverseScale)
   local selectedEntries,targets,targetKeys={},{},{}
   for _,entry in ipairs(self.quests) do if self:IsSelected(entry.key) then
     table.insert(selectedEntries,entry)
@@ -254,6 +331,9 @@ function Q:RefreshMap()
       end
     end end
   end end end
-  -- Number badges sit above action icons and remain easy to click.
-  for i=1,markerCount do self.mapPins[i]:SetFrameLevel(self.pinLayer:GetFrameLevel()+3) end
+  -- Number badges stay below shading and spawn icons. Small turn-in icons stay above.
+  for i=1,markerCount do
+    local pin=self.mapPins[i]
+    pin:SetFrameLevel(pin.entry.complete and base+11 or base+2)
+  end
 end

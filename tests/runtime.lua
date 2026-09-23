@@ -334,6 +334,76 @@ local function availabilityRegressionTests(Q)
   QuestlineDB.quests[a]=nil;QuestlineDB.quests[b]=nil
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+local function spawnDotTests(Q)
+  expect(QuestlineDB.quests[5482].objectives[1].icon=="interact","Doom Weed uses gear for its world-object objective")
+  local doom=QuestlineDB.locations["item:13702"][85]
+  expect(doom and doom.spawnKinds and string.len(doom.spawnKinds)==string.len(doom.spawnPoints)/4 and not string.find(doom.spawnKinds,"[^g]"),"all Doom Weed spawn positions retain object source classification")
+  local alphabetCheck="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
+  local packedTargets=0
+  for key,zones in pairs(QuestlineDB.locations) do for _,location in pairs(zones) do
+    if location.spawnPoints then
+      assert(not string.find(key,"^turnin:"),"turn-ins must not compile spawn markers")
+      assert(math.mod(string.len(location.spawnPoints),4)==0,"packed spawn pairs must be complete")
+      local seen={}
+      for i=1,string.len(location.spawnPoints),4 do
+        local xy=string.sub(location.spawnPoints,i,i+3)
+        assert(not seen[xy],"compiled spawn positions are deduplicated");seen[xy]=true
+        for j=i,i+2,2 do
+          local a=string.find(alphabetCheck,string.sub(location.spawnPoints,j,j),1,true)
+          local b=string.find(alphabetCheck,string.sub(location.spawnPoints,j+1,j+1),1,true)
+          assert(a and b and (a-1)*64+b-1<=4000,"spawn coordinate within map bounds")
+        end
+      end
+      packedTargets=packedTargets+1
+    end
+  end end
+  expect(packedTargets>1000,"database retains spawn coordinates for mob/item/object targets")
+  local original,setting=Q.quests,QuestlineSettings.worldMapSpawns
+  local oldX,oldY,oldPlayerZone=playerX,playerY,playerZone
+  local alphabet="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
+  local function pair(v)
+    v=math.floor(v*40+.5)
+    return string.sub(alphabet,math.floor(v/64)+1,math.floor(v/64)+1)..string.sub(alphabet,math.mod(v,64)+1,math.mod(v,64)+1)
+  end
+  local target={key="test:spawns",kind="unit",name="Spawn mob",icon="kill"}
+  QuestlineDB.locations[target.key]={[17]={runs="",points={},anchor={52.2,31},spawnPoints=pair(52.2)..pair(31)..pair(52.3)..pair(31)..pair(90)..pair(90)}}
+  local a={key="spawn:a",id=993001,title="Spawn test",level=1,objectives={{text="Spawn mob slain: 0/2",done=false}},data={objectives={target},finishers={}}}
+  local b={key="spawn:b",id=993002,title="Shared spawn test",level=2,objectives={},data={objectives={target},finishers={}}}
+  Q:SetEntries({a,b});Q:Select(a.key);Q.spawnCache=nil
+  playerZone="The Barrens";playerX=.522;playerY=.31;minimapIndoor=false;Minimap:SetZoom(0);cvars.rotateMinimap="0"
+  QuestlineSettings.worldMapSpawns=true;WorldMapFrame:Show();SetMapZoom(1,1);Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+  local function shown(pool) local n=0;for _,p in ipairs(pool or {}) do if p:IsShown() then n=n+1 end end;return n end
+  expect(shown(Q.mapSpawns)==3 and shown(Q.minimapSpawns)==2,"world map shows all selected spawns; minimap clips distant ones")
+  expect(Q.mapPins[1]:GetFrameLevel()<Q.overlay:GetFrameLevel() and Q.overlay:GetFrameLevel()<Q.mapSpawns[1]:GetFrameLevel(),"number badges render behind blue areas and spawn icons")
+  Q.mapPins[1]:SetFrameLevel(500);Q:RefreshMap()
+  expect(Q.mapPins[1]:GetFrameLevel()<Q.overlay:GetFrameLevel(),"cached map refresh repairs a raised number badge")
+  expect(Q.mapSpawns[1]:GetWidth()==14 and Q.minimapSpawns[1]:GetWidth()==14,"spawn action icons are compact")
+  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-kill") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-kill"),"mob spawns use sword artwork on both maps")
+  target.icon="loot";Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-loot") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-loot"),"pooled item-source markers switch to bags")
+  target.icon="interact";Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-interact"),"pooled interaction markers switch to gears")
+  QuestlineDB.locations[target.key][17].spawnKinds="gll";Q.spawnCache=nil;Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.mapSpawns[2].texture.textureValue[1]:find("action%-loot"),"mixed item sources distinguish objects from mob drops on world map")
+  expect(Q.minimapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.minimapSpawns[2].texture.textureValue[1]:find("action%-loot"),"mixed item sources retain their individual icons on minimap")
+  Q:Select(b.key,true);Q:RefreshQuestGivers()
+  expect(shown(Q.mapSpawns)==3,"shared target coordinates are deduplicated across selected quests")
+  local before=#widgets;Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+  expect(#widgets==before,"spawn dots reuse pooled frames and cached coordinates")
+  click(Q.optionsPanel.spawns);Q:RefreshQuestGivers()
+  expect(QuestlineSettings.worldMapSpawns==false and shown(Q.mapSpawns)==0 and shown(Q.minimapSpawns)==2,"world-map option hides dots without hiding minimap spawns")
+  Q:Select(a.key);a.objectives[1].done=true;Q:SetEntries({a,b});Q:RefreshQuestGivers()
+  expect(shown(Q.minimapSpawns)==0,"finished objective spawns disappear")
+  a.objectives[1].done=false;a.complete=true;Q:SetEntries({a,b});Q:RefreshQuestGivers()
+  expect(shown(Q.minimapSpawns)==0,"ready turn-ins have no spawn dots")
+  a.complete=false;Q:SetEntries({a,b});Q:Select(a.key);Q:RefreshQuestGivers()
+  SetMapZoom(1,2);Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+  expect(shown(Q.mapSpawns)==0 and shown(Q.minimapSpawns)==2,"browsing another zone preserves same-zone minimap sample only")
+  playerZone="Durotar";Q:RefreshQuestGivers();expect(shown(Q.minimapSpawns)==0,"crossing zones clears stale minimap dots")
+  QuestlineDB.locations[target.key]=nil;Q.spawnCache=nil
+  QuestlineSettings.worldMapSpawns=setting;playerX,playerY,playerZone=oldX,oldY,oldPlayerZone
+  Q:SetEntries(original);SetMapZoom(1,1);Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
+end
 local function trackerMapTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
   local a={key="double:objective",name="Test target",kind="unit",icon="sword"}
@@ -1358,6 +1428,7 @@ function runTests()
   trackerMapTests(Q)
   completionHistoryTests(Q)
   availabilityRegressionTests(Q)
+  spawnDotTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
   print("Runtime: "..checks.." assertions passed.")

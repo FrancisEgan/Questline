@@ -26,7 +26,7 @@ function gather(kind,id,seen=new Set()) {
   seen.add(key);
   const record=db[tables[kind]]?.[id];
   if(!record) return [];
-  if(record.coordinates) return record.coordinates;
+  if(record.coordinates) return record.coordinates.map(p=>[p[0],p[1],p[2],p[3],kind]);
   let points=[];
   function sources(drops) {
     for(const [id,chance] of Object.entries(drops.units||{})) if(Number(chance)>=0) points.push(...gather('unit',id,seen));
@@ -46,10 +46,28 @@ function target(t,turnin) {
     const points=gather(t.kind,t.id), byZone={};
     for(const p of points) (byZone[p[2]]||=[]).push(p);
     locations[key]={};
-    for(const [zone,coords] of Object.entries(byZone)) locations[key][zone]=geometry(coords,turnin||t.kind==='event'||t.kind==='zone');
+    for(const [zone,coords] of Object.entries(byZone)) {
+      const location=geometry(coords,turnin||t.kind==='event'||t.kind==='zone');
+      if(!turnin && ['unit','object','item','use'].includes(t.kind)) {
+        const unique=new Map();
+        for(const p of coords) {
+          const xy=[Math.round(p[0]*40),Math.round(p[1]*40)],key=xy.join(':');
+          const gear=t.kind==='item'&&p[4]==='object';
+          unique.set(key,{xy,gear:gear||unique.get(key)?.gear});
+        }
+        const ordered=[...unique.values()].sort((a,b)=>a.xy[0]-b.xy[0]||a.xy[1]-b.xy[1]);
+        location.spawnPoints=packRuns(ordered.flatMap(p=>p.xy));
+        if(t.kind==='item') location.spawnKinds=ordered.map(p=>p.gear?'g':'l').join('');
+      }
+      locations[key][zone]=location;
+    }
     if(!points.length) issues.push({target:key,issue:'no-locations'});
   }
   let icon=t.kind==='item'?'loot':t.kind==='object'||t.kind==='use'?'interact':t.kind==='event'||t.kind==='zone'?'explore':'kill';
+  if(t.kind==='item') {
+    const sources=gather(t.kind,t.id);
+    if(sources.length && sources.every(p=>p[4]==='object')) icon='interact';
+  }
   if(t.kind==='unit' && db.units[t.id]?.faction==='AH') icon='talk';
   if(turnin) icon='turnin';
   const result={kind:t.kind,id:t.id,key,name:targetName(t.kind,t.id),icon};
