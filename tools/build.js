@@ -63,7 +63,7 @@ function target(t,turnin) {
     }
     if(!points.length) issues.push({target:key,issue:'no-locations'});
   }
-  let icon=t.kind==='item'?'loot':t.kind==='object'||t.kind==='use'?'interact':t.kind==='event'||t.kind==='zone'?'explore':'kill';
+  let icon=t.icon || (t.kind==='item'?'loot':t.kind==='object'||t.kind==='use'?'interact':t.kind==='event'||t.kind==='zone'?'explore':'kill');
   if(t.kind==='item') {
     const sources=gather(t.kind,t.id);
     if(sources.length && sources.every(p=>p[4]==='object')) icon='interact';

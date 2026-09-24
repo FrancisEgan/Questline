@@ -2,7 +2,9 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.45**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.46**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Objective action corrections (0.1.46): normalized quest objectives may carry an optional `icon` override which the compiler preserves. The classic priest Garments quests mark their heal-and-fortify unit as `interact`, including Deathguard Kel in Garments of Darkness (5650), so precise and spawn markers use the gear on both maps. The world-map friendly-unit fallback changes only targets still classified as `kill`; it cannot overwrite explicit interaction icons.
 
 Server completion import (0.1.41): the Completed quests page sends `.queststatus` to the GUILD channel, listens for `CHAT_MSG_ADDON` messages with prefix `TWQUEST`, and collects returned numeric quest IDs for three seconds, matching pfQuest-octo patchtable.lua. It imports only IDs present in QuestlineDB, preserves every existing completion source, labels newly imported records Imported, then invalidates availability and refreshes map questgivers. The import link sits beside the Completed quests heading; the Options section returns to 300 pixels tall. While a request is active, the link is disabled and dimmed. When replies finish, the completion list updates and the link returns to blue without a separate Done state. Chat reports only newly added completion records; if there are none, it says completed quests are up to date. Missing API or no response does not alter history. This server-specific request works without pfQuest installed and is user-triggered; it is not run automatically.
 

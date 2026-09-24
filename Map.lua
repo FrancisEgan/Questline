@@ -319,7 +319,7 @@ function Q:RefreshMap()
       if not pointKeys[key] then
         pointKeys[key]=true;count=count+1
         local icon=target.icon
-        if target.kind=="unit" and target.faction and UnitFactionGroup then
+        if icon=="kill" and target.kind=="unit" and target.faction and UnitFactionGroup then
           local faction=UnitFactionGroup("player")=="Horde" and "H" or "A"
           if string.find(target.faction,faction,1,true) then icon="talk" end
         end
