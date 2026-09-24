@@ -2,7 +2,9 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.46**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.47**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Predicted availability corrections (0.1.47): quest 4641, Your Place In The World, is retained for quest-log/history resolution but has no predicted starter because Octo uses the starterless replacement quest 787, The New Horde. Cutting Teeth continues to accept either predecessor in the imported chain. Quests whose source title begins with `[DEPRECATED]` remain resolvable if observed live but are never predicted as available, preventing stale questgiver records from creating map pins.
 
 Objective action corrections (0.1.46): normalized quest objectives may carry an optional `icon` override which the compiler preserves. The classic priest Garments quests mark their heal-and-fortify unit as `interact`, including Deathguard Kel in Garments of Darkness (5650), so precise and spawn markers use the gear on both maps. The world-map friendly-unit fallback changes only targets still classified as `kill`; it cannot overwrite explicit interaction icons.
 

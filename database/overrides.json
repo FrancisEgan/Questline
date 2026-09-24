@@ -1,6 +1,9 @@
 {
   "comment": "Questline-owned corrections. Each table maps an ID to a recursive field patch; null deletes a record/field and arrays replace arrays. Run node Questline/tools/build.js afterwards. Import never overwrites this file.",
   "quests": {
+    "4641": {
+      "starters": []
+    },
     "5621": {
       "objectives": [
         {"kind": "unit", "id": 12429, "icon": "interact"}

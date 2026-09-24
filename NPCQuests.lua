@@ -185,7 +185,7 @@ end
 function Q:IsQuestAvailable(id)
   local data=DB.quests[id]
   local completed=QuestlineSettings.completedQuests or {}
-  if not data or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
+  if not data or data.deprecated or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
   if completed[id] and (not data.repeatable or QuestlineSettings.completionSources[id]=="Manual") then return false end
   for _,other in ipairs(data.blockedBy or {}) do if completed[other] or self.byKey[tostring(other)] then return false end end
   if getn(data.prerequisites or {})>0 then

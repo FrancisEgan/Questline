@@ -1166,7 +1166,6 @@ QuestlineDB.npcQuests["kal"]={["starters"]={5925},["finishers"]={}}
 QuestlineDB.npcQuests["kalanar brightshine"]={["starters"]={40326},["finishers"]={40326}}
 QuestlineDB.npcQuests["kalaran windblade"]={["starters"]={3441,3442,3443,3452,3453,3454,3462},["finishers"]={3441,3442,3443,3452,3453}}
 QuestlineDB.npcQuests["kali remik"]={["starters"]={8358},["finishers"]={8358}}
-QuestlineDB.npcQuests["kaltunk"]={["starters"]={4641},["finishers"]={}}
 QuestlineDB.npcQuests["kanati greycloud"]={["starters"]={4966},["finishers"]={4881,4966}}
 QuestlineDB.npcQuests["kandrostrasz"]={["starters"]={8559,8560,8593,8595,8596,8621,8624,8626,8629,8631,8634,8637,8640,8655,8658,8660,8663,8665,8668},["finishers"]={8559,8560,8593,8595,8596,8621,8624,8626,8629,8631,8634,8637,8640,8655,8658,8660,8663,8665,8668}}
 QuestlineDB.npcQuests["kaplak"]={["starters"]={1859,2380},["finishers"]={}}

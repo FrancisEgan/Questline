@@ -81,6 +81,7 @@ for(const [id,q] of Object.entries(db.quests)) {
   runtimeQuests[id]={title:q.title,level:q.level,minLevel:q.minLevel,raceMask:q.raceMask,classMask:q.classMask,summary:q.summary,description:q.description,objectives,finishers,
     prerequisites:q.prerequisites,blockedBy:blockedBy[id]||[],skill:q.attributes.skill ? (db.reference.professions[q.attributes.skill]||'Unknown profession') : undefined,
     event:q.attributes.event,repeatable:q.attributes.repeatable ? true : undefined};
+  if(/^\[deprecated\]/i.test(q.title)) runtimeQuests[id].deprecated=true;
   for(const t of [...objectives,...finishers]) for(const zone of Object.keys(locations[t.key])) {
     if(!zoneIndex[zone]) zoneIndex[zone]=new Set();zoneIndex[zone].add(Number(id));
   }

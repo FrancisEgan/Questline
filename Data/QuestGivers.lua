@@ -1030,7 +1030,6 @@ QuestlineDB.givers[9999]={["name"]="Ringo",["quests"]={4491},["coordinates"]={{5
 QuestlineDB.givers[10079]={["name"]="Brave Moonhorn",["quests"]={4542},["coordinates"]={{44.2,92.2,17},{32.2,22.2,400}}}
 QuestlineDB.givers[10118]={["name"]="Nessa Shadowsong",["quests"]={6341,40369},["coordinates"]={{56.3,92.4,141}}}
 QuestlineDB.givers[10136]={["name"]="Chemist Fuely",["quests"]={4293,4294,4642},["coordinates"]={{72.2,9.2,130},{47.5,73.3,1497}}}
-QuestlineDB.givers[10176]={["name"]="Kaltunk",["quests"]={4641},["coordinates"]={{43.3,68.5,14}}}
 QuestlineDB.givers[10181]={["name"]="Lady Sylvanas Windrunner",["quests"]={5961,80728},["coordinates"]={{74.6,13.4,130},{58.1,91.8,1497}}}
 QuestlineDB.givers[10182]={["name"]="Rexxar",["quests"]={6568,6602},["coordinates"]={{53.4,6.8,405},{35.1,79.6,406}}}
 QuestlineDB.givers[10216]={["name"]="Gubber Blump",["quests"]={1138,1141},["coordinates"]={{36.1,44.9,148}}}
