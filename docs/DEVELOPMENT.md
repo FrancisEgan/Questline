@@ -2,7 +2,11 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.53**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.55**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Clustered tooltip colors (0.1.55): available and complete quest rows use the same tracker-gold base color. Their bracketed level numbers retain the standard difficulty color.
+
+Clustered quest NPC tooltips (0.1.54): world-map NPC markers use the same combined availability and completed-turn-in entries as minimap markers. A nearby marker cluster produces one tooltip with `Available` and `Complete` headers and deduplicated, level-formatted quest titles beneath them. An NPC with both states displays a question mark. Standalone completed-quest map pins are omitted so turn-ins are represented once at their exact NPC coordinate; the selected turn-in retains the highest marker level and blue glow.
 
 World-map turn-ins (0.1.53): completed-quest question marks stay at their exact finisher coordinates. They no longer enter the numbered-marker collision fan, which could move a busy-hub turn-in far away from its NPC while the minimap remained correct. Turn-ins at the same NPC stack at that shared coordinate, and the selected quest receives the highest frame level so its blue glow remains visible.
 

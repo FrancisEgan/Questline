@@ -1,6 +1,7 @@
 local Q,DB=Questline,QuestlineDB
 local getn,insert=table.getn,table.insert
 local iconSize,hoverRadius=14,22
+local texturePath="Interface\\AddOns\\Questline\\Textures\\"
 local outside={[0]=466.6667,400,333.3333,266.6667,200,133.3333}
 local inside={[0]=300,240,180,120,80,50}
 
@@ -76,16 +77,25 @@ function Q:ShowGiverTooltip(pin,minimap)
   if getn(nearby)==1 then
     tip:SetText(pin.giver.name,1,.82,.32)
   else tip:SetText("Quests",1,.82,.32) end
+  local available,complete,seenAvailable,seenComplete={},{},{},{}
   for _,giver in ipairs(nearby) do
-    if getn(nearby)>1 then tip:AddLine(giver.name,1,.82,.32) end
-    if getn(giver.turnins or {})>0 then
-      tip:AddLine("Ready for turn-in",.8,.85,.9)
-      for _,quest in ipairs(giver.turnins) do tip:AddLine("  "..self:QuestTitle(quest),1,.85,.4,true) end
+    for _,quest in ipairs(giver.quests or {}) do
+      local key=quest.key or quest.id or quest.title
+      if not seenAvailable[key] then seenAvailable[key]=true;insert(available,quest) end
     end
-    if getn(giver.quests)>0 then
-      tip:AddLine("Available",.8,.85,.9)
-      for _,quest in ipairs(giver.quests) do tip:AddLine("  "..self:QuestTitle(quest),.9,.88,.8,true) end
+    for _,quest in ipairs(giver.turnins or {}) do
+      local key=quest.key or quest.id or quest.title
+      if not seenComplete[key] then seenComplete[key]=true;insert(complete,quest) end
     end
+  end
+  self:SortQuests(available);self:SortQuests(complete)
+  if getn(available)>0 then
+    tip:AddLine("Available",.8,.85,.9)
+    for _,quest in ipairs(available) do tip:AddLine("  "..self:QuestTitle(quest),1,.85,.4,true) end
+  end
+  if getn(complete)>0 then
+    tip:AddLine("Complete",.8,.85,.9)
+    for _,quest in ipairs(complete) do tip:AddLine("  "..self:QuestTitle(quest),1,.85,.4,true) end
   end
   tip:Show()
 end
@@ -98,6 +108,7 @@ function Q:GetGiverPin(index,minimap)
     pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
     pin.texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
     if not minimap then
+      pin.glow=pin:CreateTexture(nil,"BACKGROUND");pin.glow:SetPoint("CENTER",pin,"CENTER",0,0);pin.glow:SetTexture(texturePath.."turnin-glow");pin.glow:Hide()
       pin:RegisterForClicks("RightButtonUp")
       pin:SetScript("OnClick",function() if arg1=="RightButton" then Q:ShowCompletionMenu(this,false) end end)
     end
@@ -110,7 +121,7 @@ end
 function Q:RefreshGiverMap()
   if not self.pinLayer or not WorldMapFrame:IsVisible() then hide(self.mapGivers);self.giverMapLayout=nil;return end
   local zone=self:GetMapZone()
-  local entries=self:GetAvailableGivers(zone)
+  local entries=self:GetMinimapQuestNPCs(zone)
   local width,height=WorldMapButton:GetWidth(),WorldMapButton:GetHeight()
   local scale=WorldMapFrame:GetEffectiveScale()/WorldMapButton:GetEffectiveScale()
   local key=tostring(zone)..":"..width..":"..height..":"..scale
@@ -121,6 +132,12 @@ function Q:RefreshGiverMap()
     count=count+1
     local pin=self:GetGiverPin(count,false);pin.giver=giver
     pin:SetWidth(iconSize*scale);pin:SetHeight(iconSize*scale)
+    local hasTurnin=getn(giver.turnins or {})>0
+    pin.texture:SetTexture("Interface\\GossipFrame\\"..(hasTurnin and "ActiveQuestIcon" or "AvailableQuestIcon"))
+    local selected=false
+    for _,quest in ipairs(giver.turnins or {}) do if self:IsSelected(quest.key) then selected=true;break end end
+    if selected then pin.glow:SetWidth(26*scale);pin.glow:SetHeight(26*scale);pin.glow:Show() else pin.glow:Hide() end
+    pin:SetFrameLevel(self.pinLayer:GetFrameLevel()+(selected and 6 or 3))
     pin.giverX=giver.points[1][1]/100*width;pin.giverY=-giver.points[1][2]/100*height
     -- One marker per NPC in the zone, even if it has several quests/spawns.
     self:PlacePin(pin,giver.points[1],width,height)

@@ -266,7 +266,7 @@ function Q:RefreshMap()
   end end
   self:DrawAreas(targets,zone,width,height)
   local markerCount=0;local used={}
-  for _,entry in ipairs(self.quests) do
+  for _,entry in ipairs(self.quests) do if not entry.complete then
     local selected=self:IsSelected(entry.key)
     local anchor
     for _,target in ipairs(self:Targets(entry)) do
@@ -313,7 +313,7 @@ function Q:RefreshMap()
         end end
       table.insert(used,{x,y});self:PlacePin(pin,{x/width*100,y/height*100},width,height)
     end
-  end
+  end end
   local count=0;local pointKeys={}
   for _,selected in ipairs(selectedEntries) do if not selected.complete then for _,target in ipairs(self:Targets(selected)) do
     local location=DB.locations[target.key] and DB.locations[target.key][zone]
@@ -334,11 +334,11 @@ function Q:RefreshMap()
       end
     end end
   end end end
-  -- Badges share the pin layer with objective icons: areas are behind both,
-  -- objective icons sit above badges, and turn-in icons remain above all.
+  -- Badges share the pin layer with objective icons: areas are behind both and
+  -- objective icons sit above badges. QuestGivers.lua owns clustered turn-ins.
   for i=1,markerCount do
     local pin=self.mapPins[i]
-    pin:SetFrameLevel(pin.entry.complete and (self:IsSelected(pin.entry.key) and base+14 or base+13) or base+9)
+    pin:SetFrameLevel(base+9)
   end
   for _,pin in ipairs(self.mapSpawns or {}) do pin:SetFrameLevel(base+12) end
 end
