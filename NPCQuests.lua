@@ -97,9 +97,14 @@ function Q:BeginServerQuestHistoryImport()
     query:SetScript("OnEvent",function()
       if arg1~="TWQUEST" or not query.active then return end
       query.received=true
-      for token in string.gmatch(arg2 or "","%d+") do
+      local message=arg2 or ""
+      local position=1
+      while true do
+        local first,last,token=string.find(message,"(%d+)",position)
+        if not first then break end
         local id=tonumber(token)
         if id and DB.quests[id] then query.ids[id]=true end
+        position=last+1
       end
     end)
     query:SetScript("OnUpdate",function()

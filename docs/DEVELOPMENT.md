@@ -2,7 +2,9 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.47**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.48**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Vanilla compatibility (0.1.48): the server completion response parser walks numeric IDs with the Lua 5.0 `string.find` API. It does not use `string.gmatch`, which is absent from the game client.
 
 Predicted availability corrections (0.1.47): quest 4641, Your Place In The World, is retained for quest-log/history resolution but has no predicted starter because Octo uses the starterless replacement quest 787, The New Horde. Cutting Teeth continues to accept either predecessor in the imported chain. Quests whose source title begins with `[DEPRECATED]` remain resolvable if observed live but are never predicted as available, preventing stale questgiver records from creating map pins.
 
