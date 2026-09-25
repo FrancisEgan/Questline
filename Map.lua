@@ -300,14 +300,17 @@ function Q:RefreshMap()
         end
       end
       local originalX,originalY=x,y
-      for attempt=0,60 do
-        local overlaps=false
-        for _,p in ipairs(used) do if (x-p[1])*(x-p[1])+(y-p[2])*(y-p[2])<625*inverseScale*inverseScale then overlaps=true;break end end
-        if not overlaps then break end
-        local angle=attempt*2.4;local radius=(28+math.floor(attempt/7)*15)*inverseScale
-        x=math.max(13*inverseScale,math.min(width-13*inverseScale,originalX+math.cos(angle)*radius))
-        y=math.max(13*inverseScale,math.min(height-13*inverseScale,originalY+math.sin(angle)*radius))
-      end
+      -- A turn-in marker is a destination, so moving it to avoid nearby pins
+      -- makes the map give the wrong location. Stacked turn-ins share the exact
+      -- NPC coordinate; only numbered objective selectors fan out.
+      if not entry.complete then for attempt=0,60 do
+          local overlaps=false
+          for _,p in ipairs(used) do if (x-p[1])*(x-p[1])+(y-p[2])*(y-p[2])<625*inverseScale*inverseScale then overlaps=true;break end end
+          if not overlaps then break end
+          local angle=attempt*2.4;local radius=(28+math.floor(attempt/7)*15)*inverseScale
+          x=math.max(13*inverseScale,math.min(width-13*inverseScale,originalX+math.cos(angle)*radius))
+          y=math.max(13*inverseScale,math.min(height-13*inverseScale,originalY+math.sin(angle)*radius))
+        end end
       table.insert(used,{x,y});self:PlacePin(pin,{x/width*100,y/height*100},width,height)
     end
   end
@@ -335,7 +338,7 @@ function Q:RefreshMap()
   -- objective icons sit above badges, and turn-in icons remain above all.
   for i=1,markerCount do
     local pin=self.mapPins[i]
-    pin:SetFrameLevel(pin.entry.complete and base+13 or base+9)
+    pin:SetFrameLevel(pin.entry.complete and (self:IsSelected(pin.entry.key) and base+14 or base+13) or base+9)
   end
   for _,pin in ipairs(self.mapSpawns or {}) do pin:SetFrameLevel(base+12) end
 end

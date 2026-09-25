@@ -2,7 +2,9 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.52**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.53**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+World-map turn-ins (0.1.53): completed-quest question marks stay at their exact finisher coordinates. They no longer enter the numbered-marker collision fan, which could move a busy-hub turn-in far away from its NPC while the minimap remained correct. Turn-ins at the same NPC stack at that shared coordinate, and the selected quest receives the highest frame level so its blue glow remains visible.
 
 Contradictory completion repair (0.1.52): when a non-repeatable quest is present in the live quest log, Questline removes any local completion record and its provenance for that same ID. Live server state overrides legacy, imported, server-query, automatic, and manual records. The repair persists after the quest is abandoned or removed, so stale history cannot resume unlocking its successor.
 
