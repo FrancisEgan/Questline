@@ -9,7 +9,7 @@ function Q:ImportCompletedQuests()
   local added=0
   for id,done in pairs(pfQuest_history or {}) do
     id=tonumber(id)
-    if id and done and done~=0 and not history[id] then history[id]=true;QuestlineSettings.completionSources[id]="Imported";added=added+1 end
+    if id and done and done~=0 and not history[id] then history[id]=true;QuestlineSettings.completionSources[id]="Legacy";added=added+1 end
   end
   QuestlineSettings.importedQuestHistory=true
   return added
@@ -28,8 +28,9 @@ function Q:UpdateNPCQuestState()
   for _,entry in ipairs(self.quests) do
     insert(keys,entry.key)
     if entry.id and entry.data and not entry.data.repeatable and QuestlineSettings.completedQuests and
-      QuestlineSettings.completedQuests[entry.id] and not QuestlineSettings.completionSources[entry.id] then
+      QuestlineSettings.completedQuests[entry.id] then
       QuestlineSettings.completedQuests[entry.id]=nil
+      QuestlineSettings.completionSources[entry.id]=nil
       repaired=true
     end
     if entry.id then self.recentQuests[entry.id]={title=self:Normalize(entry.title),time=GetTime()} end
@@ -134,9 +135,9 @@ function Q:FinishServerQuestHistoryImport()
     for id in pairs(query.ids) do
       if not QuestlineSettings.completedQuests[id] then
         QuestlineSettings.completedQuests[id]=true
-        QuestlineSettings.completionSources[id]="Imported"
         added=added+1
       end
+      QuestlineSettings.completionSources[id]="Server"
     end
     self:InvalidateQuestAvailability()
     self:RefreshQuestGivers()
@@ -184,7 +185,7 @@ function Q:ObserveNPCOffers(gossip)
   elseif not gossip and GetNumAvailableQuests and GetAvailableTitle then
     for index=1,GetNumAvailableQuests() do insert(offers,{title=GetAvailableTitle(index),level=GetAvailableLevel and GetAvailableLevel(index)}) end
   else return end
-  self.npcOffers[self:Normalize(name)]={quests=offers,time=GetTime()}
+  self.npcOffers[self:Normalize(name)]={quests=offers}
   self:InvalidateQuestAvailability()
 end
 function Q:IsQuestAvailable(id)
@@ -195,7 +196,13 @@ function Q:IsQuestAvailable(id)
   for _,other in ipairs(data.blockedBy or {}) do if completed[other] or self.byKey[tostring(other)] then return false end end
   if getn(data.prerequisites or {})>0 then
     local unlocked=false
-    for _,previous in ipairs(data.prerequisites) do if completed[previous] then unlocked=true;break end end
+    for _,previous in ipairs(data.prerequisites) do
+      -- Live quest-log state is stronger evidence than stale/imported history:
+      -- a predecessor still being worked on has not unlocked its successor.
+      local source=QuestlineSettings.completionSources[previous]
+      local trusted=source=="Automatic" or source=="Manual" or source=="Server"
+      if completed[previous] and trusted and not self.byKey[tostring(previous)] then unlocked=true;break end
+    end
     if not unlocked then return false end
   end
   -- Holiday availability needs an actual offer from the NPC, not a calendar guess.
@@ -212,12 +219,13 @@ function Q:IsQuestAvailable(id)
   end
   return true
 end
--- Shared by NPC tooltips and both maps. Recently observed server offers take
--- precedence over database predictions, including an explicitly empty list.
+-- Shared by NPC tooltips and both maps. Observed server offers take precedence
+-- over database predictions, including an explicitly empty list, until a
+-- quest-log, level, or skill change invalidates the session cache.
 function Q:GetAvailableNPCQuests(name,ids)
   local available={}
   local offer=self.npcOffers and self.npcOffers[self:Normalize(name)]
-  if offer and GetTime()-offer.time<=60 then
+  if offer then
     for _,q in ipairs(offer.quests) do
       local found,count,known=nil,0,false
       for _,id in ipairs(ids or {}) do
@@ -289,7 +297,6 @@ function Q:GetNPCSections(name)
   local key=self:Normalize(name)
   local profile=DB.npcQuests[key]
   local offer=self.npcOffers and self.npcOffers[key]
-  if offer and GetTime()-offer.time>60 then offer=nil end
   local available,progress,complete={},{},{}
   local used,hasTalk={},false
   for _,entry in ipairs(self.quests) do
