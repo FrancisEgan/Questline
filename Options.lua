@@ -14,6 +14,31 @@ local function button(parent,text,x,y,width,action)
   Q:StyleTextLink(b)
   return b
 end
+local function nativeButton(parent,text,x,y,width,action)
+  local b=CreateFrame("Button",nil,parent,"OptionsButtonTemplate")
+  b:SetWidth(width);b:SetHeight(22);b:SetPoint("TOPLEFT",parent,"TOPLEFT",x,y);b:SetText(text)
+  b:SetScript("OnClick",action)
+  return b
+end
+local function checkbox(parent,name,text,description,x,y,action,labelWidth)
+  local c=CreateFrame("CheckButton",name,parent,"OptionsCheckButtonTemplate")
+  c:SetWidth(24);c:SetHeight(24);c:SetPoint("TOPLEFT",parent,"TOPLEFT",x,y)
+  c.label=label(parent,text,x+30,y-3,labelWidth or 390);c.label:SetTextColor(1,.82,.32)
+  if description then
+    c.description=label(parent,description,x+30,y-23,390);c.description:SetTextColor(.72,.72,.68)
+  end
+  c:SetScript("OnClick",action)
+  return c
+end
+local function navigation(parent,text,y,section)
+  local b=CreateFrame("Button",nil,parent)
+  b:SetWidth(142);b:SetHeight(32);b:SetPoint("TOPLEFT",parent,"TOPLEFT",8,y)
+  b.text=label(b,text,14,-8,120);b.text:SetTextColor(.9,.88,.8)
+  b.selected=b:CreateTexture(nil,"BACKGROUND");b.selected:SetAllPoints(b);b.selected:SetTexture(.35,.27,.06,.75);b.selected:Hide()
+  b.highlight=b:CreateTexture(nil,"HIGHLIGHT");b.highlight:SetAllPoints(b);b.highlight:SetTexture(.25,.22,.12,.45)
+  b.section=section;b:SetScript("OnClick",function() Q:ShowOptionsSection(this.section) end)
+  return b
+end
 local function window(name,parent,title,width,height)
   local f=CreateFrame("Frame",name,parent)
   f:SetWidth(width);f:SetHeight(height);f:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -61,15 +86,14 @@ function Q:RefreshOptions()
   local list=self:GetCompletionList(f.search:GetText(),f.manualOnly)
   f.pages=math.max(1,math.ceil(table.getn(list)/12));f.page=math.max(1,math.min(f.page,f.pages))
   f.count:SetText(table.getn(list).." records  -  Page "..f.page.." / "..f.pages)
-  f.filter.text:SetText(f.manualOnly and "Show all" or "Show manually skipped")
-  f.tracker.text:SetText(QuestlineSettings.tracker and "Hide tracker" or "Show tracker")
-  f.mapTracker.text:SetText(QuestlineSettings.mapTracker~=false and "Hide map tracker" or "Show map tracker")
-  f.spawns.text:SetText(QuestlineSettings.worldMapSpawns==true and "Hide world-map spawn markers" or "Show world-map spawn markers")
-  f.transparent.text:SetText(QuestlineSettings.transparentTracker and "Use bordered HUD tracker" or "Use transparent HUD tracker")
+  f.filter:SetChecked(f.manualOnly and true or false)
+  f.tracker:SetChecked(QuestlineSettings.tracker and true or false)
+  f.mapTracker:SetChecked(QuestlineSettings.mapTracker~=false)
+  f.spawns:SetChecked(QuestlineSettings.worldMapSpawns==true)
+  f.transparent:SetChecked(QuestlineSettings.transparentTracker==true)
   local importing=self.serverQuestHistoryQuery and self.serverQuestHistoryQuery.active
   f.serverImport:EnableMouse(not importing)
-  f.serverImport.text:SetTextColor(importing and .6 or .55,importing and .65 or .8,importing and .7 or 1)
-  if importing then f.serverImport.text:SetShadowColor(0,0,0,0) end
+  f.serverImport:SetAlpha(importing and .5 or 1)
   if f.section~="completed" then return end
   if table.getn(list)==0 then f.historyEmpty:Show() else f.historyEmpty:Hide() end
   for i=1,12 do
@@ -84,56 +108,63 @@ end
 function Q:ToggleOptions()
   if self.optionsPanel and self.optionsPanel:IsShown() then self.optionsPanel:Hide();return end
   if not self.optionsPanel then
-    local f=window("QuestlineOptions",UIParent,"Questline",550,510);self.optionsPanel=f
+    local f=window("QuestlineOptions",UIParent,"Questline Options",720,520);self.optionsPanel=f
     f:SetPoint("CENTER",UIParent,"CENTER",0,0)
-    f.home=CreateFrame("Frame",nil,f);f.home:SetAllPoints(f)
-    label(f.home,"Your questing companion",18,-55,490)
-    f.completedLink=button(f.home,"Completed quests",18,-98,230,function() Q:ShowOptionsSection("completed") end)
-    f.optionsLink=button(f.home,"Options",18,-138,230,function() Q:ShowOptionsSection("options") end)
-    f.settings=CreateFrame("Frame",nil,f);f.settings:SetAllPoints(f)
-    button(f.settings,"< Home",18,-46,120,function() Q:ShowOptionsSection("home") end)
-    f.tracker=button(f.settings,"",18,-80,230,function() Q:Command(QuestlineSettings.tracker and "tracker off" or "tracker on");Q:RefreshOptions() end)
-    f.mapTracker=button(f.settings,"",18,-115,260,function() Q:Command(QuestlineSettings.mapTracker~=false and "maptracker off" or "maptracker on");Q:RefreshOptions() end)
-    f.spawns=button(f.settings,"",18,-150,320,function()
+    f.title:ClearAllPoints();f.title:SetPoint("TOP",f,"TOP",0,-14);f.title:SetWidth(660);f.title:SetJustifyH("CENTER")
+    f.sidebar=CreateFrame("Frame",nil,f);f.sidebar:SetWidth(160);f.sidebar:SetHeight(458);f.sidebar:SetPoint("TOPLEFT",f,"TOPLEFT",14,-46)
+    f.sidebar:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
+    f.sidebar:SetBackdropColor(.035,.035,.03,.96);f.sidebar:SetBackdropBorderColor(.42,.39,.30,.9)
+    f.navigation={
+      navigation(f.sidebar,"General",-10,"general"),
+      navigation(f.sidebar,"Appearance",-46,"appearance"),
+      navigation(f.sidebar,"Completed Quests",-82,"completed")
+    }
+    f.content=CreateFrame("Frame",nil,f);f.content:SetWidth(524);f.content:SetHeight(458);f.content:SetPoint("TOPLEFT",f,"TOPLEFT",182,-46)
+    f.content:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
+    f.content:SetBackdropColor(.018,.018,.015,.82);f.content:SetBackdropBorderColor(.42,.39,.30,.9)
+    f.general=CreateFrame("Frame",nil,f.content);f.general:SetAllPoints(f.content)
+    label(f.general,"General",18,-18,300):SetTextColor(1,.82,.32)
+    f.tracker=checkbox(f.general,"QuestlineShowTracker","Show quest tracker","Display the main quest tracker on the HUD.",18,-54,function()
+      Q:Command(QuestlineSettings.tracker and "tracker off" or "tracker on");Q:RefreshOptions()
+    end)
+    f.mapTracker=checkbox(f.general,"QuestlineShowMapTracker","Show tracker on world map","Display the quest list alongside the world map.",18,-112,function()
+      Q:Command(QuestlineSettings.mapTracker~=false and "maptracker off" or "maptracker on");Q:RefreshOptions()
+    end)
+    f.spawns=checkbox(f.general,"QuestlineShowWorldMapSpawns","Show precise spawn markers","Show bag, sword, and gear markers for highlighted quests on the world map.",18,-170,function()
       QuestlineSettings.worldMapSpawns=not QuestlineSettings.worldMapSpawns
       Q.mapDirty=true;Q:RefreshMap();Q:RefreshOptions()
     end)
-    f.appearanceHeading=label(f.settings,"Appearance",18,-198,200);f.appearanceHeading:SetTextColor(1,.82,.32)
-    f.transparent=button(f.settings,"",18,-228,260,function()
+    nativeButton(f.general,"Reset Tracker Layout",48,-248,180,function() Q:Command("reset") end)
+    f.appearance=CreateFrame("Frame",nil,f.content);f.appearance:SetAllPoints(f.content)
+    label(f.appearance,"Appearance",18,-18,300):SetTextColor(1,.82,.32)
+    f.transparent=checkbox(f.appearance,"QuestlineTransparentTracker","Transparent HUD tracker","Remove the HUD tracker's background and border. The world-map tracker remains bordered for readability.",18,-54,function()
       QuestlineSettings.transparentTracker=not QuestlineSettings.transparentTracker
       Q:ApplyTrackerAppearance();Q:RefreshTrackers();Q:RefreshOptions()
     end)
-    button(f.settings,"Reset tracker layout",18,-273,230,function() Q:Command("reset") end)
-    button(f.settings,"Show addon status in chat",18,-308,300,function() Q:Command("status") end)
-    f.history=CreateFrame("Frame",nil,f);f.history:SetAllPoints(f)
+    f.history=CreateFrame("Frame",nil,f.content);f.history:SetAllPoints(f.content)
     local h=f.history
-    button(h,"< Home",18,-46,120,function() Q:ShowOptionsSection("home") end)
-    label(h,"Completed quests",18,-83,220)
-    f.serverImport=button(h,"Import completed quests from server",260,-83,270,function() Q:BeginServerQuestHistoryImport() end)
-    f.serverImport.text:SetJustifyH("RIGHT")
-    label(h,"Search title / ID:",18,-112,125)
-    f.search=CreateFrame("EditBox",nil,h);f.search:SetWidth(200);f.search:SetHeight(24)
-    f.search:SetPoint("TOPLEFT",f,"TOPLEFT",145,-107);f.search:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",12,"")
+    label(h,"Completed Quests",18,-18,220):SetTextColor(1,.82,.32)
+    f.serverImport=nativeButton(h,"Import from Server",336,-14,170,function() Q:BeginServerQuestHistoryImport() end)
+    label(h,"Search title / ID:",18,-58,100)
+    f.search=CreateFrame("EditBox",nil,h);f.search:SetWidth(190);f.search:SetHeight(24)
+    f.search:SetPoint("TOPLEFT",h,"TOPLEFT",120,-53);f.search:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",12,"")
     f.search:SetAutoFocus(false);f.search:SetMaxLetters(100)
     f.search:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=8,insets={left=3,right=3,top=3,bottom=3}})
     f.search:SetBackdropColor(.1,.13,.16,1)
     f.search:SetScript("OnTextChanged",function() f.page=1;Q:RefreshOptions() end)
     f.search:SetScript("OnEscapePressed",function() this:ClearFocus() end)
-    f.filter=button(h,"",360,-112,170,function() f.manualOnly=not f.manualOnly;f.page=1;Q:RefreshOptions() end)
-    f.filter:ClearAllPoints();f.filter:SetPoint("TOPRIGHT",h,"TOPRIGHT",-18,-112);f.filter.text:SetJustifyH("RIGHT")
-    f.historyEmpty=label(h,"No entries to show",18,-260,514)
+    f.filter=checkbox(h,"QuestlineManualCompletions","Manually skipped only",nil,330,-53,function() f.manualOnly=not f.manualOnly;f.page=1;Q:RefreshOptions() end,146)
+    f.historyEmpty=label(h,"No entries to show",18,-225,488)
     f.historyEmpty:SetJustifyH("CENTER");f.historyEmpty:SetTextColor(.62,.66,.72)
     f.historyEmpty:Hide()
     for i=1,12 do
-      local row=CreateFrame("Frame",nil,h);row:SetWidth(514);row:SetHeight(22);row:SetPoint("TOPLEFT",f,"TOPLEFT",18,-144-(i-1)*23)
+      local row=CreateFrame("Frame",nil,h);row:SetWidth(488);row:SetHeight(22);row:SetPoint("TOPLEFT",h,"TOPLEFT",18,-94-(i-1)*25)
       row.hover=row:CreateTexture(nil,"BACKGROUND");row.hover:SetAllPoints(row);row.hover:SetTexture(.08,.3,.5,.5);row.hover:Hide()
-      row.title=label(row,"",4,-3,395);row.title:SetHeight(18);row.title:SetTextColor(1,.82,.32)
-      row.restore=button(row,"Restore",420,0,85,function() Q:RestoreCompletedQuest(this:GetParent().id) end)
+      row.title=label(row,"",4,-3,380);row.title:SetHeight(18);row.title:SetTextColor(1,.82,.32)
+      row.restore=nativeButton(row,"Restore",402,0,82,function() Q:RestoreCompletedQuest(this:GetParent().id) end)
       row.restore:ClearAllPoints();row.restore:SetPoint("TOPRIGHT",row,"TOPRIGHT",0,0);row.restore:SetHeight(22)
-      row.restore.text:SetHeight(22);row.restore.text:SetJustifyH("RIGHT");row.restore.text:SetJustifyV("MIDDLE")
-      local enter,leave=row.restore:GetScript("OnEnter"),row.restore:GetScript("OnLeave")
-      row.restore:SetScript("OnEnter",function() this:GetParent().hover:Show();if enter then enter() end end)
-      row.restore:SetScript("OnLeave",function() this:GetParent().hover:Hide();if leave then leave() end end)
+      row.restore:SetScript("OnEnter",function() this:GetParent().hover:Show() end)
+      row.restore:SetScript("OnLeave",function() this:GetParent().hover:Hide() end)
       row:EnableMouse(true)
       row:SetScript("OnEnter",function()
         if not this.id then return end
@@ -144,24 +175,27 @@ function Q:ToggleOptions()
       row:SetScript("OnLeave",function() this.hover:Hide();GameTooltip:Hide() end)
       f.rows[i]=row
     end
-    f.count=label(h,"",115,-459,330)
+    f.count=label(h,"",100,-430,324)
     f.count:ClearAllPoints();f.count:SetPoint("BOTTOM",h,"BOTTOM",0,34);f.count:SetHeight(12);f.count:SetJustifyH("CENTER")
-    f.previous=button(h,"<",18,-459,35,function() f.page=math.max(1,f.page-1);Q:RefreshOptions() end)
-    f.next=button(h,">",497,-459,35,function() f.page=math.min(f.pages,f.page+1);Q:RefreshOptions() end)
+    f.previous=nativeButton(h,"<",18,-430,32,function() f.page=math.max(1,f.page-1);Q:RefreshOptions() end)
+    f.next=nativeButton(h,">",474,-430,32,function() f.page=math.min(f.pages,f.page+1);Q:RefreshOptions() end)
     f.previous:ClearAllPoints();f.previous:SetPoint("LEFT",h,"BOTTOMLEFT",18,40)
     f.next:ClearAllPoints();f.next:SetPoint("RIGHT",h,"BOTTOMRIGHT",-18,40)
-    f.previous.text:ClearAllPoints();f.previous.text:SetAllPoints(f.previous);f.previous.text:SetJustifyV("MIDDLE")
-    f.next.text:ClearAllPoints();f.next.text:SetAllPoints(f.next);f.next.text:SetJustifyV("MIDDLE");f.next.text:SetJustifyH("RIGHT")
     h:EnableMouseWheel(true);h:SetScript("OnMouseWheel",function() f.page=math.max(1,math.min(f.pages,f.page-(arg1 or 0)));Q:RefreshOptions() end)
   end
-  self:ShowOptionsSection("home");self.optionsPanel:Show()
+  self:ShowOptionsSection(self.optionsPanel.section or "general");self.optionsPanel:Show()
 end
 function Q:ShowOptionsSection(section)
   local f=self.optionsPanel;f.section=section
-  f.home:Hide();f.settings:Hide();f.history:Hide();f.search:ClearFocus();GameTooltip:Hide()
-  if section=="completed" then f.history:Show();f:SetHeight(510);f.title:SetText("Questline - Completed quests")
-  elseif section=="options" then f.settings:Show();f:SetHeight(365);f.title:SetText("Questline - Options")
-  else f.home:Show();f:SetHeight(195);f.title:SetText("Questline") end
+  f.general:Hide();f.appearance:Hide();f.history:Hide();f.search:ClearFocus();GameTooltip:Hide()
+  if section=="completed" then f.history:Show()
+  elseif section=="appearance" then f.appearance:Show()
+  else section="general";f.section=section;f.general:Show() end
+  for _,item in ipairs(f.navigation) do
+    local selected=item.section==section
+    if selected then item.selected:Show();item.text:SetTextColor(1,.82,.32)
+    else item.selected:Hide();item.text:SetTextColor(.9,.88,.8) end
+  end
   self:RefreshOptions()
 end
 function Q:ShowCompletionMenu(pin,minimap)

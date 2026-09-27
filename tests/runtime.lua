@@ -44,6 +44,9 @@ function methods:SetMaxResize(w,h) self.maxResize={w,h} end
 function methods:StartSizing(point) self.sizing=point end
 function methods:SetWidth(v) self.width=v end
 function methods:SetHeight(v) self.height=v end
+function methods:SetAlpha(v) self.alpha=v end
+function methods:SetChecked(v) self.checked=v end
+function methods:GetChecked() return self.checked end
 function methods:GetWidth() return self.width or (self.allPoints and self.allPoints:GetWidth()) or 100 end
 function methods:GetHeight()
   if self.kind=="FontString" and not self.height then
@@ -249,12 +252,11 @@ local function completionHistoryTests(Q)
   expect(#Q:GetCompletionList("991001",true)==1 and #Q:GetCompletionList("history quest",false)==12,"history supports ID/title search and manual filtering")
   expect(Q:GetCompletionList("991013",false)[1].source=="Existing","old completion records keep unknown provenance rather than invented sources")
   Q:Command("");local f=Q.optionsPanel
-  expect(f.section=="home" and f.home:IsShown() and not f.history:IsShown() and not f.settings:IsShown(),"slash menu starts on clean home page")
-  expect(not f.mode,"main menu has no World/Zone control")
-  click(f.optionsLink)
-  expect(f.section=="options" and f.settings:IsShown() and not f.home:IsShown(),"options link opens separate settings page")
-  expect(f:GetHeight()==365 and f.serverImport:GetParent()==f.history,"import link belongs to completed quests and options includes appearance controls")
-  expect(f.appearanceHeading:GetText()=="Appearance" and string.find(f.transparent.text:GetText(),"transparent HUD",1,true),"options has an Appearance section with a transparent HUD tracker toggle")
+  expect(f.section=="general" and f.general:IsShown() and not f.history:IsShown() and not f.appearance:IsShown(),"slash menu opens the General sidebar section")
+  expect(#f.navigation==3 and f.navigation[1].text:GetText()=="General" and f.navigation[2].text:GetText()=="Appearance" and f.navigation[3].text:GetText()=="Completed Quests","options pane has persistent category navigation")
+  expect(f:GetWidth()==720 and f:GetHeight()==520 and f.serverImport:GetParent()==f.history,"options pane uses a fixed Blizzard-style two-column layout")
+  expect(f.tracker:GetChecked() and f.mapTracker:GetChecked() and not f.spawns:GetChecked(),"General feature states use checkboxes")
+  click(f.navigation[2]);expect(f.section=="appearance" and f.appearance:IsShown() and f.navigation[2].selected:IsShown(),"Appearance category opens and highlights its sidebar row")
   Q:Select(Q.tracker.rows[1].entry.key);click(f.transparent)
   expect(QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==0 and Q.tracker.backdropBorderColor[4]==0,"transparent mode removes the HUD tracker background and border")
   expect(Q.mapTracker.backdropColor[4]==.9 and Q.mapTracker.backdropBorderColor[4]==.85,"world-map tracker remains bordered in transparent HUD mode")
@@ -264,13 +266,17 @@ local function completionHistoryTests(Q)
   expect(not QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==.9 and Q.tracker.backdropBorderColor[4]==.85,"appearance toggle restores the bordered tracker style")
   local hud=QuestlineSettings.tracker
   expect(not f.legacy and f.mapTracker,"map tracker control replaces legacy pins in options")
+  click(f.navigation[1])
   click(f.mapTracker)
   expect(QuestlineSettings.mapTracker==false and not Q.mapTracker:IsShown() and QuestlineSettings.tracker==hud,"map tracker toggle leaves HUD preference unchanged")
   Q:RefreshTrackers();Q:Command("reset")
   expect(not Q.mapTracker:IsShown(),"refresh and layout reset preserve hidden map tracker")
   click(f.mapTracker)
   expect(QuestlineSettings.mapTracker and Q.mapTracker:IsShown(),"options can restore map tracker")
-  Q:ShowOptionsSection("home");click(f.completedLink)
+  click(f.navigation[3])
+  expect(f.section=="completed" and f.history:IsShown() and f.navigation[3].selected:IsShown(),"Completed Quests opens from the persistent sidebar")
+  expect(f.serverImport:GetWidth()==170 and f.serverImport.point[4]+f.serverImport:GetWidth()==506,"server import fits its label and remains aligned with Restore")
+  expect(f.filter.label.point[4]+f.filter.label:GetWidth()==506 and f.search.point[4]==120 and f.search:GetWidth()==190,"completed filter and compact search field share the available header width")
   QuestlineDB.quests[991014]={title="Imported test quest",level=1,minLevel=1,objectives={},prerequisites={},blockedBy={}}
   local oldSend,sends=SendChatMessage,0
   SendChatMessage=function(message,channel)
@@ -282,8 +288,8 @@ local function completionHistoryTests(Q)
   arg1="TWQUEST";arg2="991001 991014 999999";fire("CHAT_MSG_ADDON")
   now=now+3.1;this=Q.serverQuestHistoryQuery;Q.serverQuestHistoryQuery.scripts.OnUpdate()
   expect(QuestlineSettings.completedQuests[991014] and QuestlineSettings.completionSources[991014]=="Imported" and QuestlineSettings.completionSources[991001]=="Manual","server result imports known quests without replacing manual history")
-  expect(f.serverImport.mouseEnabled and f.serverImport.text.color[3]==1 and string.find(DEFAULT_CHAT_FRAME:GetText(),"1 quest marked as completed",1,true),"completed import restores the blue link and reports only newly added quests")
-  expect(#Q:GetCompletionList("Imported test quest",false)==1 and not string.find(f.serverImport.text:GetText(),"Done",1,true),"completed list updates with the import without a Done suffix")
+  expect(f.serverImport.mouseEnabled and f.serverImport.alpha==1 and string.find(DEFAULT_CHAT_FRAME:GetText(),"1 quest marked as completed",1,true),"completed import restores the native action button and reports only newly added quests")
+  expect(#Q:GetCompletionList("Imported test quest",false)==1 and f.serverImport:GetText()=="Import from Server","completed list updates without changing the import action label")
   click(f.serverImport);arg1="TWQUEST";arg2="991001 991014";fire("CHAT_MSG_ADDON")
   now=now+3.1;this=Q.serverQuestHistoryQuery;Q.serverQuestHistoryQuery.scripts.OnUpdate()
   expect(string.find(DEFAULT_CHAT_FRAME:GetText(),"Completed quests are up to date",1,true),"repeated server import reports no new completions")
