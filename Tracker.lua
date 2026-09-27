@@ -27,8 +27,8 @@ function Q:StyleTextLink(button)
   button:SetScript("OnLeave",function() paint(this,false);if leave then leave() end end)
   button:SetScript("OnHide",function() paint(this,false);if hide then hide() end end)
 end
-local function font(parent, size, red, green, blue)
-  local text = parent:CreateFontString(nil, "OVERLAY")
+local function font(parent, size, red, green, blue, layer)
+  local text = parent:CreateFontString(nil, layer or "OVERLAY")
   text:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF", size, "")
   text:SetTextColor(red or 0.9, green or 0.88, blue or 0.8)
   text:SetJustifyH("LEFT"); text:SetJustifyV("TOP")
@@ -111,6 +111,8 @@ local function makeRow(panel)
   local row=CreateFrame("Button",nil,panel)
   row:SetWidth(238)
   row.shade=row:CreateTexture(nil,"BACKGROUND");row.shade:SetAllPoints(row);row.shade:SetTexture(0.08,0.3,0.5,0.65)
+  row.glow=row:CreateTexture(nil,"BACKGROUND");row.glow:SetAllPoints(row)
+  row.glow:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight2");row.glow:SetVertexColor(.12,.52,1);row.glow:SetAlpha(.24);row.glow:SetBlendMode("ADD");row.glow:Hide()
   row.badge=Q:MakeBadge(row,23);row.badge:SetPoint("TOPLEFT",row,"TOPLEFT",1,0)
   row.title=font(row,12,1,0.82,0.32);row.title:SetPoint("TOPLEFT",row,"TOPLEFT",29,-3);row.title:SetWidth(205)
   row.detail=font(row,11);row.detail:SetPoint("TOPLEFT",row.title,"BOTTOMLEFT",0,-4);row.detail:SetWidth(203)
@@ -289,9 +291,9 @@ function Q:RenderTracker(panel,entries,zone,zoneName)
     self:PaintBadge(row.badge,entry,selected)
     local transparent=QuestlineSettings.transparentTracker==true and not panel.isMap
     if selected and not transparent then row.shade:Show() else row.shade:Hide() end
-    local shadow=selected and transparent
-    row.title:SetShadowColor(1,1,1,shadow and .55 or 0);row.title:SetShadowOffset(shadow and 1 or 0,shadow and -1 or 0)
-    row.detail:SetShadowColor(1,1,1,shadow and .4 or 0);row.detail:SetShadowOffset(shadow and 1 or 0,shadow and -1 or 0)
+    if selected and transparent then row.glow:Show() else row.glow:Hide() end
+    row.title:SetShadowColor(0,0,0,0);row.title:SetShadowOffset(0,0)
+    row.detail:SetShadowColor(0,0,0,0);row.detail:SetShadowOffset(0,0)
     row:Show();top=top+height+4
   end
   if getn(entries)==0 then

@@ -45,6 +45,7 @@ function methods:StartSizing(point) self.sizing=point end
 function methods:SetWidth(v) self.width=v end
 function methods:SetHeight(v) self.height=v end
 function methods:SetAlpha(v) self.alpha=v end
+function methods:SetVertexColor(...) self.vertexColor={...} end
 function methods:SetChecked(v) self.checked=v end
 function methods:GetChecked() return self.checked end
 function methods:GetWidth() return self.width or (self.allPoints and self.allPoints:GetWidth()) or 100 end
@@ -260,8 +261,8 @@ local function completionHistoryTests(Q)
   Q:Select(Q.tracker.rows[1].entry.key);click(f.transparent)
   expect(QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==0 and Q.tracker.backdropBorderColor[4]==0,"transparent mode removes the HUD tracker background and border")
   expect(Q.mapTracker.backdropColor[4]==.9 and Q.mapTracker.backdropBorderColor[4]==.85,"world-map tracker remains bordered in transparent HUD mode")
-  expect(not Q.tracker.rows[1].shade:IsShown() and Q.tracker.rows[1].title.shadowColor[4]>.5 and Q.tracker.rows[1].badge.glow:IsShown(),"transparent mode replaces selected-row fill with a light text shadow and keeps the selected badge")
-  expect(Q.mapTracker.rows[1].shade:IsShown() and Q.mapTracker.rows[1].title.shadowColor[4]==0,"world-map tracker retains its selected-row fill without the transparent HUD text shadow")
+  expect(not Q.tracker.rows[1].shade:IsShown() and Q.tracker.rows[1].glow:IsShown() and Q.tracker.rows[1].glow.alpha==.24 and Q.tracker.rows[1].badge.glow:IsShown(),"transparent mode gives the selected row a faint soft blue glow and keeps the selected badge")
+  expect(Q.mapTracker.rows[1].shade:IsShown() and not Q.mapTracker.rows[1].glow:IsShown(),"world-map tracker retains its selected-row fill without the transparent HUD glow")
   click(f.transparent)
   expect(not QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==.9 and Q.tracker.backdropBorderColor[4]==.85,"appearance toggle restores the bordered tracker style")
   local hud=QuestlineSettings.tracker
