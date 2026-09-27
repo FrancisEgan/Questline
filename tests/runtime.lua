@@ -277,7 +277,7 @@ local function completionHistoryTests(Q)
   click(f.navigation[3])
   expect(f.section=="completed" and f.history:IsShown() and f.navigation[3].selected:IsShown(),"Completed Quests opens from the persistent sidebar")
   expect(f.serverImport:GetWidth()==170 and f.serverImport.point[4]+f.serverImport:GetWidth()==506,"server import fits its label and remains aligned with Restore")
-  expect(f.filter.label.point[4]+f.filter.label:GetWidth()==506 and f.search.point[4]==120 and f.search:GetWidth()==190,"completed filter and compact search field share the available header width")
+  expect(f.filter.label.point[4]+f.filter.label:GetWidth()==506 and f.filter.label.point[5]==-59 and f.search.point[4]==120 and f.search:GetWidth()==190,"completed filter is vertically aligned and the compact search field shares the available header width")
   QuestlineDB.quests[991014]={title="Imported test quest",level=1,minLevel=1,objectives={},prerequisites={},blockedBy={}}
   local oldSend,sends=SendChatMessage,0
   SendChatMessage=function(message,channel)
