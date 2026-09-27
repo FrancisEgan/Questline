@@ -417,6 +417,10 @@ events:SetScript("OnEvent",function()
     if QuestlineSettings.tracker==nil then QuestlineSettings.tracker=true end
     if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=true end
     if QuestlineSettings.worldMapSpawns==nil then QuestlineSettings.worldMapSpawns=false end
+    if QuestlineSettings.transparentTracker==nil then
+      QuestlineSettings.transparentTracker=type(QuestlineSettings.trackerOpacity)=="number" and QuestlineSettings.trackerOpacity==0 or false
+    end
+    QuestlineSettings.trackerOpacity=nil
     if QuestlineSettings.trackerMode~="zone" and QuestlineSettings.trackerMode~="world" then QuestlineSettings.trackerMode="zone" end
     Q:BuildIndexes();Q:CreateTrackers();Q:CreateMap();Q.ready=true;Q.dirty=true
     Q:InitializeNPCQuests()

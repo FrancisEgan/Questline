@@ -1,6 +1,16 @@
 local Q, DB = Questline, QuestlineDB
 local getn = table.getn
 local path = "Interface\\AddOns\\Questline\\Textures\\"
+function Q:ApplyTrackerAppearance()
+  local transparent=QuestlineSettings.transparentTracker==true
+  for _,panel in ipairs({self.tracker,self.mapTracker}) do
+    if panel then
+      local clear=transparent and not panel.isMap
+      panel:SetBackdropColor(0.025,0.045,0.065,clear and 0 or .9)
+      panel:SetBackdropBorderColor(0.35,0.30,0.16,clear and 0 or .85)
+    end
+  end
+end
 function Q:StyleTextLink(button)
   local enter,leave,hide=button:GetScript("OnEnter"),button:GetScript("OnLeave"),button:GetScript("OnHide")
   local function paint(widget,hovered)
@@ -122,7 +132,8 @@ local function makePanel(name,parent,isMap)
   panel:SetFrameStrata(isMap and "FULLSCREEN" or "MEDIUM")
   if isMap then panel:SetFrameLevel(WorldMapFrame:GetFrameLevel()+40) end
   panel:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
-  panel:SetBackdropColor(0.025,0.045,0.065,0.90);panel:SetBackdropBorderColor(0.35,0.30,0.16,0.85)
+  local transparent=QuestlineSettings.transparentTracker==true and not isMap
+  panel:SetBackdropColor(0.025,0.045,0.065,transparent and 0 or .9);panel:SetBackdropBorderColor(0.35,0.30,0.16,transparent and 0 or .85)
   panel.isMap=isMap;panel.rows={};panel.page=1
   panel.header=CreateFrame("Button",nil,panel);panel.header:SetPoint("TOPLEFT",panel,"TOPLEFT",7,-5);panel.header:SetWidth(218);panel.header:SetHeight(23)
   panel.heading=font(panel.header,13,1,0.82,0.32);panel.heading:SetPoint("LEFT",panel.header,"LEFT",5,0)
@@ -276,7 +287,11 @@ function Q:RenderTracker(panel,entries,zone,zoneName)
     row:SetHeight(height)
     local selected=self:IsSelected(entry.key)
     self:PaintBadge(row.badge,entry,selected)
-    if selected then row.shade:Show() else row.shade:Hide() end
+    local transparent=QuestlineSettings.transparentTracker==true and not panel.isMap
+    if selected and not transparent then row.shade:Show() else row.shade:Hide() end
+    local shadow=selected and transparent
+    row.title:SetShadowColor(1,1,1,shadow and .55 or 0);row.title:SetShadowOffset(shadow and 1 or 0,shadow and -1 or 0)
+    row.detail:SetShadowColor(1,1,1,shadow and .4 or 0);row.detail:SetShadowOffset(shadow and 1 or 0,shadow and -1 or 0)
     row:Show();top=top+height+4
   end
   if getn(entries)==0 then

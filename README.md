@@ -25,6 +25,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - Double-click a tracker quest to open its objective or turn-in map
 - Shift-click to link a quest in open chat; right-click to open it in the quest log
 - Movable, resizable, collapsible trackers with saved sizes, positions, and highlights
+- Optional transparent HUD tracker style; the world-map tracker remains bordered for readability
 - Standalone quest database; no pfQuest dependency
 
 ## Commands

@@ -2,7 +2,9 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.55**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.56**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Tracker appearance (0.1.56): Options has a separate Appearance section with a transparent HUD-tracker toggle. Transparent mode removes the HUD backdrop and border, replaces the selected row's blue fill with a restrained light text shadow, and retains the selected yellow badge. The world-map tracker always keeps its bordered backdrop and blue selected-row fill for readability over map artwork. The previous bordered HUD appearance remains the default. A zero-percent opacity value saved by the short-lived slider implementation migrates to transparent mode; other slider values return to the default bordered style.
 
 Clustered tooltip colors (0.1.55): available and complete quest rows use the same tracker-gold base color. Their bracketed level numbers retain the standard difficulty color.
 

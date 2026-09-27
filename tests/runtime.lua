@@ -119,7 +119,9 @@ function methods:AddLine(text,...)
   end
 end
 function methods:SetTextColor(...) self.color={...} end
-for _,key in ipairs({"SetMovable","SetClampedToScreen","SetFrameStrata","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","RegisterForDrag","EnableMouseWheel","SetJustifyH","SetJustifyV","StartMoving","StopMovingOrSizing"}) do methods[key]=function() end end
+for _,key in ipairs({"SetMovable","SetClampedToScreen","SetFrameStrata","SetBackdrop","RegisterForDrag","EnableMouseWheel","SetJustifyH","SetJustifyV","StartMoving","StopMovingOrSizing"}) do methods[key]=function() end end
+function methods:SetBackdropColor(...) self.backdropColor={...} end
+function methods:SetBackdropBorderColor(...) self.backdropBorderColor={...} end
 local function widget(kind,name,parent)
   local o=setmetatable({kind=kind,name=name,parent=parent,shown=true,scripts={},events={}}, {__index=function(_,k) if methods[k] then return methods[k] end end})
   if name then _G[name]=o end
@@ -251,7 +253,15 @@ local function completionHistoryTests(Q)
   expect(not f.mode,"main menu has no World/Zone control")
   click(f.optionsLink)
   expect(f.section=="options" and f.settings:IsShown() and not f.home:IsShown(),"options link opens separate settings page")
-  expect(f:GetHeight()==300 and f.serverImport:GetParent()==f.history,"import link belongs to completed quests and options stays compact")
+  expect(f:GetHeight()==365 and f.serverImport:GetParent()==f.history,"import link belongs to completed quests and options includes appearance controls")
+  expect(f.appearanceHeading:GetText()=="Appearance" and string.find(f.transparent.text:GetText(),"transparent HUD",1,true),"options has an Appearance section with a transparent HUD tracker toggle")
+  Q:Select(Q.tracker.rows[1].entry.key);click(f.transparent)
+  expect(QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==0 and Q.tracker.backdropBorderColor[4]==0,"transparent mode removes the HUD tracker background and border")
+  expect(Q.mapTracker.backdropColor[4]==.9 and Q.mapTracker.backdropBorderColor[4]==.85,"world-map tracker remains bordered in transparent HUD mode")
+  expect(not Q.tracker.rows[1].shade:IsShown() and Q.tracker.rows[1].title.shadowColor[4]>.5 and Q.tracker.rows[1].badge.glow:IsShown(),"transparent mode replaces selected-row fill with a light text shadow and keeps the selected badge")
+  expect(Q.mapTracker.rows[1].shade:IsShown() and Q.mapTracker.rows[1].title.shadowColor[4]==0,"world-map tracker retains its selected-row fill without the transparent HUD text shadow")
+  click(f.transparent)
+  expect(not QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==.9 and Q.tracker.backdropBorderColor[4]==.85,"appearance toggle restores the bordered tracker style")
   local hud=QuestlineSettings.tracker
   expect(not f.legacy and f.mapTracker,"map tracker control replaces legacy pins in options")
   click(f.mapTracker)
