@@ -419,7 +419,7 @@ QuestlineDB.npcQuests["connor rivers"]={["starters"]={1301},["finishers"]={}}
 QuestlineDB.npcQuests["conservationist yalus"]={["starters"]={40227},["finishers"]={40227}}
 QuestlineDB.npcQuests["conservator ilthalaine"]={["starters"]={456,457,3116,3117,3118,3119,3120},["finishers"]={456,457}}
 QuestlineDB.npcQuests["cook torka"]={["starters"]={814,815,50305,80110},["finishers"]={814,815,50305,80109}}
-QuestlineDB.npcQuests["corithras moonrage"]={["starters"]={929,933,934,935,7383},["finishers"]={928,929,933,934,7383}}
+QuestlineDB.npcQuests["corithras moonrage"]={["starters"]={929,933,935,7383},["finishers"]={928,929,933,7383}}
 QuestlineDB.npcQuests["cork gizelton"]={["starters"]={5821},["finishers"]={}}
 QuestlineDB.npcQuests["corporal carnes"]={["starters"]={8494,8495},["finishers"]={8494,8495}}
 QuestlineDB.npcQuests["corporal danmere"]={["starters"]={40964},["finishers"]={}}

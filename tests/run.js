@@ -38,6 +38,7 @@ const read=k=>JSON.parse(fs.readFileSync(path.join(root,'database',k+'.json'),'u
 const quests=read('quests'),units=read('units'),items=read('items');
 check(Object.keys(quests).length>6000,'merged quests retained');
 check(!quests[1],'upstream underscore tombstone honored');
+check(read('overrides').quests[934]===null&&quests[7383]?.objectives.some(target=>target.kind==='item'&&target.id===18151),'duplicate Crown of the Earth record removed in favor of the complete Amethyst Phial quest');
 check(units[92012].coordinates[0][2]===8,'Octo manual relocation applied');
 check(items[51220].drops.units[50610]===100,'Octo manual interaction applied');
 check(quests[900].objectives.length===3,'all valve interactions preserved');
