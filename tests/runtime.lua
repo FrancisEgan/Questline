@@ -368,6 +368,12 @@ local function availabilityRegressionTests(Q)
   fire("QUEST_COMPLETE")
   expect(not QuestlineSettings.completedQuests[a],"opening reward dialogue alone never records completion")
   GetQuestReward(1)
+  Q:ObserveQuestCompletion("Shared chain title completed.")
+  expect(not QuestlineSettings.completedQuests[a] and Q.pendingTurnIn and Q.pendingTurnIn.confirmed,
+    "completion message waits for quest-log removal instead of racing live-state repair")
+  Q:SetEntries({first})
+  expect(not QuestlineSettings.completedQuests[a] and Q.pendingTurnIn,
+    "intermediate quest-log scan retains the confirmed pending turn-in")
   QuestlineSettings.completedQuests[b]=true
   Q:SetEntries({second})
   expect(QuestlineSettings.completedQuests[a] and QuestlineSettings.completionSources[a]=="Automatic","reward and log removal record the old chain step")

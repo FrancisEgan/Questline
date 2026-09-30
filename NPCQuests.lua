@@ -164,7 +164,11 @@ function Q:ObserveQuestCompletion(message)
   title=self:Normalize(title)
   local pending=self.pendingTurnIn
   if pending and pending.title==title and GetTime()-pending.time<=30 then
-    self.pendingTurnIn=nil;self:SetQuestCompleted(pending.id,"Automatic");return
+    -- The completion message can arrive before the server removes the quest
+    -- from the live log. Keep the snapshot until a scan observes that removal;
+    -- otherwise the live-state repair below can erase the new history record.
+    pending.confirmed=true
+    return
   end
   local matches={}
   for _,entry in ipairs(self.quests) do if entry.id and self:Normalize(entry.title)==title then matches[entry.id]=true end end
