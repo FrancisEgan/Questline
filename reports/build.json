@@ -1,10 +1,10 @@
 {
-  "build": "9c3fe7598fabb406",
+  "build": "7d00c3c0183f9bba",
   "grid": 1280,
-  "quests": 6700,
-  "targets": 7261,
-  "zones": 118,
-  "unmappedTargets": 1038,
+  "quests": 6704,
+  "targets": 7502,
+  "zones": 120,
+  "unmappedTargets": 962,
   "issues": [
     {
       "target": "item:15885",
@@ -68,6 +68,10 @@
     },
     {
       "target": "item:3388",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:3668",
       "issue": "no-locations"
     },
     {
@@ -147,6 +151,10 @@
       "issue": "no-locations"
     },
     {
+      "target": "item:16782",
+      "issue": "no-locations"
+    },
+    {
       "target": "item:5184",
       "issue": "no-locations"
     },
@@ -160,6 +168,14 @@
     },
     {
       "target": "item:5645",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:5646",
+      "issue": "no-locations"
+    },
+    {
+      "target": "use:5623",
       "issue": "no-locations"
     },
     {
@@ -320,6 +336,10 @@
     },
     {
       "target": "item:7083",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:6926",
       "issue": "no-locations"
     },
     {
@@ -551,6 +571,10 @@
       "issue": "no-locations"
     },
     {
+      "target": "item:9250",
+      "issue": "no-locations"
+    },
+    {
       "target": "item:9306",
       "issue": "no-locations"
     },
@@ -576,6 +600,10 @@
     },
     {
       "target": "item:9330",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:9326",
       "issue": "no-locations"
     },
     {
@@ -616,6 +644,10 @@
     },
     {
       "target": "item:9597",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:10441",
       "issue": "no-locations"
     },
     {
@@ -727,11 +759,11 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:11169",
+      "target": "item:11522",
       "issue": "no-locations"
     },
     {
-      "target": "item:11522",
+      "target": "item:11169",
       "issue": "no-locations"
     },
     {
@@ -776,10 +808,6 @@
     },
     {
       "target": "item:11470",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:5646",
       "issue": "no-locations"
     },
     {
@@ -963,6 +991,10 @@
       "issue": "no-locations"
     },
     {
+      "target": "item:13156",
+      "issue": "no-locations"
+    },
+    {
       "target": "item:13172",
       "issue": "no-locations"
     },
@@ -988,6 +1020,10 @@
     },
     {
       "target": "item:16973",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:13250",
       "issue": "no-locations"
     },
     {
@@ -1507,7 +1543,19 @@
       "issue": "no-locations"
     },
     {
+      "target": "item:19003",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:19002",
+      "issue": "no-locations"
+    },
+    {
       "target": "item:19017",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:19018",
       "issue": "no-locations"
     },
     {
@@ -1556,6 +1604,22 @@
     },
     {
       "target": "item:19182",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:19423",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:19424",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:19443",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:19452",
       "issue": "no-locations"
     },
     {
@@ -2015,39 +2079,7 @@
       "issue": "no-locations"
     },
     {
-      "target": "turnin:unit:15762",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15763",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15764",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15766",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:21438",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15765",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15761",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15768",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:15767",
       "issue": "no-locations"
     },
     {
@@ -2135,11 +2167,27 @@
       "issue": "no-locations"
     },
     {
+      "target": "item:22049",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:22050",
+      "issue": "no-locations"
+    },
+    {
       "target": "use:22050",
       "issue": "no-locations"
     },
     {
       "target": "unit:16097",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:22051",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:22052",
       "issue": "no-locations"
     },
     {
@@ -2419,6 +2467,10 @@
       "issue": "no-locations"
     },
     {
+      "target": "turnin:unit:60441",
+      "issue": "no-locations"
+    },
+    {
       "target": "unit:60324",
       "issue": "no-locations"
     },
@@ -2507,6 +2559,10 @@
       "issue": "no-locations"
     },
     {
+      "target": "item:60349",
+      "issue": "no-locations"
+    },
+    {
       "target": "item:60189",
       "issue": "no-locations"
     },
@@ -2591,6 +2647,14 @@
       "issue": "no-locations"
     },
     {
+      "target": "unit:60442",
+      "issue": "no-locations"
+    },
+    {
+      "target": "turnin:unit:66000",
+      "issue": "no-locations"
+    },
+    {
       "target": "item:83016",
       "issue": "no-locations"
     },
@@ -2608,6 +2672,10 @@
     },
     {
       "target": "item:60148",
+      "issue": "no-locations"
+    },
+    {
+      "target": "turnin:unit:60670",
       "issue": "no-locations"
     },
     {
@@ -2632,6 +2700,10 @@
     },
     {
       "target": "unit:60375",
+      "issue": "no-locations"
+    },
+    {
+      "target": "unit:60376",
       "issue": "no-locations"
     },
     {
@@ -2703,11 +2775,15 @@
       "issue": "no-locations"
     },
     {
-      "target": "unit:60906",
+      "target": "unit:60398",
       "issue": "no-locations"
     },
     {
-      "target": "unit:60398",
+      "target": "turnin:unit:91243",
+      "issue": "no-locations"
+    },
+    {
+      "target": "turnin:unit:60972",
       "issue": "no-locations"
     },
     {
@@ -2752,6 +2828,10 @@
     },
     {
       "target": "turnin:unit:61138",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:60989",
       "issue": "no-locations"
     },
     {
@@ -2815,10 +2895,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:61231",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:60035",
       "issue": "no-locations"
     },
@@ -2844,10 +2920,6 @@
     },
     {
       "target": "unit:60040",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:61351",
       "issue": "no-locations"
     },
     {
@@ -2911,10 +2983,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:61653",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:61693",
       "issue": "no-locations"
     },
@@ -2936,6 +3004,10 @@
     },
     {
       "target": "unit:60050",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:61759",
       "issue": "no-locations"
     },
     {
@@ -3071,7 +3143,7 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:41406",
+      "target": "item:41398",
       "issue": "no-locations"
     },
     {
@@ -3115,10 +3187,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:61759",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:60056",
       "issue": "no-locations"
     },
@@ -3144,10 +3212,6 @@
     },
     {
       "target": "unit:60060",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41447",
       "issue": "no-locations"
     },
     {
@@ -3255,10 +3319,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "turnin:unit:62202",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:41477",
       "issue": "no-locations"
     },
@@ -3267,59 +3327,11 @@
       "issue": "no-locations"
     },
     {
-      "target": "turnin:unit:62210",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41603",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41605",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62114",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62115",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62116",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:60065",
       "issue": "no-locations"
     },
     {
       "target": "unit:60078",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41609",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41686",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62199",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62194",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62195",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62197",
       "issue": "no-locations"
     },
     {
@@ -3339,14 +3351,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:41689",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41690",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:41695",
       "issue": "no-locations"
     },
@@ -3355,111 +3359,11 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:41708",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41712",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62229",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62230",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62231",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62232",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41716",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62131",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62162",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62165",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41732",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41733",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41734",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62186",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:41735",
       "issue": "no-locations"
     },
     {
-      "target": "item:41736",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:41737",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41740",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62135",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62136",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62137",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62158",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62156",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62176",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62180",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62181",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62182",
       "issue": "no-locations"
     },
     {
@@ -3468,30 +3372,6 @@
     },
     {
       "target": "unit:60071",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62169",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62170",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62171",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62172",
-      "issue": "no-locations"
-    },
-    {
-      "target": "turnin:unit:62183",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41675",
       "issue": "no-locations"
     },
     {
@@ -3535,79 +3415,11 @@
       "issue": "no-locations"
     },
     {
-      "target": "turnin:unit:62144",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41782",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41783",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62220",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62221",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62222",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41788",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62250",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62251",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62218",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41795",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41796",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:60079",
       "issue": "no-locations"
     },
     {
       "target": "item:41800",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41805",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41807",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41808",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41809",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41810",
       "issue": "no-locations"
     },
     {
@@ -3627,43 +3439,7 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:41825",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41829",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62041",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62072",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41834",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62051",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41841",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41864",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:41865",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41866",
       "issue": "no-locations"
     },
     {
@@ -3671,19 +3447,7 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:41874",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:41877",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62235",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62236",
       "issue": "no-locations"
     },
     {
@@ -3691,87 +3455,7 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:41907",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41948",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41951",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62228",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62233",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41957",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62241",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62242",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62244",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41962",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62213",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62214",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62215",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41969",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62223",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62224",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62225",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41972",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62258",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:62248",
-      "issue": "no-locations"
-    },
-    {
-      "target": "item:41994",
+      "target": "unit:62947",
       "issue": "no-locations"
     },
     {
@@ -3780,6 +3464,10 @@
     },
     {
       "target": "turnin:unit:63047",
+      "issue": "no-locations"
+    },
+    {
+      "target": "unit:60686",
       "issue": "no-locations"
     },
     {
@@ -3903,10 +3591,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "turnin:unit:80121",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:91294",
       "issue": "no-locations"
     },
@@ -3916,6 +3600,10 @@
     },
     {
       "target": "unit:91301",
+      "issue": "no-locations"
+    },
+    {
+      "target": "item:51220",
       "issue": "no-locations"
     },
     {
@@ -3999,6 +3687,10 @@
       "issue": "no-locations"
     },
     {
+      "target": "turnin:unit:80121",
+      "issue": "no-locations"
+    },
+    {
       "target": "turnin:unit:80129",
       "issue": "no-locations"
     },
@@ -4016,6 +3708,10 @@
     },
     {
       "target": "turnin:unit:80202",
+      "issue": "no-locations"
+    },
+    {
+      "target": "unit:80203",
       "issue": "no-locations"
     },
     {
@@ -4160,7 +3856,7 @@
     }
   ],
   "barrens": {
-    "quests": 672,
+    "quests": 682,
     "examples": [
       {
         "id": 844,

@@ -19,7 +19,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - Quest progress in world-object tooltips, including quest herbs and other collectibles
 - Shared quest progress from party members running Questline, with class-colored names
 - NPC tooltips showing available, in-progress, and completed quests
-- Saved completion history with searchable records, manual-only filtering, Restore actions, and an optional server-history import
+- Saved completion history with searchable records, manual-only filtering, individual or Restore All actions, and an optional server-history import
 - Right-click a questgiver marker on the world map to mark an individual quest completed
 - `/ql` options pane with General, Appearance, and Completed Quests sidebar sections
 - Double-click a tracker quest to open its objective or turn-in map
@@ -40,4 +40,4 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 
 ## Credits
 
-Database material comes from pfQuest, pfQuest-turtle, and pfQuest-octo. The bag, sword, and gear marker artwork comes from pfQuest. Their MIT notices are included in `licenses/`.
+Questie-Octo's compiled database is the sole source for quest data. Data fixes are contributed upstream and imported into Questline. The bag, sword, and gear marker artwork comes from pfQuest. Upstream notices are included in `licenses/`.

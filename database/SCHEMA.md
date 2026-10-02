@@ -1,5 +1,11 @@
 # Database schema 1
 
+The current source snapshot is imported from Questie-Octo's compiled runtime
+with `npm run import:questie -- [path-to-Questie-Octo]`. The import records exact
+input hashes in `manifest.json`. Questie-Octo is the sole authority; there are
+no local overrides or fallback database. `npm run build` produces the in-game
+`Data/` files. Submit data corrections to Questie-Octo, then refresh the snapshot.
+
 All entity tables are JSON objects keyed by numeric ID strings. Runtime Lua uses numeric entity keys and string location keys. IDs from different kinds are distinct.
 
 | File | Record fields |
@@ -17,7 +23,7 @@ Targets are `{kind, id}`. Kinds are `unit`, `object`, `item`, `event`, `use`, an
 
 Coordinates are arrays of `[x, y, zoneId, respawnSeconds?]`. X/Y use percentages in the named zone, not continent coordinates. Zero-zero placeholders, non-finite values, out-of-range points, and non-positive zone IDs are rejected. Respawn is optional. Duplicate X/Y/zone triples collapse to one coordinate. Faction is the upstream friendly-faction string (`A`, `H`, `AH`, or empty/unspecified). Unit levels may be ranges, so they remain strings.
 
-`overrides.json` holds local recursive patches. An empty object changes nothing; an empty array removes all members of an array; `null` removes a field or record. Rebuild after changing it. If upstream refresh is wanted, apply import first, then build; build applies overrides in memory and leaves the imported snapshot intact.
+All JSON entity tables are disposable import output. Import replaces them completely; build compiles them without applying any local corrections. Upstream zone IDs are preserved.
 
 Runtime `QuestlineDB.locations[targetKey][zoneId]` contains:
 

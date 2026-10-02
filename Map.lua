@@ -266,7 +266,7 @@ function Q:RefreshMap()
   end end
   self:DrawAreas(targets,zone,width,height)
   local markerCount=0;local used={}
-  for _,entry in ipairs(self.quests) do if not entry.complete then
+  for _,entry in ipairs(self.quests) do if not entry.failed then
     local selected=self:IsSelected(entry.key)
     local anchor
     for _,target in ipairs(self:Targets(entry)) do

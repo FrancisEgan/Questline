@@ -46,6 +46,10 @@ function readLua(file, env) {
             const base = value(v.base, scope), key = value(v.index, scope);
             if (!base || typeof base !== 'object') throw Error(`${file}: missing table for patch key ${key}`);
             if (vals[i] === undefined) delete base[key]; else base[key] = vals[i];
+          } else if (v.type === 'MemberExpression') {
+            const base = value(v.base, scope), key = v.identifier.name;
+            if (!base || typeof base !== 'object') throw Error(`${file}: missing table for member ${key}`);
+            if (vals[i] === undefined) delete base[key]; else base[key] = vals[i];
           } else throw Error(`${file}: unsupported assignment ${v.type}`);
         });
       } else if (n.type === 'DoStatement') block(n.body, Object.create(scope));

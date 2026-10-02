@@ -153,6 +153,17 @@ function Q:RestoreCompletedQuest(id)
   self.npcOffers={};self:InvalidateQuestAvailability()
   if self.RefreshOptions then self:RefreshOptions() end
 end
+function Q:RestoreAllCompletedQuests()
+  local count=0
+  for id,done in pairs(QuestlineSettings.completedQuests or {}) do if done then count=count+1 end end
+  QuestlineSettings.completedQuests={}
+  QuestlineSettings.completionSources={}
+  self.npcOffers={};self:InvalidateQuestAvailability()
+  if self.RefreshQuestGivers then self:RefreshQuestGivers() end
+  if self.RefreshOptions then self:RefreshOptions() end
+  self:Print(count..(count==1 and " quest" or " quests").." restored. Import from Server to refresh completion history.")
+  return count
+end
 local function escapePattern(text) return string.gsub(text,"([%(%)%.%%%+%-%*%?%[%]%^%$])","%%%1") end
 function Q:ObserveQuestCompletion(message)
   local format=ERR_QUEST_COMPLETE_S or "%s completed."
@@ -195,7 +206,7 @@ end
 function Q:IsQuestAvailable(id)
   local data=DB.quests[id]
   local completed=QuestlineSettings.completedQuests or {}
-  if not data or data.deprecated or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
+  if not data or data.disabled or data.deprecated or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
   if completed[id] and (not data.repeatable or QuestlineSettings.completionSources[id]=="Manual") then return false end
   for _,other in ipairs(data.blockedBy or {}) do if completed[other] or self.byKey[tostring(other)] then return false end end
   if getn(data.prerequisites or {})>0 then

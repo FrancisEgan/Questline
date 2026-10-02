@@ -2,7 +2,23 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.57**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.59**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Completion-history reset (0.1.59): Completed Quests has a Restore All button
+beside Import from Server. It clears all saved completion records and their
+provenance, invalidates predicted availability, refreshes questgiver markers
+and the open list, and reports the number restored. A subsequent server import
+repopulates history from current server truth, which supports clean database
+refresh testing.
+
+Questie-Octo database import (0.1.58): `tools/import-questie.js` reads the
+neighboring addon's private compiled runtime snapshot without evaluating
+arbitrary Lua, records exact input hashes, converts it to Questline's owned
+JSON schema. Questie-Octo is the sole authority: the old local override file
+and pfQuest import pipeline have been removed. Imported JSON is disposable
+build output; corrections belong upstream. Questline remains standalone in
+game. The generated runtime retains all 6,704 upstream quests. Relevant upstream
+MIT, GPL metadata, scope, and third-party notices are preserved in `licenses/`.
 
 Deterministic turn-in recording (0.1.57): a matching completion system message now confirms the pending reward snapshot without immediately writing completion history. Questline keeps that snapshot through intermediate quest-log scans and records completion only after the quest disappears from the live log. This removes the event-order race where an early completion message unlocked a successor, then live-state reconciliation erased the predecessor's new completion record because the server had not removed it from the log yet.
 
@@ -111,25 +127,18 @@ pfQuest is optional. If it is enabled, Questline hides its world-map pins and ro
 
 ## Owned database
 
-The normalized JSON under `database/` is the maintainable source. `Data/` contains generated Lua for the game. Neither playing nor rebuilding requires any pfQuest addon. Only explicitly re-importing upstream needs the three original folders.
+Questie-Octo's `Data/runtime/` snapshot is the sole database source. The JSON
+under `database/` is a converted snapshot, and `Data/` contains generated Lua
+views and indexes for Questline. Both are regenerated; neither is a separate
+database to maintain. Data corrections should be contributed to Questie-Octo.
+No local overrides, quest deletions, coordinate remapping, or pfQuest fallback
+layers are applied. Questie-Octo is needed only when refreshing the snapshot.
 
-This migration contains **6,701 quests**, **14,119 NPC records**, **21,158 object records**, and **24,862 item records**, plus zones, exploration triggers, reference loot, and quest-item interactions. It removed 128 duplicate coordinates. English names/text, faction and class/race restrictions, quest links, and extra source attributes are preserved. Non-English translations are outside this POC.
-
-Import precedence is **pfQuest < pfQuest-turtle < pfQuest-octo**. A higher-priority record replaces the entire lower-priority record; coordinate lists are not blindly unioned. `_` deletes an upstream record. Each source's `overwrites.lua` is applied before merging, including Turtle's phantom dungeon zone correction and Octo's manual objective fixes. Equivalent phantom zone IDs are canonicalized, coordinates are validated and deduplicated, and duplicate zone names resolve deterministically to the ID with the most coordinate references.
-
-`database/manifest.json` records input filenames, SHA-256 hashes, precedence, and counts. `reports/import.json` records record provenance, conflicts, tombstones, duplicate zone names, and six unresolved quest references. `reports/build.json` records geometry coverage and targets without locations. Missing references and missing spawn coverage are separate: crafting, unlocated NPCs, and other upstream gaps account for additional unmapped targets. Missing locations are never invented.
-
-For durable corrections, edit **`database/overrides.json`** and rebuild. Patches recursively merge named fields; arrays replace arrays; `null` deletes a field or record. Import never overwrites this correction file. Direct edits to the normalized JSON also work, but a deliberate re-import will replace those files.
-
-Example correction:
-
-```json
-{
-  "units": {
-    "3338": { "coordinates": [[52.2, 31.0, 17, 600]] }
-  }
-}
-```
+`database/manifest.json` records input filenames, SHA-256 hashes, and counts.
+`reports/import.json` records duplicate zone names and missing references;
+`reports/build.json` records geometry coverage. Missing locations are never
+invented. A later shared database addon can replace the input provider while
+Questline keeps compiling its presentation indexes from the same entity data.
 
 Coordinates use `[xPercent, yPercent, zoneId, optionalRespawnSeconds]`. Quest targets use `{ "kind": "unit|object|item|event|use|zone", "id": 123 }`. See [database/SCHEMA.md](../database/SCHEMA.md).
 
@@ -138,14 +147,11 @@ Coordinates use `[xPercent, yPercent, zoneId, optionalRespawnSeconds]`. Quest ta
 Node.js is only for development. From `Interface/AddOns`:
 
 ```powershell
-# Normal maintenance: rebuild from Questline's own data and corrections.
+# Refresh the snapshot from the neighboring Questie-Octo installation.
+node Questline/tools/import-questie.js
 node Questline/tools/build.js
 node Questline/tools/assets.js
 node Questline/tests/run.js
-
-# Optional upstream refresh; this replaces the normalized import snapshot.
-node Questline/tools/import.js
-node Questline/tools/build.js
 
 # Optional interactive coordinate preview; open the resulting HTML in a browser.
 node Questline/tools/preview.js

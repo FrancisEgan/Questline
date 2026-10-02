@@ -38,7 +38,7 @@ const read=k=>JSON.parse(fs.readFileSync(path.join(root,'database',k+'.json'),'u
 const quests=read('quests'),units=read('units'),items=read('items');
 check(Object.keys(quests).length>6000,'merged quests retained');
 check(!quests[1],'upstream underscore tombstone honored');
-check(read('overrides').quests[934]===null&&quests[7383]?.objectives.some(target=>target.kind==='item'&&target.id===18151),'duplicate Crown of the Earth record removed in favor of the complete Amethyst Phial quest');
+check(quests[934]&&quests[7383]?.objectives.some(target=>target.kind==='item'&&target.id===18151),'both upstream Crown of the Earth records retained without local deletion');
 check(units[92012].coordinates[0][2]===8,'Octo manual relocation applied');
 check(items[51220].drops.units[50610]===100,'Octo manual interaction applied');
 check(quests[900].objectives.length===3,'all valve interactions preserved');
@@ -86,7 +86,9 @@ check(!giverIndex.givers[2]&&!giverIndex.givers[4]&&!giverIndex.givers[999],'tur
 const giverData=questGivers({quests,units});
 check(giverData.byZone[17].includes(3338)&&giverData.givers[3338].quests.includes(844),'real Barrens starter and its quest chain are compiled');
 const sources=JSON.parse(fs.readFileSync(path.join(root,'reports/import.json'),'utf8'));
-check(sources.origin.units.data[92012]==='pfQuest-octo','Octo wins conflicting IDs');
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'database/manifest.json'),'utf8'));
+check(manifest.source==='Questie-Octo compiled runtime'&&manifest.inputs.some(input=>input.file==='Data/runtime/quests.lua'),'Questie-Octo compiled runtime provenance is recorded');
+check(sources.policy.includes('Questie-Octo compiled runtime snapshot'),'Questie-Octo import policy is recorded');
 for(const kind of ['units','objects','events']) for(const [id,r] of Object.entries(read(kind))) {
   const seen=new Set();
   for(const p of r.coordinates) {
@@ -152,6 +154,7 @@ function run(code,name) {
 }
 run(fs.readFileSync(path.join(__dirname,'runtime.lua'),'utf8'),'runtime stubs');
 for(const name of files) run(fs.readFileSync(path.join(root,name),'utf8'),name);
+run('local count=0;for id in pairs(QuestlineDB.quests) do count=count+1 end;assert(count=='+Object.keys(quests).length+',"compiled snapshot must retain every upstream quest");assert(QuestlineDB.quests[934],"upstream quest 934 must not be deleted locally")','database authority');
 run('runTests()','runtime tests');
 if(process.argv.includes('--review')) {
   const id=Number(Object.keys(quests).find(id=>quests[id].title==='Preventing Poison'))||845;
