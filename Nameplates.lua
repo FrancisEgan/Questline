@@ -17,11 +17,16 @@ function Q:NameplateQuests(name)
   return result
 end
 
-function Q:PaintNameplate(nameplate)
-  if not nameplate then return end
+local function plateName(nameplate)
   local original=nameplate.original
   local name=original and original.name and original.name:GetText()
   if not name or name=="" then name=nameplate.name and nameplate.name:GetText() end
+  return name
+end
+
+function Q:PaintNameplate(nameplate)
+  if not nameplate then return end
+  local name=plateName(nameplate)
   local entries=self:NameplateQuests(name)
   nameplate.questlineBadges=nameplate.questlineBadges or {}
   local anchor=nameplate.health or nameplate
@@ -40,12 +45,20 @@ function Q:PaintNameplate(nameplate)
   for index=getn(entries)+1,getn(nameplate.questlineBadges) do nameplate.questlineBadges[index]:Hide() end
 end
 
-function Q:RefreshNameplates()
+function Q:RefreshNameplates(changesOnly)
   if not GudaPlates or not GudaPlates.registry then return end
   for frame,nameplate in pairs(GudaPlates.registry) do
-    if frame:IsShown() and nameplate:IsShown() then self:PaintNameplate(nameplate)
-    elseif nameplate.questlineBadges then
-      for _,badge in ipairs(nameplate.questlineBadges) do badge:Hide() end
+    if frame:IsShown() and nameplate:IsShown() then
+      local name=plateName(nameplate)
+      if not changesOnly or not nameplate.questlineVisible or nameplate.questlineName~=name then
+        self:PaintNameplate(nameplate)
+      end
+      nameplate.questlineVisible=true;nameplate.questlineName=name
+    else
+      nameplate.questlineVisible=nil;nameplate.questlineName=nil
+      if nameplate.questlineBadges then
+        for _,badge in ipairs(nameplate.questlineBadges) do badge:Hide() end
+      end
     end
   end
 end
@@ -54,6 +67,9 @@ local updater=CreateFrame("Frame","QuestlineNameplateUpdater")
 local elapsed=0
 updater:SetScript("OnUpdate",function()
   elapsed=elapsed+arg1
-  if elapsed<.2 then return end
-  elapsed=0;Q:RefreshNameplates()
+  -- New/reused plates need badges on their first visible frame. Keep the
+  -- more expensive quest-progress/selection repaint on the existing timer.
+  local changesOnly=elapsed<.2
+  if not changesOnly then elapsed=0 end
+  Q:RefreshNameplates(changesOnly)
 end)

@@ -379,11 +379,26 @@ local function requestedBehaviorTests(Q)
   local plate=CreateFrame("Frame",nil,UIParent);plate.health=CreateFrame("Frame",nil,plate)
   plate.original={name=plate:CreateFontString(nil,"OVERLAY")};plate.original.name:SetText(second.name)
   QuestlineSettings.selected=active.key;QuestlineSettings.selectedKeys=nil
-  Q:PaintNameplate(plate)
+  local savedGuda=GudaPlates
+  local native=CreateFrame("Frame",nil,UIParent);native:Show();plate:Show()
+  GudaPlates={registry={[native]=plate}}
+  local function nameplateFrame()
+    this=QuestlineNameplateUpdater;arg1=1/120;this.scripts.OnUpdate()
+  end
+  nameplateFrame()
   expect(plate.questlineBadges and plate.questlineBadges[1]:IsShown() and plate.questlineBadges[1].text:GetText()==tostring(active.number),"relevant GudaPlates mobs receive the quest number badge")
   expect(plate.questlineBadges[1].glow:IsShown(),"the selected tracker quest highlights its nameplate badge")
+  plate.original.name:SetText("Unrelated creature");nameplateFrame()
+  expect(not plate.questlineBadges[1]:IsShown(),"reused nameplates remove stale badges on the first frame after a name change")
+  plate.original.name:SetText(second.name);nameplateFrame()
+  expect(plate.questlineBadges[1]:IsShown(),"a newly populated name gets its badge without waiting for the progress timer")
+  native:Hide();nameplateFrame()
+  expect(not plate.questlineBadges[1]:IsShown(),"hidden native plates immediately clear their badge state")
+  native:Show();nameplateFrame()
+  expect(plate.questlineBadges[1]:IsShown(),"a returning plate restores its badge on the first visible frame")
   active.objectives[2].done=true;Q:PaintNameplate(plate)
   expect(not plate.questlineBadges[1]:IsShown(),"finishing a mob objective removes its nameplate badge")
+  GudaPlates=savedGuda
   QuestlineDB.mobObjectives[Q:Normalize(second.name)]=nil
   Q:SetEntries(original)
 end

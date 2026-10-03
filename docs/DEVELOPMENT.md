@@ -189,6 +189,12 @@ The API implementation was checked against the original [1.12 QuestLogFrame](htt
 
 ## Current limits and in-game checks
 
+Nameplate badges inspect GudaPlates' registry every frame for newly visible
+plates and changed names, painting those immediately. Unchanged visible plates
+retain the 0.2-second quest-progress/selection repaint interval. Hidden plates
+clear their badge state so reuse cannot retain another creature's badges.
+This does not bypass GudaPlates' own discovery or fresh-data show delay.
+
 - English quest identification uses quest links if the client supplies them; otherwise exact title, level, faction/class restrictions, and quest text. Ambiguous matches stay unmapped. Live objectives still appear in the tracker.
 - Completed objective names are matched to target names, never assumed to share the database's order. Unmatched custom objective text remains visible until the quest completes.
 - The imported data can still contain obsolete or server-specific records. Octo wins collisions, while Turtle-only additions are retained; retaining a record does not prove that quest is available on Octo.
