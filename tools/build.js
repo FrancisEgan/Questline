@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const { lua } = require('./lua-data');
 const { GRID, geometry } = require('./geometry');
 const { packRuns } = require('./packed-runs');
+const { mappedVendors } = require('./vendor-locations');
 const { mobObjectives, mobDropRates, npcQuests, questGivers } = require('./mob-objectives');
 const root=path.resolve(__dirname,'..'), dir=path.join(root,'database');
 const kinds=['quests','units','objects','items','zones','events','lootGroups','itemUses','reference'];
@@ -26,7 +27,7 @@ function gather(kind,id,seen=new Set()) {
       seen.add('group:'+id);if(db.lootGroups[id]) sources(db.lootGroups[id]);
     }
   }
-  if(kind==='item') {sources(record.drops);for(const id of Object.keys(record.vendors||{})) points.push(...gather('unit',id,seen));}
+  if(kind==='item') {sources(record.drops);for(const id of mappedVendors(record)) points.push(...gather('unit',id,seen));}
   if(kind==='use') for(const use of record) points.push(...gather(use.kind,use.id,seen));
   if(kind==='zone'&&record.bounds) {const b=record.bounds;points.push([b.x+b.width/2,b.y+b.height/2,b.parent]);}
   return points;
@@ -52,7 +53,7 @@ function target(t,turnin) {
       }
       locations[key][zone]=location;
     }
-    if(!points.length) issues.push({target:key,issue:'no-locations'});
+    if(!points.length && !(t.kind==='item' && Object.keys(db.items[t.id]?.vendors||{}).length && !mappedVendors(db.items[t.id]).length)) issues.push({target:key,issue:'no-locations'});
   }
   let icon=t.icon || (t.kind==='item'?'loot':t.kind==='object'||t.kind==='use'?'interact':t.kind==='event'||t.kind==='zone'?'explore':'kill');
   if(t.kind==='item') {
@@ -87,7 +88,7 @@ function writeTable(file,field,records,append=false) {
   }
   fs[append?'appendFileSync':'writeFileSync'](path.join(output,file),lines.join('\n')+'\n');
 }
-const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).digest('hex').slice(0,16);
+const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).update(fs.readFileSync(path.join(__dirname,'vendor-locations.js'))).digest('hex').slice(0,16);
 fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
 writeTable('Quests.lua','quests',runtimeQuests);
 writeTable('Locations.lua','locations',locations);

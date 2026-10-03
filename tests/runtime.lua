@@ -1124,6 +1124,21 @@ local function questLevelAndRateTests(Q)
   mouseoverName=nil;GameTooltip:Hide();WorldMapFrame:Hide()
 end
 
+local function areaAnchorTests(Q)
+  local original=Q.quests
+  local point={key="anchor-point",name="Specialty supply",kind="item",icon="loot"}
+  local area={key="anchor-area",name="Hunting target",kind="item",icon="loot"}
+  QuestlineDB.locations[point.key]={[17]={points={{5,60}},runs="",anchor={5,60},spawns=1}}
+  QuestlineDB.locations[area.key]={[17]={points={},runs="01010A",anchor={60,50},spawns=100}}
+  local entry={key="anchor-test",id=980100,title="Area anchor",level=8,objectives={},data={objectives={point,area},finishers={point}}}
+  Q:SetEntries({entry});SetMapZoom(1,1);WorldMapFrame:Show();Q.mapDirty=true;Q:RefreshMap()
+  expect(math.abs(Q.mapPins[1].point[4]-WorldMapButton:GetWidth()*.6)<.001,"badge prefers the hunting area's center over the first point objective")
+  entry.complete=true;Q.mapDirty=true;Q:RefreshMap()
+  expect(math.abs(Q.mapPins[1].point[4]-WorldMapButton:GetWidth()*.05)<.001,"completed quest keeps its exact turn-in anchor")
+  QuestlineDB.locations[point.key]=nil;QuestlineDB.locations[area.key]=nil
+  Q:SetEntries(original);WorldMapFrame:Hide()
+end
+
 local function multiSelectionTests(Q)
   local original,oldSelected,oldKeys=Q.quests,QuestlineSettings.selected,QuestlineSettings.selectedKeys
   local oldControl,oldMode=IsControlKeyDown,QuestlineSettings.trackerMode
@@ -1525,6 +1540,7 @@ function runTests()
   giverClusterTests(Q)
   questLevelAndRateTests(Q)
   partySyncTests(Q)
+  areaAnchorTests(Q)
   multiSelectionTests(Q)
   trackerResizeTests(Q)
   trackerMapTests(Q)

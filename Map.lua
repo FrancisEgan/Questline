@@ -268,10 +268,18 @@ function Q:RefreshMap()
   local markerCount=0;local used={}
   for _,entry in ipairs(self.quests) do if not entry.failed then
     local selected=self:IsSelected(entry.key)
-    local anchor
+    local anchor,anchorArea,anchorSpawns
     for _,target in ipairs(self:Targets(entry)) do
       local location=DB.locations[target.key] and DB.locations[target.key][zone]
-      if location and location.anchor then anchor=location.anchor;break end
+      if location and location.anchor then
+        local area=location.runs and string.len(location.runs)>0
+        local spawns=location.spawns or 0
+        -- Prefer the main remaining hunting area over a vendor or isolated
+        -- pickup. Point-only destinations and turn-ins retain their order.
+        if not anchor or (area and (not anchorArea or spawns>anchorSpawns)) then
+          anchor=location.anchor;anchorArea=area;anchorSpawns=spawns
+        end
+      end
     end
     if anchor then
       markerCount=markerCount+1

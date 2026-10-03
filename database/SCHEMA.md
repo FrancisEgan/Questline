@@ -33,6 +33,12 @@ Runtime `QuestlineDB.locations[targetKey][zoneId]` contains:
 - `runs`: runtime schema 2 packs zero-based `[row, startColumn, exclusiveEndColumn]` triples into strings. Each integer occupies two characters from `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_`; its value is `firstDigit * 64 + secondDigit`. Each triple is six characters. `tools/packed-runs.js` encodes/decodes this generated representation. `QuestlineDB.grid` is 1280. The normalized JSON remains schema 1 and is unchanged by this runtime encoding.
 - `spawns`: number of unique source points in that zone.
 
+Compiler display policy omits vendor coordinates for items stocked without a
+limit by at least ten vendors. Their objective records and actual drop sources
+remain intact; specialty and limited-stock items retain vendor destinations.
+Unfinished quest badges prefer the area target with the most spawns, falling
+back to the first mapped point target when no area remains.
+
 Turn-in location keys are prefixed `turnin:` and always use point geometry. Ordinary keys look like `item:5087` or `unit:3338`. Multiple quests reuse target geometry. The runtime retains objective names, summary/description for identification, and finishers. It also retains minimum level, race/class masks, `prerequisites`, reverse `blockedBy` lists derived from other quests' `closes`, an optional profession name (`skill`), holiday `event`, and explicit `repeatable` flags for availability checks. Prerequisites follow the upstream any-completed-predecessor semantics; unrecorded requirements are not invented.
 
 `QuestlineDB.mobObjectives[normalizedMobName]` is a generated array of `unit:<id>` and `item:<id>` objective keys used by mob tooltips. Names are lowercase with normalized whitespace. The compiler follows direct unit drops and reference-loot groups, retains zero-rate quest-only drops, and excludes negative/disabled drops, vendors, and containers. Only targets used by quests enter this index. Item and mob names still come from the owned JSON; runtime progress and required counts come from the current quest log, not this index. Rebuild to regenerate `Data/MobObjectives.lua` after corrections to item sources or mob names.

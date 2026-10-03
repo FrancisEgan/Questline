@@ -2,7 +2,17 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.59**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.60**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Quest map destinations (0.1.60): the compiler omits vendor locations for items
+with at least ten unlimited-stock vendors, while retaining their quest
+objectives and any actual drop sources. Specialty and limited-stock vendors
+remain mapped. This shared display policy removes Coarse Thread's scattered
+bags without changing the Questie-Octo snapshot. Numbered badges prefer the
+remaining area target with the most spawns over point objectives, using its
+existing central spawn anchor. Point-only quests and turn-ins retain their
+destination order. Runtime tests cover area selection and exact turn-ins;
+compiler checks cover common supplies, specialty and limited stock.
 
 Completion-history reset (0.1.59): Completed Quests has a Restore All button
 beside Import from Server. It clears all saved completion records and their
