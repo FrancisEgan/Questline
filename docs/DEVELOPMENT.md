@@ -189,6 +189,14 @@ The API implementation was checked against the original [1.12 QuestLogFrame](htt
 
 ## Current limits and in-game checks
 
+Unmapped objectives use "No known map location for this objective" in tracker,
+tooltip, and map-navigation feedback. An unfinished item objective whose live
+or imported quest summary explicitly says "You can make ... with the ... skill
+or buy ... from someone with the skill" instead shows the named craft-or-player
+hint. Quest 60140 supplies this instruction for Linen Bandages / First Aid.
+No source records or recipe data are invented. Completed quests use their
+finisher locations; an unmapped finisher reports a missing turn-in location.
+
 Nameplate badges inspect GudaPlates' registry every frame for newly visible
 plates and changed names, painting those immediately. Unchanged visible plates
 retain the 0.2-second quest-progress/selection repaint interval. Hidden plates

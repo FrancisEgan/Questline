@@ -355,6 +355,39 @@ local function completionHistoryTests(Q)
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
 
+local function craftingHintTests(Q)
+  local original,mode=Q.quests,QuestlineSettings.trackerMode
+  local data=QuestlineDB.quests[60140]
+  local entry={key="60140",id=60140,title=data.title,level=data.level,summary="",data=data,
+    objectives={{text="Linen Bandage: 0/10",kind="item",done=false}}}
+  local hint="Craft with First Aid or obtain from another player"
+  expect(not Q:HasLocations(entry) and Q:MissingLocationHint(entry)==hint,"real Linen Bandage quest derives its crafting hint from the imported quest summary")
+  Q:SetEntries({entry});Q:SetTrackerMode("world")
+  local detail=Q.tracker.rows[1].detail:GetText()
+  expect(string.find(detail,"Linen Bandage: 0/10",1,true) and string.find(detail,hint,1,true) and not string.find(detail,"No known map location",1,true),"tracker keeps live bandage progress and replaces the missing-location warning with crafting guidance")
+  local mapShown=WorldMapFrame:IsShown();WorldMapFrame:Hide()
+  Q:ShowQuestTooltip(Q.tracker.rows[1],entry)
+  expect(string.find(GameTooltip:GetText(),hint,1,true),"quest tooltip uses the same crafting guidance")
+  Q:TrackerDoubleClick(entry,"LeftButton")
+  expect(string.find(DEFAULT_CHAT_FRAME:GetText(),hint,1,true) and not WorldMapFrame:IsShown(),"double-clicking a crafting objective explains how to obtain it without opening an unrelated map")
+  entry.complete=true
+  expect(Q:HasLocations(entry) and Q:MissingLocationHint(entry)==nil,"completed crafting quests map their real finisher instead of retaining the crafting hint")
+  entry.complete=nil
+  entry.data={summary="",objectives=data.objectives,finishers=data.finishers}
+  expect(Q:MissingLocationHint(entry)=="No known map location for this objective","missing item sources alone never imply a crafting requirement")
+  entry.summary=data.summary
+  expect(Q:MissingLocationHint(entry)==hint,"live quest summary can also provide an explicit crafting instruction")
+  entry.data={summary=data.summary,objectives={{kind="unit",key="unit:unmapped",name="Unmapped creature"}},finishers={}}
+  expect(Q:MissingLocationHint(entry)=="No known map location for this objective","crafting text does not relabel a non-item objective")
+  entry.complete=true
+  expect(Q:MissingLocationHint(entry)=="No known map location for the turn-in","unmapped completed quests report the missing turn-in rather than a crafting instruction")
+  entry.failed=true
+  expect(Q:MissingLocationHint(entry)==nil,"failed quests do not display acquisition guidance")
+  GameTooltip:Hide();Q.partyQuestTooltip=nil
+  if mapShown then WorldMapFrame:Show() end
+  Q:SetEntries(original);Q:SetTrackerMode(mode)
+end
+
 local function requestedBehaviorTests(Q)
   local original=Q.quests
   local first={kind="unit",id=990001,key="unit:990001",name="First Mob",icon="kill"}
@@ -1641,6 +1674,7 @@ function runTests()
   objectTooltipTests(Q)
   requestedBehaviorTests(Q)
   vendorTooltipTests(Q)
+  craftingHintTests(Q)
   QuestlineSettings.nameplateBadges=false
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.nameplateBadges==false,"login preserves a saved disabled nameplate badges preference")

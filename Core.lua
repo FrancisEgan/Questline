@@ -155,6 +155,23 @@ function Q:HasLocations(entry)
   end
   return false
 end
+function Q:MissingLocationHint(entry)
+  if not entry.id or entry.failed or self:HasLocations(entry) then return nil end
+  if entry.complete then return "No known map location for the turn-in" end
+  -- Only use an explicit craft-or-buy instruction in quest text. Missing
+  -- item sources alone do not establish that an item is crafted.
+  local itemObjective=false
+  for _,target in ipairs(self:Targets(entry)) do
+    if target.kind=="item" then itemObjective=true end
+  end
+  if itemObjective then
+    local pattern="You can make .- with the ([%a%s%-]+) skill or buy .- from someone with the skill%."
+    local _,_,skill=string.find(entry.summary or "",pattern)
+    if not skill and entry.data then _,_,skill=string.find(entry.data.summary or "",pattern) end
+    if skill then return "Craft with "..skill.." or obtain from another player" end
+  end
+  return "No known map location for this objective"
+end
 function Q:GetMapZone()
   local continent, zone = GetCurrentMapContinent(), GetCurrentMapZone()
   if not continent or continent <= 0 or not zone or zone <= 0 then return nil end
@@ -340,7 +357,7 @@ function Q:TrackerDoubleClick(entry,button)
       end
     end
   end
-  if not best then self:Print("No remaining mapped locations for this quest.");return end
+  if not best then self:Print((self:MissingLocationHint(entry) or "No known map location for this quest")..".");return end
   if not WorldMapFrame:IsVisible() then ShowUIPanel(WorldMapFrame) end
   -- Opening the native map can reset its zone, so navigate afterwards.
   SetMapZoom(best[1],best[2]);self.mapDirty=true
