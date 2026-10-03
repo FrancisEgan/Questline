@@ -194,6 +194,9 @@ plates and changed names, painting those immediately. Unchanged visible plates
 retain the 0.2-second quest-progress/selection repaint interval. Hidden plates
 clear their badge state so reuse cannot retain another creature's badges.
 This does not bypass GudaPlates' own discovery or fresh-data show delay.
+General's Show nameplate badges checkbox defaults on and saves the per-character
+`nameplateBadges` preference. Turning it off immediately hides existing badges
+and skips the frame updater; turning it back on immediately repaints visible plates.
 
 - English quest identification uses quest links if the client supplies them; otherwise exact title, level, faction/class restrictions, and quest text. Ambiguous matches stay unmapped. Live objectives still appear in the tracker.
 - Completed objective names are matched to target names, never assumed to share the database's order. Unmatched custom objective text remains visible until the quest completes.

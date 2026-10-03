@@ -417,6 +417,7 @@ events:SetScript("OnEvent",function()
     if QuestlineSettings.tracker==nil then QuestlineSettings.tracker=true end
     if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=true end
     if QuestlineSettings.worldMapSpawns==nil then QuestlineSettings.worldMapSpawns=false end
+    if QuestlineSettings.nameplateBadges==nil then QuestlineSettings.nameplateBadges=true end
     if QuestlineSettings.transparentTracker==nil then
       if type(QuestlineSettings.trackerOpacity)=="number" then
         QuestlineSettings.transparentTracker=QuestlineSettings.trackerOpacity==0

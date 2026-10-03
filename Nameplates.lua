@@ -24,8 +24,16 @@ local function plateName(nameplate)
   return name
 end
 
+local function hideBadges(nameplate)
+  nameplate.questlineVisible=nil;nameplate.questlineName=nil
+  if nameplate.questlineBadges then
+    for _,badge in ipairs(nameplate.questlineBadges) do badge:Hide() end
+  end
+end
+
 function Q:PaintNameplate(nameplate)
   if not nameplate then return end
+  if QuestlineSettings and QuestlineSettings.nameplateBadges==false then hideBadges(nameplate);return end
   local name=plateName(nameplate)
   local entries=self:NameplateQuests(name)
   nameplate.questlineBadges=nameplate.questlineBadges or {}
@@ -48,17 +56,14 @@ end
 function Q:RefreshNameplates(changesOnly)
   if not GudaPlates or not GudaPlates.registry then return end
   for frame,nameplate in pairs(GudaPlates.registry) do
-    if frame:IsShown() and nameplate:IsShown() then
+    if (not QuestlineSettings or QuestlineSettings.nameplateBadges~=false) and frame:IsShown() and nameplate:IsShown() then
       local name=plateName(nameplate)
       if not changesOnly or not nameplate.questlineVisible or nameplate.questlineName~=name then
         self:PaintNameplate(nameplate)
       end
       nameplate.questlineVisible=true;nameplate.questlineName=name
     else
-      nameplate.questlineVisible=nil;nameplate.questlineName=nil
-      if nameplate.questlineBadges then
-        for _,badge in ipairs(nameplate.questlineBadges) do badge:Hide() end
-      end
+      hideBadges(nameplate)
     end
   end
 end
@@ -66,6 +71,7 @@ end
 local updater=CreateFrame("Frame","QuestlineNameplateUpdater")
 local elapsed=0
 updater:SetScript("OnUpdate",function()
+  if QuestlineSettings and QuestlineSettings.nameplateBadges==false then return end
   elapsed=elapsed+arg1
   -- New/reused plates need badges on their first visible frame. Keep the
   -- more expensive quest-progress/selection repaint on the existing timer.
