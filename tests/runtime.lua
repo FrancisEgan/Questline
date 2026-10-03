@@ -258,13 +258,22 @@ local function completionHistoryTests(Q)
   expect(f:GetWidth()==720 and f:GetHeight()==520 and f.serverImport:GetParent()==f.history and f.restoreAll:GetParent()==f.history,"options pane uses a fixed Blizzard-style two-column layout")
   expect(f.tracker:GetChecked() and f.mapTracker:GetChecked() and not f.spawns:GetChecked(),"General feature states use checkboxes")
   click(f.navigation[2]);expect(f.section=="appearance" and f.appearance:IsShown() and f.navigation[2].selected:IsShown(),"Appearance category opens and highlights its sidebar row")
-  Q:SetEntries(original);Q:Select(Q.tracker.rows[1].entry.key);click(f.transparent)
+  Q:SetEntries(original);Q:Select(Q.tracker.rows[1].entry.key)
+  expect(not f.bordered:GetChecked() and f.bordered.label:GetText()=="Bordered tracker","Appearance offers an unchecked bordered tracker option for transparent mode")
+  click(f.bordered)
+  expect(f.bordered:GetChecked() and not QuestlineSettings.transparentTracker,"checking bordered tracker enables the border")
+  click(f.bordered)
   expect(QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==0 and Q.tracker.backdropBorderColor[4]==0,"transparent mode removes the HUD tracker background and border")
+  expect(Q.tracker.headerBar:IsShown() and not Q.tracker.rule:IsShown() and not Q.mapTracker.headerBar:IsShown(),"transparent HUD uses the gold-edged header strip without changing the map header")
+  local detail=Q.tracker.rows[1].detail
+  expect(detail.color[1]==1 and detail.color[2]==1 and detail.color[3]==1,"tracker detail text uses a pure white base")
+  expect(detail.shadowColor[4]==1 and detail.shadowOffset[1]==1 and detail.shadowOffset[2]==-1 and Q.tracker.rows[1].title.shadowOffset[2]==-1,"tracker refresh preserves the black shadow one pixel right and down")
   expect(Q.mapTracker.backdropColor[4]==.9 and Q.mapTracker.backdropBorderColor[4]==.85,"world-map tracker remains bordered in transparent HUD mode")
   expect(not Q.tracker.rows[1].shade:IsShown() and Q.tracker.rows[1].glow:IsShown() and Q.tracker.rows[1].glow.alpha==.24 and Q.tracker.rows[1].badge.glow:IsShown(),"transparent mode gives the selected row a faint soft blue glow and keeps the selected badge")
   expect(Q.mapTracker.rows[1].shade:IsShown() and not Q.mapTracker.rows[1].glow:IsShown(),"world-map tracker retains its selected-row fill without the transparent HUD glow")
-  click(f.transparent)
+  click(f.bordered)
   expect(not QuestlineSettings.transparentTracker and Q.tracker.backdropColor[4]==.9 and Q.tracker.backdropBorderColor[4]==.85,"appearance toggle restores the bordered tracker style")
+  expect(not Q.tracker.headerBar:IsShown() and Q.tracker.rule:IsShown(),"bordered mode restores the original header rule")
   local hud=QuestlineSettings.tracker
   expect(not f.legacy and f.mapTracker,"map tracker control replaces legacy pins in options")
   click(f.navigation[1])
@@ -359,6 +368,7 @@ local function requestedBehaviorTests(Q)
   Q:SetEntries({complete,talk,active});Q:SetTrackerMode("world")
   local completeText,talkText
   for _,row in ipairs(Q.tracker.rows) do if row:IsShown() and row.entry then
+    if row.entry.key==active.key then expect(string.find(row.detail:GetText(),"|cffffffff- Second Mob: 0/1|r",1,true),"unfinished tracker objectives use pure white") end
     if row.entry.key==complete.key then completeText=row.detail:GetText() end
     if row.entry.key==talk.key then talkText=row.detail:GetText() end
   end end
@@ -1255,7 +1265,7 @@ local function multiSelectionTests(Q)
   local ordered=Q:GetTrackerEntries()
   expect(selectedCount()==7 and ordered[1].key=="multi:1" and ordered[3].key=="multi:6" and ordered[7].key=="multi:10" and ordered[8].key=="multi:3","more than five highlights sort first by level before the remaining quests")
   click(Q.tracker.next)
-  expect(Q.tracker.rows[1].entry.key=="multi:9" and Q.tracker.rows[1].shade:IsShown() and not Q.tracker.rows[3].shade:IsShown(),"highlighted overflow continues on page two ahead of unselected quests")
+  expect(Q.tracker.rows[1].entry.key=="multi:9" and Q.tracker.rows[1].glow:IsShown() and not Q.tracker.rows[3].glow:IsShown(),"highlighted overflow continues on page two ahead of unselected quests in the default transparent style")
   click(row(Q.tracker,12))
   expect(Q:IsSelected("multi:12") and Q.tracker.rows[5].entry.key=="multi:8","unmapped quests can join a highlighted group and unknown levels sort last within it")
   click(row(Q.tracker,11))
@@ -1477,6 +1487,7 @@ function runTests()
   selection=3 -- second header's quest in the collapsed view
   playerZone="Mulgore";fire("PLAYER_LOGIN");tick(.2)
   local Q=Questline
+  expect(QuestlineSettings.transparentTracker==true and Q.tracker.backdropColor[4]==0,"new settings default to the transparent HUD tracker")
   expect(Q.ready,"login initialized")
   expect(QuestlineSettings.trackerMode=="zone" and Q.tracker.heading:GetText()=="Quests - Mulgore","fresh characters start with their physical zone")
   playerZone="The Barrens";fire("ZONE_CHANGED_NEW_AREA")
@@ -1607,5 +1618,6 @@ function runTests()
   vendorTooltipTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
+  expect(QuestlineSettings.transparentTracker==false,"login preserves an explicitly saved bordered tracker preference")
   print("Runtime: "..checks.." assertions passed.")
 end

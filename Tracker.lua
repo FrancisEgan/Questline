@@ -8,6 +8,8 @@ function Q:ApplyTrackerAppearance()
       local clear=transparent and not panel.isMap
       panel:SetBackdropColor(0.025,0.045,0.065,clear and 0 or .9)
       panel:SetBackdropBorderColor(0.35,0.30,0.16,clear and 0 or .85)
+      if clear then panel.headerBar:Show();panel.rule:Hide()
+      else panel.headerBar:Hide();panel.rule:Show() end
     end
   end
 end
@@ -19,7 +21,9 @@ function Q:StyleTextLink(button)
       widget.text:SetShadowColor(.25,.6,1,.65);widget.text:SetShadowOffset(1,-1)
     else
       widget.text:SetTextColor(.55,.8,1)
-      widget.text:SetShadowColor(0,0,0,0);widget.text:SetShadowOffset(0,0)
+      if widget:GetParent().rows then
+        widget.text:SetShadowColor(0,0,0,1);widget.text:SetShadowOffset(1,-1)
+      else widget.text:SetShadowColor(0,0,0,0);widget.text:SetShadowOffset(0,0) end
     end
   end
   paint(button,false)
@@ -31,6 +35,7 @@ local function font(parent, size, red, green, blue, layer)
   local text = parent:CreateFontString(nil, layer or "OVERLAY")
   text:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF", size, "")
   text:SetTextColor(red or 0.9, green or 0.88, blue or 0.8)
+  text:SetShadowColor(0,0,0,1);text:SetShadowOffset(1,-1)
   text:SetJustifyH("LEFT"); text:SetJustifyV("TOP")
   return text
 end
@@ -118,7 +123,7 @@ local function makeRow(panel)
   row.glow:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight2");row.glow:SetVertexColor(.12,.52,1);row.glow:SetAlpha(.24);row.glow:SetBlendMode("ADD");row.glow:Hide()
   row.badge=Q:MakeBadge(row,23);row.badge:SetPoint("TOPLEFT",row,"TOPLEFT",1,0)
   row.title=font(row,12,1,0.82,0.32);row.title:SetPoint("TOPLEFT",row,"TOPLEFT",29,-3);row.title:SetWidth(205)
-  row.detail=font(row,11);row.detail:SetPoint("TOPLEFT",row.title,"BOTTOMLEFT",0,-4);row.detail:SetWidth(203)
+  row.detail=font(row,11,1,1,1);row.detail:SetPoint("TOPLEFT",row.title,"BOTTOMLEFT",0,-4);row.detail:SetWidth(203)
   row:RegisterForClicks("LeftButtonUp","RightButtonUp");row.badge:RegisterForClicks("LeftButtonUp","RightButtonUp")
   row:SetScript("OnClick",function() Q:TrackerClick(this.entry,arg1) end)
   row.badge:SetScript("OnClick",function() Q:TrackerClick(this:GetParent().entry,arg1) end)
@@ -140,6 +145,22 @@ local function makePanel(name,parent,isMap)
   local transparent=QuestlineSettings.transparentTracker==true and not isMap
   panel:SetBackdropColor(0.025,0.045,0.065,transparent and 0 or .9);panel:SetBackdropBorderColor(0.35,0.30,0.16,transparent and 0 or .85)
   panel.isMap=isMap;panel.rows={};panel.page=1
+  panel.headerBar=CreateFrame("Frame",nil,panel)
+  panel.headerBar:SetPoint("TOPLEFT",panel,"TOPLEFT",7,-5)
+  panel.headerBar:SetPoint("TOPRIGHT",panel,"TOPRIGHT",-7,-5);panel.headerBar:SetHeight(24)
+  panel.headerBar.fill=panel.headerBar:CreateTexture(nil,"BACKGROUND")
+  panel.headerBar.fill:SetAllPoints(panel.headerBar);panel.headerBar.fill:SetTexture(0.08,0.06,0.015,.5)
+  panel.headerBar.glow=panel.headerBar:CreateTexture(nil,"BORDER")
+  panel.headerBar.glow:SetAllPoints(panel.headerBar)
+  panel.headerBar.glow:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+  panel.headerBar.glow:SetVertexColor(1,.78,.22,.18)
+  for _,edge in ipairs({"TOP","BOTTOM"}) do
+    local line=panel.headerBar:CreateTexture(nil,"ARTWORK")
+    line:SetPoint(edge.."LEFT",panel.headerBar,edge.."LEFT",0,0)
+    line:SetPoint(edge.."RIGHT",panel.headerBar,edge.."RIGHT",0,0);line:SetHeight(1)
+    line:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight");line:SetVertexColor(1,.78,.22,.65)
+  end
+  if not transparent then panel.headerBar:Hide() end
   panel.header=CreateFrame("Button",nil,panel);panel.header:SetPoint("TOPLEFT",panel,"TOPLEFT",7,-5);panel.header:SetWidth(218);panel.header:SetHeight(23)
   panel.heading=font(panel.header,13,1,0.82,0.32);panel.heading:SetPoint("LEFT",panel.header,"LEFT",5,0)
   if not isMap then
@@ -181,6 +202,7 @@ local function makePanel(name,parent,isMap)
     QuestlineSettings[key]=not QuestlineSettings[key];Q:RefreshTrackers()
   end)
   panel.rule=panel:CreateTexture(nil,"ARTWORK");panel.rule:SetTexture(0.85,0.63,0.14,0.65);panel.rule:SetPoint("TOPLEFT",panel,"TOPLEFT",12,-29);panel.rule:SetWidth(234);panel.rule:SetHeight(1)
+  if transparent then panel.rule:Hide() end
   panel.empty=font(panel,11,0.75,0.8,0.85);panel.empty:SetPoint("TOPLEFT",panel,"TOPLEFT",14,-38);panel.empty:SetWidth(229)
   panel.footer=font(panel,10,0.57,0.66,0.72);panel.footer:SetPoint("BOTTOM",panel,"BOTTOM",0,9)
   panel.previous=CreateFrame("Button",nil,panel);panel.previous:SetWidth(28);panel.previous:SetHeight(22);panel.previous:SetPoint("RIGHT",panel.footer,"LEFT",-8,0)
@@ -231,9 +253,9 @@ end
 local function detailText(entry)
   if entry.failed then return "|cffff6060Quest failed|r" end
   local lines={}
-  for _,o in ipairs(entry.objectives) do table.insert(lines,((entry.complete or o.done) and "|cff69d979- " or "|cffe0ddd1- ")..o.text.."|r") end
+  for _,o in ipairs(entry.objectives) do table.insert(lines,((entry.complete or o.done) and "|cff69d979- " or "|cffffffff- ")..o.text.."|r") end
   if getn(lines)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
-    table.insert(lines,(entry.complete and "|cff69d979" or "|cffe0ddd1").."Speak with "..entry.data.finishers[1].name.."|r")
+    table.insert(lines,(entry.complete and "|cff69d979" or "|cffffffff").."Speak with "..entry.data.finishers[1].name.."|r")
   elseif getn(lines)==0 then table.insert(lines,Q:ExpandText(entry.summary)) end
   if not entry.id then table.insert(lines,"|cffdbaa78Location unavailable|r") end
   if entry.id and not Q:HasLocations(entry) then table.insert(lines,"|cffdbaa78No remaining mapped locations|r") end
@@ -296,8 +318,6 @@ function Q:RenderTracker(panel,entries,zone,zoneName)
     local transparent=QuestlineSettings.transparentTracker==true and not panel.isMap
     if selected and not transparent then row.shade:Show() else row.shade:Hide() end
     if selected and transparent then row.glow:Show() else row.glow:Hide() end
-    row.title:SetShadowColor(0,0,0,0);row.title:SetShadowOffset(0,0)
-    row.detail:SetShadowColor(0,0,0,0);row.detail:SetShadowOffset(0,0)
     row:Show();top=top+height+4
   end
   if getn(entries)==0 then

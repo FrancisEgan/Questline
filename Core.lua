@@ -418,7 +418,9 @@ events:SetScript("OnEvent",function()
     if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=true end
     if QuestlineSettings.worldMapSpawns==nil then QuestlineSettings.worldMapSpawns=false end
     if QuestlineSettings.transparentTracker==nil then
-      QuestlineSettings.transparentTracker=type(QuestlineSettings.trackerOpacity)=="number" and QuestlineSettings.trackerOpacity==0 or false
+      if type(QuestlineSettings.trackerOpacity)=="number" then
+        QuestlineSettings.transparentTracker=QuestlineSettings.trackerOpacity==0
+      else QuestlineSettings.transparentTracker=true end
     end
     QuestlineSettings.trackerOpacity=nil
     if QuestlineSettings.trackerMode~="zone" and QuestlineSettings.trackerMode~="world" then QuestlineSettings.trackerMode="zone" end
