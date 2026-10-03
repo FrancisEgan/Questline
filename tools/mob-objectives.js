@@ -24,6 +24,18 @@ function mobObjectives(db,objectMode=false) {
   }
   return Object.fromEntries([...byName].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([name,keys])=>[name,[...keys].sort()]));
 }
+function vendorObjectives(db) {
+  const result={};
+  for(const quest of Object.values(db.quests)) for(const target of quest.objectives||[]) {
+    if(target.kind!=='item') continue;
+    const key='item:'+target.id;
+    for(const id of Object.keys(db.items[target.id]?.vendors||{})) {
+      const name=db.units[id]?.name?.trim().toLowerCase().replace(/\s+/g,' ');
+      if(name && !(result[name]||=[]).includes(key)) result[name].push(key);
+    }
+  }
+  return Object.fromEntries(Object.entries(result).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([name,keys])=>[name,keys.sort()]));
+}
 function npcQuests(db) {
   const result={};
   for(const [id,quest] of Object.entries(db.quests)) for(const role of ['starters','finishers']) {
@@ -94,4 +106,4 @@ function questGivers(db) {
   }
   return {givers,byZone};
 }
-module.exports={mobObjectives,mobDropRates,npcQuests,questGivers};
+module.exports={mobObjectives,vendorObjectives,mobDropRates,npcQuests,questGivers};

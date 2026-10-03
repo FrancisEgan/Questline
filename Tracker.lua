@@ -75,15 +75,18 @@ function Q:ShowQuestTooltip(owner, entry, target)
   tip:SetOwner(owner,"ANCHOR_LEFT")
   tip:SetText(self:QuestTitle(entry),1,0.85,0.4)
   if target then tip:AddLine(target.name,0.7,0.85,1) end
-  if entry.complete then tip:AddLine("Ready for turn-in",1,0.9,0.4)
-  elseif entry.failed then tip:AddLine("Quest failed",1,0.3,0.3)
+  if entry.failed then tip:AddLine("Quest failed",1,0.3,0.3)
   else for index,objective in ipairs(entry.objectives) do
-    local lines=self:PartyObjectiveLines(entry,index,objective.text,objective.done,"")
+    local lines=self:PartyObjectiveLines(entry,index,objective.text,entry.complete or objective.done,"")
     for _,line in ipairs(lines) do
       if line.done then tip:AddLine(line.text,0.35,1,0.4,true)
       else tip:AddLine(line.text,0.88,0.88,0.82,true) end
     end
-  end end
+  end
+    if getn(entry.objectives)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
+      tip:AddLine("Speak with "..entry.data.finishers[1].name,entry.complete and .35 or .88,entry.complete and 1 or .88,entry.complete and .4 or .82,true)
+    end
+  end
   if entry.complete or entry.failed or getn(entry.objectives)==0 then
     local lines=self:PartyStatusLines(entry,"  ")
     if getn(lines)>0 then tip:AddLine("Party",.8,.85,.9) end
@@ -226,11 +229,12 @@ function Q:CreateTrackers()
   self:PositionTrackers()
 end
 local function detailText(entry)
-  if entry.complete then return "|cffffdf70Ready for turn-in|r" end
   if entry.failed then return "|cffff6060Quest failed|r" end
   local lines={}
-  for _,o in ipairs(entry.objectives) do table.insert(lines,(o.done and "|cff69d979- " or "|cffe0ddd1- ")..o.text.."|r") end
-  if getn(lines)==0 then table.insert(lines,Q:ExpandText(entry.summary)) end
+  for _,o in ipairs(entry.objectives) do table.insert(lines,((entry.complete or o.done) and "|cff69d979- " or "|cffe0ddd1- ")..o.text.."|r") end
+  if getn(lines)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
+    table.insert(lines,(entry.complete and "|cff69d979" or "|cffe0ddd1").."Speak with "..entry.data.finishers[1].name.."|r")
+  elseif getn(lines)==0 then table.insert(lines,Q:ExpandText(entry.summary)) end
   if not entry.id then table.insert(lines,"|cffdbaa78Location unavailable|r") end
   if entry.id and not Q:HasLocations(entry) then table.insert(lines,"|cffdbaa78No remaining mapped locations|r") end
   return table.concat(lines,"\n")

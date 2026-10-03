@@ -1,9 +1,9 @@
 {
-  "build": "cef42a9cc8993f0b",
+  "build": "f545bb13a17b6cc9",
   "grid": 1280,
   "quests": 6704,
   "targets": 7502,
-  "zones": 119,
+  "zones": 120,
   "unmappedTargets": 962,
   "issues": [
     {
@@ -3856,7 +3856,7 @@
     }
   ],
   "barrens": {
-    "quests": 664,
+    "quests": 682,
     "examples": [
       {
         "id": 844,

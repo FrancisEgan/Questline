@@ -57,6 +57,24 @@ function Q:GetMobProgress(name,object)
   for _,group in ipairs(groups) do table.sort(group.objectives,function(a,b) return a.objectiveIndex<b.objectiveIndex end) end
   return groups
 end
+function Q:GetVendorProgress(name)
+  local groups,byQuest={},{}
+  for _,key in ipairs((DB.vendorObjectives or {})[self:Normalize(name)] or {}) do
+    for _,progress in ipairs((self.tooltipProgress or {})[key] or {}) do
+      local group=byQuest[progress.questKey]
+      if not group then
+        group={key=progress.questKey,title=progress.questTitle,level=progress.questLevel,number=progress.questNumber,objectives={},seen={}}
+        byQuest[progress.questKey]=group;table.insert(groups,group)
+      end
+      if not group.seen[progress.objectiveIndex] then
+        table.insert(group.objectives,progress);group.seen[progress.objectiveIndex]=true
+      end
+    end
+  end
+  table.sort(groups,function(a,b) return a.number<b.number end)
+  for _,group in ipairs(groups) do table.sort(group.objectives,function(a,b) return a.objectiveIndex<b.objectiveIndex end) end
+  return groups
+end
 local function leftLine(index) return getglobal("GameTooltipTextLeft"..index) end
 local function sameProgress(text,progress)
   text=Q:Normalize(text);text=string.gsub(text,"^%-%s*","")
@@ -127,7 +145,8 @@ function Q:RefreshMobTooltip()
   local desired,sections={},nil
   if hovering then
     if not object then sections=self:GetNPCSections(name) end
-    if not sections then desired=self:GetMobProgress(name,object) end
+    if not object then desired=self:GetVendorProgress(name) end
+    if not sections then for _,group in ipairs(self:GetMobProgress(name,object)) do table.insert(desired,group) end end
   end
   local lines={}
   if sections then for _,section in ipairs(sections) do

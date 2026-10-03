@@ -2,8 +2,8 @@
 ## Title: |cff8cccffQuestline|r
 ## Author: Questline contributors
 ## Notes: Quest tracker, NPC tooltips, questgiver map/minimap markers and selected-quest areas. Standalone Octo-first database.
-## Version: 0.1.60
-## OptionalDeps: pfQuest, pfQuest-octo, pfQuest-turtle, Magnify, ModernMapMarkers-octo
+## Version: 0.1.63
+## OptionalDeps: pfQuest, pfQuest-octo, pfQuest-turtle, Magnify, ModernMapMarkers-octo, GudaPlates
 ## SavedVariablesPerCharacter: QuestlineSettings
 
 Data\Init.lua
@@ -17,6 +17,7 @@ Data\QuestGivers.lua
 Data\ZoneGivers.lua
 Core.lua
 Tracker.lua
+Nameplates.lua
 Map.lua
 Compat.lua
 Tooltip.lua

@@ -1,8 +1,6 @@
-// Widely stocked supplies do not have a useful quest destination. Keep scarce
-// and limited-stock vendors mapped; this is display policy, not a data override.
+// Questie-Octo is the authority for vendor availability. Keep every recorded
+// vendor so nearby suppliers remain useful quest destinations.
 function mappedVendors(item) {
-  const vendors=Object.entries(item.vendors||{});
-  const unlimited=vendors.filter(([,stock])=>Number(stock)===0);
-  return unlimited.length>=10 ? [] : vendors.map(([id])=>id);
+  return Object.keys(item.vendors||{});
 }
 module.exports={mappedVendors};

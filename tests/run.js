@@ -4,7 +4,7 @@ const {readLua,lua,luaparse}=require('../tools/lua-data');
 const {geometry,GRID}=require('../tools/geometry');
 const {badge,glow,area}=require('../tools/contour-assets');
 const {packRuns,unpackRuns}=require('../tools/packed-runs');
-const {mobObjectives,mobDropRates,npcQuests,questGivers}=require('../tools/mob-objectives');
+const {mobObjectives,vendorObjectives,mobDropRates,npcQuests,questGivers}=require('../tools/mob-objectives');
 const {mappedVendors}=require('../tools/vendor-locations');
 let fengari;
 try { fengari=require('fengari'); } catch (_) { fengari=require(path.join(root,'../.test-tools/node_modules/fengari')); }
@@ -42,9 +42,9 @@ check(!quests[1],'upstream underscore tombstone honored');
 check(quests[934]&&quests[7383]?.objectives.some(target=>target.kind==='item'&&target.id===18151),'both upstream Crown of the Earth records retained without local deletion');
 check(units[92012].coordinates[0][2]===8,'Octo manual relocation applied');
 check(items[51220].drops.units[50610]===100,'Octo manual interaction applied');
-assert.deepEqual(mappedVendors(items[2320]),[],'Coarse Thread has no vendor destinations');checks++;
+check(mappedVendors(items[2320]).includes('2118'),'Coarse Thread includes Abigail Shiel as a vendor destination');
 const commonVendors=Object.fromEntries(Array.from({length:10},(_,i)=>[i+1,0]));
-assert.deepEqual(mappedVendors({vendors:commonVendors}),[],'widely stocked supplies omit vendor pins');checks++;
+assert.deepEqual(mappedVendors({vendors:commonVendors}),Object.keys(commonVendors),'widely stocked supplies retain every upstream vendor');checks++;
 assert.deepEqual(mappedVendors({vendors:{1:0,2:0}}),['1','2'],'specialty vendor destinations remain mapped');checks++;
 assert.deepEqual(mappedVendors({vendors:Object.fromEntries(Array.from({length:10},(_,i)=>[i+1,1]))}),Object.keys(commonVendors),'limited-stock items remain mapped');checks++;
 check(quests[900].objectives.length===3,'all valve interactions preserved');
@@ -60,6 +60,8 @@ const lootFixture=mobObjectives({
 assert.deepEqual(lootFixture['test mob'],['item:10','unit:1']);checks++;
 check(lootFixture['quest drop mob'].includes('item:10'),'zero-rate quest drops and cyclic reference loot resolve');
 check(!lootFixture['vendor only']&&!lootFixture['disabled drop'],'vendors and disabled drops are excluded');
+const vendorIndex=vendorObjectives({quests,units,items});
+check(vendorIndex['abigail shiel'].includes('item:2320'),'vendor tooltip index connects Abigail Shiel to Coarse Thread');
 const realRates=mobDropRates({quests,units,items,lootGroups:read('lootGroups')});
 check(realRates['adult plainstrider']['item:7097']===10.4,'Leg Meat uses the owned Adult Plainstrider rate, not the example percentage');
 check(realRates['rattlecage soldier']['item:3162']===40,'Notched Rib percentage is retained');
@@ -162,7 +164,7 @@ run(fs.readFileSync(path.join(__dirname,'runtime.lua'),'utf8'),'runtime stubs');
 for(const name of files) run(fs.readFileSync(path.join(root,name),'utf8'),name);
 run('local count=0;for id in pairs(QuestlineDB.quests) do count=count+1 end;assert(count=='+Object.keys(quests).length+',"compiled snapshot must retain every upstream quest");assert(QuestlineDB.quests[934],"upstream quest 934 must not be deleted locally")','database authority');
 run('runTests()','runtime tests');
-run('assert(not next(QuestlineDB.locations["item:2320"]),"Coarse Thread has no map or minimap pins");assert(string.len(QuestlineDB.locations["item:2876"][85].runs)>0,"Duskbat hunting area remains mapped");local thread=false;for _,t in ipairs(QuestlineDB.quests[375].objectives) do if t.key=="item:2320" then thread=true end end;assert(thread,"thread objective remains in tracker")','vendor display policy');
+run('local threadLocation=QuestlineDB.locations["item:2320"][85];assert(threadLocation and threadLocation.pointKinds and threadLocation.pointKinds[1]=="v","Coarse Thread vendors are compiled as vendor pins");local abigail=false;for i,p in ipairs(threadLocation.points) do if math.abs(p[1]-61)<.1 and math.abs(p[2]-52.4)<.1 and threadLocation.pointKinds[i]=="v" then abigail=true end end;assert(abigail,"Abigail Shiel is mapped in Brill");assert(string.len(QuestlineDB.locations["item:2876"][85].runs)>0,"Duskbat hunting area remains mapped");local thread=false;for _,t in ipairs(QuestlineDB.quests[375].objectives) do if t.key=="item:2320" and t.icon=="buy" then thread=true end end;assert(thread,"vendor-only thread objective uses the buy icon")','vendor display policy');
 if(process.argv.includes('--review')) {
   const id=Number(Object.keys(quests).find(id=>quests[id].title==='Preventing Poison'))||845;
   const source='return Questline:ContourPatches(Questline:AreaRows(QuestlineDB.quests['+id+'].objectives,17))';

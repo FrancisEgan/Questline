@@ -4,6 +4,7 @@ local texturePath = "Interface\\AddOns\\Questline\\Textures\\"
 local actionTextures={
   loot=texturePath.."action-loot",kill=texturePath.."action-kill",
   interact=texturePath.."action-interact",explore=texturePath.."action-interact",
+  buy="Interface\\GossipFrame\\VendorGossipIcon",vendor="Interface\\GossipFrame\\VendorGossipIcon",
   talk="Interface\\GossipFrame\\GossipGossipIcon",
 }
 local alphabet="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
@@ -188,7 +189,7 @@ function Q:SelectedSpawns(zone)
       if not seen[identity] then
         seen[identity]=true
         local kind=location.spawnKinds and string.sub(location.spawnKinds,(i-1)/4+1,(i-1)/4+1)
-        table.insert(points,{coordinate(packed,i)/40,coordinate(packed,i+2)/40,entry=item.entry,target=item.target,icon=kind=="g" and "interact" or (kind=="l" and "loot" or nil)})
+        table.insert(points,{coordinate(packed,i)/40,coordinate(packed,i+2)/40,entry=item.entry,target=item.target,icon=kind=="g" and "interact" or (kind=="l" and "loot" or (kind=="v" and "vendor" or nil))})
       end
     end
   end
@@ -234,6 +235,29 @@ function Q:RefreshSpawnMinimap()
   end end
   for i=count+1,getn(self.minimapSpawns) do self.minimapSpawns[i]:Hide() end
 end
+function Q:ClosestVendorAnchor(entry,target,location,zone)
+  if not location or not location.points or (target.icon~="buy" and target.icon~="vendor") then return location and location.anchor end
+  local destinations={}
+  for _,finisher in ipairs(entry.data and entry.data.finishers or {}) do
+    local finish=DB.locations[finisher.key] and DB.locations[finisher.key][zone]
+    if finish then
+      local added=false
+      for _,point in ipairs(finish.points or {}) do table.insert(destinations,point);added=true end
+      if not added and finish.anchor then table.insert(destinations,finish.anchor) end
+    end
+  end
+  if getn(destinations)==0 then return location.anchor end
+  local best,bestDistance
+  for index,point in ipairs(location.points) do
+    local kind=location.pointKinds and location.pointKinds[index]
+    if not kind or kind=="v" then for _,destination in ipairs(destinations) do
+      local dx,dy=point[1]-destination[1],(point[2]-destination[2])*.667
+      local distance=dx*dx+dy*dy
+      if not bestDistance or distance<bestDistance then best,bestDistance=point,distance end
+    end end
+  end
+  return best or location.anchor
+end
 function Q:RefreshMap()
   if not self.overlay or not WorldMapFrame:IsVisible() then return end
   -- Reassert ordering even on cached renders: map addons/clicks can raise frames.
@@ -274,10 +298,11 @@ function Q:RefreshMap()
       if location and location.anchor then
         local area=location.runs and string.len(location.runs)>0
         local spawns=location.spawns or 0
+        local targetAnchor=self:ClosestVendorAnchor(entry,target,location,zone)
         -- Prefer the main remaining hunting area over a vendor or isolated
         -- pickup. Point-only destinations and turn-ins retain their order.
         if not anchor or (area and (not anchorArea or spawns>anchorSpawns)) then
-          anchor=location.anchor;anchorArea=area;anchorSpawns=spawns
+          anchor=targetAnchor;anchorArea=area;anchorSpawns=spawns
         end
       end
     end
@@ -325,11 +350,12 @@ function Q:RefreshMap()
   local count=0;local pointKeys={}
   for _,selected in ipairs(selectedEntries) do if not selected.complete then for _,target in ipairs(self:Targets(selected)) do
     local location=DB.locations[target.key] and DB.locations[target.key][zone]
-    if location then for _,point in ipairs(location.points) do
-      local key=point[1]..":"..point[2]..":"..target.icon
+    if location then for pointIndex,point in ipairs(location.points) do
+      local pointKind=location.pointKinds and location.pointKinds[pointIndex]
+      local icon=pointKind=="v" and "vendor" or target.icon
+      local key=point[1]..":"..point[2]..":"..icon
       if not pointKeys[key] then
         pointKeys[key]=true;count=count+1
-        local icon=target.icon
         if icon=="kill" and target.kind=="unit" and target.faction and UnitFactionGroup then
           local faction=UnitFactionGroup("player")=="Horde" and "H" or "A"
           if string.find(target.faction,faction,1,true) then icon="talk" end

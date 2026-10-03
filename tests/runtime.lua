@@ -345,6 +345,53 @@ local function completionHistoryTests(Q)
   QuestlineDB.quests[991014]=nil
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+
+local function requestedBehaviorTests(Q)
+  local original=Q.quests
+  local first={kind="unit",id=990001,key="unit:990001",name="First Mob",icon="kill"}
+  local second={kind="unit",id=990002,key="unit:990002",name="Second Mob",icon="kill"}
+  local finisher={kind="unit",id=990003,key="turnin:unit:990003",name="Helpful NPC",icon="turnin"}
+  local active={key="requested-active",id=990010,title="Requested behavior",level=5,number=1,objectives={{text="First Mob: 1/1",done=true},{text="Second Mob: 0/1",done=false}},data={objectives={first,second},finishers={finisher}}}
+  expect(#Q:Targets(active)==1 and Q:Targets(active)[1].key==second.key,"completed mob objectives are removed from the remaining map area")
+
+  local complete={key="requested-complete",id=990011,title="Completed context",level=5,complete=true,objectives={{text="Keep this objective context",done=true}},data={objectives={first},finishers={finisher}}}
+  local talk={key="requested-talk",id=990012,title="A Conversation",level=5,complete=true,objectives={},data={objectives={},finishers={finisher}}}
+  Q:SetEntries({complete,talk,active});Q:SetTrackerMode("world")
+  local completeText,talkText
+  for _,row in ipairs(Q.tracker.rows) do if row:IsShown() and row.entry then
+    if row.entry.key==complete.key then completeText=row.detail:GetText() end
+    if row.entry.key==talk.key then talkText=row.detail:GetText() end
+  end end
+  expect(completeText and string.find(completeText,"Keep this objective context",1,true) and not string.find(completeText,"Ready for turn-in",1,true),"completed tracker rows retain their green objective context")
+  expect(talkText and string.find(talkText,"Speak with Helpful NPC",1,true),"talk-only quests name their destination NPC")
+
+  QuestlineDB.mobObjectives[Q:Normalize(second.name)]={second.key}
+  local plate=CreateFrame("Frame",nil,UIParent);plate.health=CreateFrame("Frame",nil,plate)
+  plate.original={name=plate:CreateFontString(nil,"OVERLAY")};plate.original.name:SetText(second.name)
+  QuestlineSettings.selected=active.key;QuestlineSettings.selectedKeys=nil
+  Q:PaintNameplate(plate)
+  expect(plate.questlineBadges and plate.questlineBadges[1]:IsShown() and plate.questlineBadges[1].text:GetText()==tostring(active.number),"relevant GudaPlates mobs receive the quest number badge")
+  expect(plate.questlineBadges[1].glow:IsShown(),"the selected tracker quest highlights its nameplate badge")
+  active.objectives[2].done=true;Q:PaintNameplate(plate)
+  expect(not plate.questlineBadges[1]:IsShown(),"finishing a mob objective removes its nameplate badge")
+  QuestlineDB.mobObjectives[Q:Normalize(second.name)]=nil
+  Q:SetEntries(original)
+end
+
+local function vendorTooltipTests(Q)
+  local original=Q.quests
+  local target={kind="item",id=990020,key="item:990020",name="Test Thread",icon="buy"}
+  local entry={key="vendor-tooltip",id=990021,title="Shopping Test",level=8,objectives={{text="Test Thread: 0/1",kind="item",done=false}},data={objectives={target},finishers={}}}
+  QuestlineDB.vendorObjectives["test supplier"]={target.key}
+  Q:SetEntries({entry})
+  mouseoverName="Test Supplier";mouseoverPlayer=false
+  GameTooltip:SetOwner(UIParent,"ANCHOR_NONE");GameTooltip:SetText(mouseoverName);GameTooltip:AddLine("Trade Supplies");GameTooltip:Show();Q:RefreshMobTooltip()
+  expect(GameTooltipTextLeft3:GetText()==Q:QuestTitle(entry),"vendor tooltip uses the tracker's colored level and quest title")
+  expect(GameTooltipTextLeft4:GetText()=="  Test Thread - 0/1","vendor tooltip identifies the sold quest item and live progress")
+  local lines=GameTooltip:NumLines();Q:RefreshMobTooltip()
+  expect(GameTooltip:NumLines()==lines,"vendor tooltip details do not duplicate while hovering")
+  QuestlineDB.vendorObjectives["test supplier"]=nil;mouseoverName=nil;GameTooltip:Hide();Q:SetEntries(original)
+end
 local function availabilityRegressionTests(Q)
   local original=Q.quests
   local history,sources=QuestlineSettings.completedQuests,QuestlineSettings.completionSources
@@ -1135,7 +1182,15 @@ local function areaAnchorTests(Q)
   expect(math.abs(Q.mapPins[1].point[4]-WorldMapButton:GetWidth()*.6)<.001,"badge prefers the hunting area's center over the first point objective")
   entry.complete=true;Q.mapDirty=true;Q:RefreshMap()
   expect(math.abs(Q.mapPins[1].point[4]-WorldMapButton:GetWidth()*.05)<.001,"completed quest keeps its exact turn-in anchor")
+  local vendor={key="anchor-vendors",name="Vendor supply",kind="item",icon="buy"}
+  local turnin={key="anchor-turnin",name="Turn-in NPC",kind="unit",icon="turnin"}
+  QuestlineDB.locations[vendor.key]={[17]={points={{5,60},{61,52.4},{90,20}},pointKinds={"v","v","v"},runs="",anchor={5,60},spawns=3}}
+  QuestlineDB.locations[turnin.key]={[17]={points={{60,52}},runs="",anchor={60,52},spawns=1}}
+  local vendorEntry={key="vendor-anchor-test",id=980101,title="Vendor anchor",level=8,objectives={{text="Vendor supply: 0/1",done=false}},data={objectives={vendor},finishers={turnin}}}
+  local closest=Q:ClosestVendorAnchor(vendorEntry,vendor,QuestlineDB.locations[vendor.key][17],17)
+  expect(closest[1]==61 and closest[2]==52.4,"vendor-only quests anchor beside the supplier closest to their turn-in")
   QuestlineDB.locations[point.key]=nil;QuestlineDB.locations[area.key]=nil
+  QuestlineDB.locations[vendor.key]=nil;QuestlineDB.locations[turnin.key]=nil
   Q:SetEntries(original);WorldMapFrame:Hide()
 end
 
@@ -1548,6 +1603,8 @@ function runTests()
   availabilityRegressionTests(Q)
   spawnDotTests(Q)
   objectTooltipTests(Q)
+  requestedBehaviorTests(Q)
+  vendorTooltipTests(Q)
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.trackerMode=="world","login preserves an existing saved World preference")
   print("Runtime: "..checks.." assertions passed.")

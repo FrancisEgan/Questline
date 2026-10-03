@@ -6,7 +6,7 @@ const { lua } = require('./lua-data');
 const { GRID, geometry } = require('./geometry');
 const { packRuns } = require('./packed-runs');
 const { mappedVendors } = require('./vendor-locations');
-const { mobObjectives, mobDropRates, npcQuests, questGivers } = require('./mob-objectives');
+const { mobObjectives, vendorObjectives, mobDropRates, npcQuests, questGivers } = require('./mob-objectives');
 const root=path.resolve(__dirname,'..'), dir=path.join(root,'database');
 const kinds=['quests','units','objects','items','zones','events','lootGroups','itemUses','reference'];
 const db=Object.fromEntries(kinds.map(k=>[k,JSON.parse(fs.readFileSync(path.join(dir,k+'.json'),'utf8'))]));
@@ -27,7 +27,10 @@ function gather(kind,id,seen=new Set()) {
       seen.add('group:'+id);if(db.lootGroups[id]) sources(db.lootGroups[id]);
     }
   }
-  if(kind==='item') {sources(record.drops);for(const id of mappedVendors(record)) points.push(...gather('unit',id,seen));}
+  if(kind==='item') {
+    sources(record.drops);
+    for(const id of mappedVendors(record)) for(const point of gather('unit',id,seen)) points.push([...point.slice(0,4),'vendor']);
+  }
   if(kind==='use') for(const use of record) points.push(...gather(use.kind,use.id,seen));
   if(kind==='zone'&&record.bounds) {const b=record.bounds;points.push([b.x+b.width/2,b.y+b.height/2,b.parent]);}
   return points;
@@ -39,26 +42,38 @@ function target(t,turnin) {
     for(const p of points) (byZone[p[2]]||=[]).push(p);
     locations[key]={};
     for(const [zone,coords] of Object.entries(byZone)) {
-      const location=geometry(coords,turnin||t.kind==='event'||t.kind==='zone');
+      const areaCoords=coords.filter(p=>p[4]!=='vendor');
+      const vendorCoords=coords.filter(p=>p[4]==='vendor');
+      const location=geometry(areaCoords.length?areaCoords:vendorCoords,turnin||t.kind==='event'||t.kind==='zone'||!areaCoords.length);
+      if(vendorCoords.length && areaCoords.length) {
+        const existing=new Set(location.points.map(p=>p[0]+':'+p[1]));
+        for(const p of vendorCoords) if(!existing.has(p[0]+':'+p[1])) {location.points.push(p.slice(0,2));existing.add(p[0]+':'+p[1]);}
+      }
+      if(t.kind==='item' && location.points.length) {
+        const vendors=new Set(vendorCoords.map(p=>p[0]+':'+p[1]));
+        location.pointKinds=location.points.map(p=>vendors.has(p[0]+':'+p[1])?'v':'');
+      }
       if(!turnin && ['unit','object','item','use'].includes(t.kind)) {
         const unique=new Map();
         for(const p of coords) {
           const xy=[Math.round(p[0]*40),Math.round(p[1]*40)],key=xy.join(':');
-          const gear=t.kind==='item'&&p[4]==='object';
-          unique.set(key,{xy,gear:gear||unique.get(key)?.gear});
+          const kind=t.kind==='item'?(p[4]==='vendor'?'v':p[4]==='object'?'g':'l'):'';
+          const previous=unique.get(key);
+          unique.set(key,{xy,kind:previous?.kind==='v'?'v':kind||previous?.kind});
         }
         const ordered=[...unique.values()].sort((a,b)=>a.xy[0]-b.xy[0]||a.xy[1]-b.xy[1]);
         location.spawnPoints=packRuns(ordered.flatMap(p=>p.xy));
-        if(t.kind==='item') location.spawnKinds=ordered.map(p=>p.gear?'g':'l').join('');
+        if(t.kind==='item') location.spawnKinds=ordered.map(p=>p.kind||'l').join('');
       }
       locations[key][zone]=location;
     }
-    if(!points.length && !(t.kind==='item' && Object.keys(db.items[t.id]?.vendors||{}).length && !mappedVendors(db.items[t.id]).length)) issues.push({target:key,issue:'no-locations'});
+    if(!points.length) issues.push({target:key,issue:'no-locations'});
   }
   let icon=t.icon || (t.kind==='item'?'loot':t.kind==='object'||t.kind==='use'?'interact':t.kind==='event'||t.kind==='zone'?'explore':'kill');
   if(t.kind==='item') {
     const sources=gather(t.kind,t.id);
-    if(sources.length && sources.every(p=>p[4]==='object')) icon='interact';
+    if(sources.length && sources.every(p=>p[4]==='vendor')) icon='buy';
+    else if(sources.length && sources.every(p=>p[4]==='object')) icon='interact';
   }
   if(t.kind==='unit' && db.units[t.id]?.faction==='AH') icon='talk';
   if(turnin) icon='turnin';
@@ -89,13 +104,14 @@ function writeTable(file,field,records,append=false) {
   fs[append?'appendFileSync':'writeFileSync'](path.join(output,file),lines.join('\n')+'\n');
 }
 const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).update(fs.readFileSync(path.join(__dirname,'vendor-locations.js'))).digest('hex').slice(0,16);
-fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
+fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
 writeTable('Quests.lua','quests',runtimeQuests);
 writeTable('Locations.lua','locations',locations);
 writeTable('Zones.lua','zones',Object.fromEntries(Object.entries(db.zones).map(([id,zone])=>[id,{...zone,mapSize:db.reference.minimap[id]}])));
 writeTable('ZoneQuests.lua','zoneQuests',Object.fromEntries(Object.entries(zoneIndex).map(([k,v])=>[k,[...v].sort((a,b)=>a-b)])));
 writeTable('MobObjectives.lua','mobObjectives',mobObjectives(db));
 writeTable('MobObjectives.lua','objectObjectives',mobObjectives(db,true),true);
+writeTable('MobObjectives.lua','vendorObjectives',vendorObjectives(db),true);
 writeTable('MobObjectives.lua','mobDropRates',mobDropRates(db),true);
 writeTable('NPCQuests.lua','npcQuests',npcQuests(db));
 const giverData=questGivers(db);
