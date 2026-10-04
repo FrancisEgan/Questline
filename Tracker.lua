@@ -75,11 +75,28 @@ function Q:PaintBadge(badge, entry, selected)
     badge.text:SetShadowColor(0,0,0,0.9)
   end
 end
+function Q:SetSourceTooltipTitle(tip,name)
+  tip:SetText(name,1,1,1)
+  local title=getglobal(tip:GetName().."TextLeft1")
+  if not title or not GameTooltipText then return end
+  -- Use the body font for source names, then restore the shared title on hide.
+  if not tip.questlineTitleFont then
+    tip.questlineTitleFont=title:GetFontObject()
+    local onHide=tip:GetScript("OnHide")
+    tip:SetScript("OnHide",function()
+      title:SetFontObject(tip.questlineTitleFont)
+      tip.questlineTitleFont=nil
+      tip:SetScript("OnHide",onHide)
+      if onHide then onHide() end
+    end)
+  end
+  title:SetFontObject(GameTooltipText)
+end
 function Q:ShowQuestTooltip(owner, entry, target, sourceName)
   local tip = WorldMapFrame:IsVisible() and WorldMapTooltip or GameTooltip
   tip:SetOwner(owner,"ANCHOR_LEFT")
   if sourceName then
-    tip:SetText(sourceName,1,1,1)
+    self:SetSourceTooltipTitle(tip,sourceName)
     tip:AddLine(self:QuestTitle(entry),1,0.85,0.4,true)
   else
     tip:SetText(self:QuestTitle(entry),1,0.85,0.4)

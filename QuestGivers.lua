@@ -75,7 +75,7 @@ function Q:ShowGiverTooltip(pin,minimap)
   local tip=minimap and GameTooltip or WorldMapTooltip
   tip:SetOwner(pin,"ANCHOR_RIGHT")
   for index,giver in ipairs(nearby) do
-    if index==1 then tip:SetText(giver.name,1,1,1)
+    if index==1 then self:SetSourceTooltipTitle(tip,giver.name)
     else tip:AddLine(" ");tip:AddLine(giver.name,1,1,1,true) end
     local available,complete,seenAvailable,seenComplete={},{},{},{}
     for _,quest in ipairs(giver.quests or {}) do

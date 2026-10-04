@@ -78,6 +78,9 @@ function methods:SetFrameLevel(level) self.level=level end
 function methods:GetFrameLevel() return self.level or 1 end
 function methods:GetEffectiveScale() return self.scale or (self.parent and self.parent:GetEffectiveScale()) or 1 end
 function methods:GetParent() return self.parent end
+function methods:GetName() return self.name end
+function methods:GetFontObject() return self.fontObject end
+function methods:SetFontObject(value) self.fontObject=value end
 function methods:SetOwner(owner) self.owner=owner end
 function methods:GetLeft() return 20 end
 function methods:GetTop() return 600 end
@@ -118,7 +121,11 @@ function methods:AddLine(text,...)
   if self==GameTooltip then
     self.numLines=self:NumLines()+1
     local name="GameTooltipTextLeft"..self.numLines
-    local line=_G[name] or self:CreateFontString(name,"OVERLAY")
+    local line=_G[name]
+    if not line then
+      line=self:CreateFontString(name,"OVERLAY")
+      line:SetFontObject(self.numLines==1 and GameTooltipHeaderText or GameTooltipText)
+    end
     line:SetText(text);line:SetTextColor(...);line:Show()
   end
 end
@@ -144,6 +151,8 @@ QuestLogListScrollFrame=widget("Frame","QuestLogListScrollFrame",QuestLogFrame)
 QuestLogListScrollFrameScrollBar=widget("Slider","QuestLogListScrollFrameScrollBar",QuestLogFrame)
 ChatFrameEditBox=widget("EditBox","ChatFrameEditBox",UIParent);ChatFrameEditBox:Hide()
 GameTooltip=widget("Frame","GameTooltip",UIParent)
+GameTooltipHeaderText={}
+GameTooltipText={}
 WorldMapTooltip=widget("Frame","WorldMapTooltip",WorldMapFrame)
 DEFAULT_CHAT_FRAME=widget("Frame",nil,UIParent)
 SlashCmdList={}
@@ -1321,8 +1330,10 @@ local function giverClusterTests(Q)
   this=Q.minimapGivers[1];this.scripts.OnEnter();text=GameTooltip:GetText()
   expect(text:find(names[1].." quest one",1,true) and text:find(names[2].." quest two",1,true) and not text:find(names[3],1,true),"minimap hover also combines nearby NPC names and quests")
   expect(GameTooltipTextLeft1:GetText()==names[1] and GameTooltipTextLeft2:GetText()=="  Available" and string.find(text,names[2].."\n  Available",1,true),"minimap clusters use the same NPC-first section layout")
+  expect(GameTooltipTextLeft1:GetFontObject()==GameTooltipText,"first clustered NPC uses the smaller body font")
   for _,pool in ipairs({Q.mapGivers,Q.minimapGivers}) do for _,pin in ipairs(pool) do pin:Hide() end end
   Q.mapGivers=mapPool;Q.minimapGivers=miniPool;WorldMapFrame:Hide();GameTooltip:Hide();WorldMapTooltip:Hide()
+  expect(GameTooltipTextLeft1:GetFontObject()==GameTooltipHeaderText,"closing the NPC tooltip restores the shared header font")
 end
 
 local function questLevelAndRateTests(Q)
