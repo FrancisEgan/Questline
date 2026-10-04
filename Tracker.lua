@@ -109,6 +109,7 @@ function Q:ShowQuestTooltip(owner, entry, target, sourceName)
     for _,line in ipairs(lines) do tip:AddLine(line.text,line.done and .4 or .88,line.done and .9 or .88,line.done and .45 or .82,true) end
   end
   if not entry.id then tip:AddLine(entry.reason=="ambiguous" and "Multiple database matches; map location unresolved." or "Quest not found in the English database.",1,0.55,0.3,true) end
+  if target and target.note then tip:AddLine(target.note,.7,.85,1,true) end
   local hint=self:MissingLocationHint(entry)
   if hint then tip:AddLine(hint..".",1,0.55,0.3,true) end
   tip:Show()

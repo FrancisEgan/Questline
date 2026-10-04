@@ -1,10 +1,10 @@
 {
-  "build": "38a1121b264cf5a0",
+  "build": "711c6e951bf44c64",
   "grid": 1280,
   "quests": 6704,
   "targets": 7502,
   "zones": 120,
-  "unmappedTargets": 962,
+  "unmappedTargets": 951,
   "issues": [
     {
       "target": "item:15885",
@@ -48,10 +48,6 @@
     },
     {
       "target": "item:2759",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:1946",
       "issue": "no-locations"
     },
     {
@@ -875,10 +871,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "unit:10323",
-      "issue": "no-locations"
-    },
-    {
       "target": "turnin:unit:10296",
       "issue": "no-locations"
     },
@@ -1495,10 +1487,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "turnin:unit:14524",
-      "issue": "no-locations"
-    },
-    {
       "target": "turnin:unit:14526",
       "issue": "no-locations"
     },
@@ -1983,10 +1971,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "item:21149",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:15211",
       "issue": "no-locations"
     },
@@ -2403,10 +2387,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "unit:20120",
-      "issue": "no-locations"
-    },
-    {
       "target": "item:61107",
       "issue": "no-locations"
     },
@@ -2587,10 +2567,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "unit:60343",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:60344",
       "issue": "no-locations"
     },
@@ -2695,15 +2671,7 @@
       "issue": "no-locations"
     },
     {
-      "target": "unit:60374",
-      "issue": "no-locations"
-    },
-    {
       "target": "unit:60375",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:60376",
       "issue": "no-locations"
     },
     {
@@ -3643,14 +3611,6 @@
       "issue": "no-locations"
     },
     {
-      "target": "unit:3654",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:70028",
-      "issue": "no-locations"
-    },
-    {
       "target": "turnin:unit:80100",
       "issue": "no-locations"
     },
@@ -3708,10 +3668,6 @@
     },
     {
       "target": "turnin:unit:80202",
-      "issue": "no-locations"
-    },
-    {
-      "target": "unit:80203",
       "issue": "no-locations"
     },
     {

@@ -2131,13 +2131,13 @@ QuestlineDB.givers[62839]={["name"]="Brolan Windhorn",["quests"]={41967},["coord
 QuestlineDB.givers[62842]={["name"]="Nuhlgahn Windhorn",["quests"]={42013,42016},["coordinates"]={{65.97,41.18,5642}}}
 QuestlineDB.givers[62852]={["name"]="Fena Ma'dar",["quests"]={41945},["coordinates"]={{60.9,65.7,5642}}}
 QuestlineDB.givers[62899]={["name"]="Olgra",["quests"]={41990},["coordinates"]={{66.78,70.59,5642}}}
-QuestlineDB.givers[62900]={["name"]="Arch Druid Renethra Moonwater",["quests"]={42094,42095},["coordinates"]={{62.7,15.84,5642}}}
-QuestlineDB.givers[62901]={["name"]="Sentinel Commander Silverstreak",["quests"]={42088,42089,42090,42091},["coordinates"]={{62.67,15.86,5642}}}
-QuestlineDB.givers[62902]={["name"]="Zarazar Sagewind",["quests"]={42092},["coordinates"]={{62.32,16.62,5642}}}
-QuestlineDB.givers[62906]={["name"]="Elendon Truebough",["quests"]={42093},["coordinates"]={{62.61,15.81,5642}}}
-QuestlineDB.givers[62907]={["name"]="Talanis Amberscribe",["quests"]={42086,42087},["coordinates"]={{62.67,15.89,5642}}}
+QuestlineDB.givers[62900]={["name"]="Arch Druid Renethra Moonwater",["quests"]={42094,42095},["coordinates"]={{59.24,24.61,5642}}}
+QuestlineDB.givers[62901]={["name"]="Sentinel Commander Silverstreak",["quests"]={42088,42089,42090,42091},["coordinates"]={{59.08,24.68,5642}}}
+QuestlineDB.givers[62902]={["name"]="Zarazar Sagewind",["quests"]={42092},["coordinates"]={{57.46,28.26,5642}}}
+QuestlineDB.givers[62906]={["name"]="Elendon Truebough",["quests"]={42093},["coordinates"]={{58.83,24.48,5642}}}
+QuestlineDB.givers[62907]={["name"]="Talanis Amberscribe",["quests"]={42086,42087},["coordinates"]={{59.1,24.85,5642}}}
 QuestlineDB.givers[62913]={["name"]="Grovetender Sellais",["quests"]={42043},["coordinates"]={{68.1,21.2,5642}}}
-QuestlineDB.givers[62914]={["name"]="Sister Mirallun",["quests"]={42096,42097},["coordinates"]={{64.53,15.29,5642}}}
+QuestlineDB.givers[62914]={["name"]="Sister Mirallun",["quests"]={42096,42097},["coordinates"]={{67.79,22.05,5642}}}
 QuestlineDB.givers[62917]={["name"]="Keeper Bandalar",["quests"]={42042},["coordinates"]={{67.8,22.3,5642}}}
 QuestlineDB.givers[62922]={["name"]="Farmer Denpar",["quests"]={41946},["coordinates"]={{64.1,69.7,5642}}}
 QuestlineDB.givers[62972]={["name"]="Dhela",["quests"]={42015},["coordinates"]={{65.62,40.79,5642}}}

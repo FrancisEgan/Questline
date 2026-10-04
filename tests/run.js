@@ -37,6 +37,13 @@ for(let i=0;i<originalBlips.length;i++) if(!allowedChanges.has(i)) assert.equal(
 checks++;
 const read=k=>JSON.parse(fs.readFileSync(path.join(root,'database',k+'.json'),'utf8'));
 const quests=read('quests'),units=read('units'),items=read('items');
+const {scriptedEncounter}=require('../tools/scripted-encounters');
+const encounterDb={units,objects:read('objects'),scriptedEncounters:read('scriptedEncounters')};
+const lillith=scriptedEncounter(encounterDb,1946,'objectiveCreature');
+check(units[1946].coordinates.length===0,'summoning guidance does not invent ordinary Lillith spawns');
+assert.deepEqual(lillith.coordinates,encounterDb.objects[1557].coordinates,'Lillith guidance uses upstream dinner-table coordinates');checks++;
+check(!scriptedEncounter(encounterDb,1946,'turnin')&&!scriptedEncounter(encounterDb,1946,'vendor'),'summoning guidance cannot become a turn-in or vendor destination');
+check(!scriptedEncounter({...encounterDb,units:{...units,1946:{coordinates:[[10,20,85]]}}},1946,'objectiveCreature'),'canonical creature spawns take priority');
 check(Object.keys(quests).length>6000,'merged quests retained');
 check(!quests[1],'upstream underscore tombstone honored');
 check(quests[934]&&quests[7383]?.objectives.some(target=>target.kind==='item'&&target.id===18151),'both upstream Crown of the Earth records retained without local deletion');
@@ -164,6 +171,7 @@ run(fs.readFileSync(path.join(__dirname,'runtime.lua'),'utf8'),'runtime stubs');
 for(const name of files) run(fs.readFileSync(path.join(root,name),'utf8'),name);
 run('local count=0;for id in pairs(QuestlineDB.quests) do count=count+1 end;assert(count=='+Object.keys(quests).length+',"compiled snapshot must retain every upstream quest");assert(QuestlineDB.quests[934],"upstream quest 934 must not be deleted locally")','database authority');
 run('runTests()','runtime tests');
+run(`local Q=Questline;local data=QuestlineDB.quests[409];local target=data.objectives[1];local location=QuestlineDB.locations[target.key][85];assert(location and math.abs(location.anchor[1]-66.6)<.01 and math.abs(location.anchor[2]-44.9)<.01,"Lillith summoning table mapped");local entry={id=409,key="409",title=data.title,level=data.level,data=data,objectives={{text="Lillith Nefara slain: 0/1",kind="monster",done=false}}};assert(Q:HasLocations(entry) and not Q:MissingLocationHint(entry),"summoning objective mapped without missing-location warning");WorldMapFrame:Show();Q:ShowQuestTooltip(Q.tracker,entry,target,"Lillith Nefara");local text=WorldMapTooltip:GetText();assert(string.find(text,"Lillith Nefara\\n",1,true)==1 and string.find(text,"Lillith Nefara slain: 0/1",1,true),"NPC-first live objective");assert(string.find(text,"Candle of Beckoning",1,true) and string.find(text,"Dinner Table",1,true),"summoning instruction");entry.objectives[1].done=true;assert(table.getn(Q:Targets(entry))==0,"completed objective cleared");entry.complete=true;assert(Q:Targets(entry)[1].name=="Gunther Arcanus","real finisher retained");WorldMapTooltip:Hide();Q.partyQuestTooltip=nil;WorldMapFrame:Hide()`,'summoned objective regression');
 run('local threadLocation=QuestlineDB.locations["item:2320"][85];assert(threadLocation and threadLocation.pointKinds and threadLocation.pointKinds[1]=="v","Coarse Thread vendors are compiled as vendor pins");local abigail=false;for i,p in ipairs(threadLocation.points) do if math.abs(p[1]-61)<.1 and math.abs(p[2]-52.4)<.1 and threadLocation.pointKinds[i]=="v" then abigail=true end end;assert(abigail,"Abigail Shiel is mapped in Brill");assert(string.len(QuestlineDB.locations["item:2876"][85].runs)>0,"Duskbat hunting area remains mapped");local thread=false;for _,t in ipairs(QuestlineDB.quests[375].objectives) do if t.key=="item:2320" and t.icon=="buy" then thread=true end end;assert(thread,"vendor-only thread objective uses the buy icon")','vendor display policy');
 if(process.argv.includes('--review')) {
   const id=Number(Object.keys(quests).find(id=>quests[id].title==='Preventing Poison'))||845;

@@ -18,7 +18,7 @@
     },
     {
       "file": "Data/runtime/units.lua",
-      "sha256": "24877a3a3023dc3ec1d71988a15807d054e04723c5942e920d31c5ae935deeec"
+      "sha256": "8a0817389619f94c8d42229f8e1bcd29a68dec3eb900b0511e13f46039075e19"
     },
     {
       "file": "Data/runtime/objects.lua",
@@ -51,6 +51,10 @@
     {
       "file": "Data/runtime/enUS.lua",
       "sha256": "98fd8c0349533eca2f32f82cb04b334508f1d1dcf4d025e2d803cd4f7271a53a"
+    },
+    {
+      "file": "Data/runtime/scripted-encounters.lua",
+      "sha256": "91e19c9407dae77c4ab989d75e6338ab507e4547024f028c30d46884e3d6888b"
     }
   ],
   "counts": {
@@ -61,10 +65,11 @@
     "zones": 1548,
     "events": 496,
     "lootGroups": 124,
-    "itemUses": 193
+    "itemUses": 193,
+    "scriptedEncounters": 12
   },
   "stats": {
-    "coordinatesRead": 147192,
+    "coordinatesRead": 147205,
     "invalidCoordinates": 0,
     "duplicateCoordinates": 80
   }

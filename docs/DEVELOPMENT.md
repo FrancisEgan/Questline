@@ -4,6 +4,14 @@ Standalone quest tracker and selected-quest map areas for the English OctoWoW / 
 
 Current version: **0.1.60**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
+Summoned objectives: the import includes Questie-Octo's compiled scripted
+encounter presentation metadata. Role-scoped guidance supplies map positions
+only when canonical creature coordinates are absent. Object anchors use the
+recorded upstream object coordinates. Proving Allegiance maps Lillith Nefara
+at Lillith's Dinner Table and explains the Candle of Beckoning interaction
+in the map tooltip. Canonical NPC coordinates and live objective progress
+remain authoritative; completion maps the ordinary quest finisher.
+
 Quest map destinations (0.1.60): the compiler omits vendor locations for items
 with at least ten unlimited-stock vendors, while retaining their quest
 objectives and any actual drop sources. Specialty and limited-stock vendors

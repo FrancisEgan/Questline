@@ -16,6 +16,7 @@ All entity tables are JSON objects keyed by numeric ID strings. Runtime Lua uses
 | `lootGroups.json` | `units`, `objects`, `groups`, `attributes`; the first three map source IDs to upstream values |
 | `itemUses.json` | Item ID to an array of `{kind, id, spell}` interactions; negative upstream IDs become positive `object` IDs |
 | `events.json` | `coordinates`, `attributes`; exploration trigger targets |
+| `scriptedEncounters.json` | Unit ID to upstream presentation guidance: `roles`, `coordinates`, optional `anchorObject`, `displayName`, `note`. Used only for the stated role when canonical unit coordinates are absent; an object anchor resolves through `objects.json`. |
 | `zones.json` | `name`, `coordinateCount`, optional `bounds: { parent, width, height, x, y }` |
 | `reference.json` | Merged profession names, service/resource metadata, minimap dimensions, and Turtle quest patch metadata; the compiler extracts profession names and zone dimensions needed at runtime |
 

@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '..');
 const sourceRoot = path.resolve(process.argv[2] || path.join(root, '..', 'Questie-Octo'));
 const runtimeRoot = path.join(sourceRoot, 'Data', 'runtime');
 const files = ['init.lua','quests.lua','items.lua','units.lua','objects.lua','refloot.lua',
-  'quests-itemreq.lua','zones.lua','areatrigger.lua','minimap.lua','meta.lua','enUS.lua'];
+  'quests-itemreq.lua','zones.lua','areatrigger.lua','minimap.lua','meta.lua','enUS.lua','scripted-encounters.lua'];
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const inputs = [];
 const env = { QuestieOcto:{} };
@@ -53,7 +53,9 @@ function targets(raw, owner) {
   return result;
 }
 function extras(raw, keys) { return Object.fromEntries(Object.entries(raw).filter(([key])=>!keys.includes(key))); }
-const db={schemaVersion:1,locale:'enUS',profile:'octo',quests:{},units:{},objects:{},items:{},zones:{},events:{},lootGroups:{},itemUses:{}};
+const db={schemaVersion:1,locale:'enUS',profile:'octo',quests:{},units:{},objects:{},items:{},zones:{},events:{},lootGroups:{},itemUses:{},scriptedEncounters:{}};
+for (const [id,r] of Object.entries(env.QuestieOcto.RuntimeScriptedEncounters||{})) db.scriptedEncounters[id]={
+  roles:r.roles||{},coordinates:coords(r.coords,'scriptedEncounter',id),anchorObject:r.anchorObject,displayName:r.displayName,note:r.note};
 for (const [id,r] of Object.entries(runtime.quests.data)) {
   const localized=runtime.quests.enUS[id];
   if (!localized || typeof localized!=='object' || !localized.T) { issues.push({kind:'quest',id:Number(id),issue:'missing-title'}); continue; }
