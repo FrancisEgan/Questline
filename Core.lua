@@ -115,18 +115,21 @@ function Q:ResolveQuest(index, title, level, description, summary)
   if not tied then return best end
   return nil, "ambiguous"
 end
-function Q:ObjectiveDone(entry, target)
-  if entry.complete then return true end
+function Q:ObjectiveMatches(objective, target)
   local name = self:Normalize(target.name)
   if name == "" then return false end
+  local text = self:Normalize(objective.text)
+  text = string.gsub(text, ":%s*%d+%s*/%s*%d+.*$", "")
+  text = string.gsub(text, "%s+slain$", "")
+  text = string.gsub(text, "%s+killed$", "")
+  return text == name
+end
+function Q:ObjectiveDone(entry, target)
+  if entry.complete then return true end
   -- Match names, not array positions: pfQuest groups targets by type, not log order.
   local found, allDone = false, true
   for _, objective in ipairs(entry.objectives) do
-    local text = self:Normalize(objective.text)
-    text = string.gsub(text, ":%s*%d+%s*/%s*%d+.*$", "")
-    text = string.gsub(text, "%s+slain$", "")
-    text = string.gsub(text, "%s+killed$", "")
-    if text == name then
+    if self:ObjectiveMatches(objective,target) then
       found = true
       if not objective.done then allDone = false end
     end

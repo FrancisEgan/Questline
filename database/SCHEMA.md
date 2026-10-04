@@ -32,6 +32,10 @@ Runtime `QuestlineDB.locations[targetKey][zoneId]` contains:
 - `spawnPoints`: optional packed source positions for selected-quest spawn markers. Four characters per point encode x then y as two base64-pairs integers, each representing percent multiplied by 40 (range 0?4000). Deduplicated after quantization and sorted by x/y; absent for turn-ins, zone centers, and exploration triggers.
 - `runs`: runtime schema 2 packs zero-based `[row, startColumn, exclusiveEndColumn]` triples into strings. Each integer occupies two characters from `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_`; its value is `firstDigit * 64 + secondDigit`. Each triple is six characters. `tools/packed-runs.js` encodes/decodes this generated representation. `QuestlineDB.grid` is 1280. The normalized JSON remains schema 1 and is unchanged by this runtime encoding.
 - `spawns`: number of unique source points in that zone.
+- `vendorNames`: optional names of recorded item vendors keyed by `x:y`, where
+  x/y are coordinates rounded to percent times 40. These keys identify vendors
+  at precise and packed spawn pins; names sharing a coordinate are joined with
+  ` / `. This metadata comes directly from upstream vendor and unit records.
 
 Compiler display policy omits vendor coordinates for items stocked without a
 limit by at least ten vendors. Their objective records and actual drop sources

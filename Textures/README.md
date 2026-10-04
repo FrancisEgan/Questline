@@ -10,3 +10,7 @@ pfQuest's notice is retained in `../licenses/pfQuest-MIT.txt`.
 These shipped assets do not require pfQuest at runtime and are not overwritten
 by Questline's generated-texture build. Talk objectives use the client's native
 `Interface\GossipFrame\GossipGossipIcon`.
+
+Bag markers now use the client's native `Interface\GossipFrame\VendorGossipIcon`
+instead of `action-loot.tga`. Precise map bags render at 14 pixels; spawn bags
+render at 12 pixels on both maps, compensating for world-map zoom.

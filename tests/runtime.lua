@@ -355,6 +355,37 @@ local function completionHistoryTests(Q)
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
 
+local function vendorMapTooltipTests(Q)
+  local original,oldMapZone,spawns=Q.quests,Q.GetMapZone,QuestlineSettings.worldMapSpawns
+  local oldScale=WorldMapButton.scale
+  local data=QuestlineDB.quests[375]
+  local entry={key="375",id=375,title=data.title,level=data.level,data=data,objectives={
+    {text="Duskbat Pelt: 5/5",kind="item",done=true},{text="Coarse Thread: 0/1",kind="item",done=false}}}
+  Q.GetMapZone=function() return 85 end
+  QuestlineSettings.worldMapSpawns=true
+  WorldMapFrame:Show();WorldMapButton.scale=2
+  Q:SetEntries({entry});Q:Select(entry.key);Q:RefreshMap()
+  local pin,spawn
+  for _,p in ipairs(Q.objectivePins) do if p:IsShown() and p.sourceName=="Abigail Shiel" then pin=p end end
+  for _,p in ipairs(Q.mapSpawns) do if p:IsShown() and p.spawn.sourceName=="Abigail Shiel" then spawn=p end end
+  expect(pin and spawn,"real Coarse Thread vendor identity reaches both precise and spawn pins")
+  expect(pin:GetWidth()==7 and spawn:GetWidth()==6 and pin.texture.textureValue[1]=="Interface\\GossipFrame\\VendorGossipIcon","native bag markers use smaller sizes while compensating for map zoom")
+  this=pin;pin.scripts.OnEnter()
+  local text=WorldMapTooltip:GetText()
+  expect(string.sub(text,1,14)=="Abigail Shiel\n" and string.find(text,Q:QuestTitle(entry),1,true)>14,"vendor map tooltip starts with the NPC name before the quest title")
+  expect(not string.find(text,"Duskbat Pelt",1,true) and string.find(text,"Coarse Thread: 0/1",1,true),"vendor tooltip shows only the supplied item, matched by name rather than objective position")
+  expect(Q.partyQuestTooltip.sourceName=="Abigail Shiel","party tooltip refresh retains the hovered vendor identity")
+  this=spawn;spawn.scripts.OnEnter()
+  expect(string.sub(WorldMapTooltip:GetText(),1,14)=="Abigail Shiel\n","vendor spawn tooltip also starts with the source NPC")
+  expect(not string.find(WorldMapTooltip:GetText(),"Duskbat Pelt",1,true) and string.find(WorldMapTooltip:GetText(),"Coarse Thread: 0/1",1,true),"vendor spawn tooltip also filters unrelated objectives")
+  Q:ShowQuestTooltip(pin,entry,pin.target)
+  expect(string.find(WorldMapTooltip:GetText(),Q:QuestTitle(entry),1,true)==1,"markers without source metadata retain the quest-first fallback")
+  expect(string.find(WorldMapTooltip:GetText(),"Duskbat Pelt: 5/5",1,true),"full quest tooltips retain all objectives")
+  WorldMapTooltip:Hide();Q.partyQuestTooltip=nil
+  Q.GetMapZone=oldMapZone;WorldMapButton.scale=oldScale;QuestlineSettings.worldMapSpawns=spawns
+  Q.spawnCache=nil;Q:SetEntries(original);Q.mapDirty=true;Q:RefreshMap()
+end
+
 local function craftingHintTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
   local data=QuestlineDB.quests[60140]
@@ -572,12 +603,12 @@ local function spawnDotTests(Q)
   Q.GetMinimapQuestNPCs=oldCandidates;Q.SelectedSpawns=oldSpawns;Q.ScanLog=oldScan
   playerX=.522;Q:RefreshQuestGivers()
   target.icon="loot";Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
-  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-loot") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-loot"),"pooled item-source markers switch to bags")
+  expect(Q.mapSpawns[1].texture.textureValue[1]=="Interface\\GossipFrame\\VendorGossipIcon" and Q.minimapSpawns[1].texture.textureValue[1]=="Interface\\GossipFrame\\VendorGossipIcon" and Q.mapSpawns[1]:GetWidth()==12 and Q.minimapSpawns[1]:GetWidth()==12,"pooled item-source markers switch to smaller native bags")
   target.icon="interact";Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
   expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.minimapSpawns[1].texture.textureValue[1]:find("action%-interact"),"pooled interaction markers switch to gears")
   QuestlineDB.locations[target.key][17].spawnKinds="gll";Q.spawnCache=nil;Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
-  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.mapSpawns[2].texture.textureValue[1]:find("action%-loot"),"mixed item sources distinguish objects from mob drops on world map")
-  expect(Q.minimapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.minimapSpawns[2].texture.textureValue[1]:find("action%-loot"),"mixed item sources retain their individual icons on minimap")
+  expect(Q.mapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.mapSpawns[2].texture.textureValue[1]=="Interface\\GossipFrame\\VendorGossipIcon","mixed item sources distinguish objects from mob drops on world map")
+  expect(Q.minimapSpawns[1].texture.textureValue[1]:find("action%-interact") and Q.minimapSpawns[2].texture.textureValue[1]=="Interface\\GossipFrame\\VendorGossipIcon","mixed item sources retain their individual icons on minimap")
   Q:Select(b.key,true);Q:RefreshQuestGivers()
   expect(shown(Q.mapSpawns)==3,"shared target coordinates are deduplicated across selected quests")
   local before=#widgets;Q.mapDirty=true;Q:RefreshMap();Q:RefreshQuestGivers()
@@ -1509,10 +1540,11 @@ local function partySyncTests(Q)
   expect(Q.party.peers.Alice.session=="alice-two" and Q.party.peers.Alice.quests[40535].status=="C","late packets from a retired session are ignored")
 
   WorldMapFrame:Hide();GameTooltip:Hide();hovered=Q.tracker.rows[1]
-  Q:ShowQuestTooltip(hovered,entry)
+  Q:ShowQuestTooltip(hovered,entry,nil,"Test Vendor")
   expect(findLine("  Alice: 2/2") and findLine("  You: 1/2"),"tracker quest tooltip also shows synchronized objective counts")
   deliver(40535,body,2,"alice-two");pump(1.2)
   expect(findLine("  Alice: 0/2"),"party changes refresh an actively hovered tracker tooltip")
+  expect(GameTooltipTextLeft1:GetText()=="Test Vendor","party refresh preserves the NPC-first tooltip header")
   hovered=nil;entry.complete=true;Q:ShowQuestTooltip(Q.tracker.rows[1],entry)
   expect(findLine("  Alice: In progress") and findLine("Party"),"turn-in tooltip shows other members' overall quest status")
   entry.complete=false;GameTooltip:Hide()
@@ -1675,6 +1707,7 @@ function runTests()
   requestedBehaviorTests(Q)
   vendorTooltipTests(Q)
   craftingHintTests(Q)
+  vendorMapTooltipTests(Q)
   QuestlineSettings.nameplateBadges=false
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.nameplateBadges==false,"login preserves a saved disabled nameplate badges preference")

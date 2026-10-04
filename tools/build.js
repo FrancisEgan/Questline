@@ -29,7 +29,7 @@ function gather(kind,id,seen=new Set()) {
   }
   if(kind==='item') {
     sources(record.drops);
-    for(const id of mappedVendors(record)) for(const point of gather('unit',id,seen)) points.push([...point.slice(0,4),'vendor']);
+    for(const id of mappedVendors(record)) for(const point of gather('unit',id,seen)) points.push([...point.slice(0,4),'vendor',db.units[id]?.name]);
   }
   if(kind==='use') for(const use of record) points.push(...gather(use.kind,use.id,seen));
   if(kind==='zone'&&record.bounds) {const b=record.bounds;points.push([b.x+b.width/2,b.y+b.height/2,b.parent]);}
@@ -52,6 +52,12 @@ function target(t,turnin) {
       if(t.kind==='item' && location.points.length) {
         const vendors=new Set(vendorCoords.map(p=>p[0]+':'+p[1]));
         location.pointKinds=location.points.map(p=>vendors.has(p[0]+':'+p[1])?'v':'');
+        const names={};
+        for(const p of vendorCoords) if(p[5]) {
+          const key=Math.round(p[0]*40)+':'+Math.round(p[1]*40);
+          (names[key]||=new Set()).add(p[5]);
+        }
+        if(Object.keys(names).length) location.vendorNames=Object.fromEntries(Object.entries(names).map(([key,names])=>[key,[...names].sort().join(' / ')]));
       }
       if(!turnin && ['unit','object','item','use'].includes(t.kind)) {
         const unique=new Map();

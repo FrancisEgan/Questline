@@ -281,7 +281,7 @@ function Q:UpdatePartySync()
   if hover and MouseIsOver and hover.owner:IsVisible() and hover.tip:IsShown() and MouseIsOver(hover.owner)
     and (not state.tooltipAt or now>=state.tooltipAt) then
     local entry=self.byKey[hover.key]
-    if entry then self:ShowQuestTooltip(hover.owner,entry,hover.target) end
+    if entry then self:ShowQuestTooltip(hover.owner,entry,hover.target,hover.sourceName) end
     state.tooltipAt=now+1
   end
 end

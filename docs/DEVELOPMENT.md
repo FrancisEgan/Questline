@@ -189,6 +189,14 @@ The API implementation was checked against the original [1.12 QuestLogFrame](htt
 
 ## Current limits and in-game checks
 
+Item-vendor map pins carry names compiled from their exact recorded source
+coordinates. Hovering a vendor bag shows its NPC name first, then the quest
+title and live objective/party counts for the supplied item only, matched by
+normalized objective name rather than position. Party refresh retains that source name.
+Markers without known source names retain their quest-first tooltip. All loot
+and vendor bags use native VendorGossipIcon at 14 pixels for precise map pins
+and 12 pixels for spawn pins, with world-map zoom compensation.
+
 Unmapped objectives use "No known map location for this objective" in tracker,
 tooltip, and map-navigation feedback. An unfinished item objective whose live
 or imported quest summary explicitly says "You can make ... with the ... skill

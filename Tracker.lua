@@ -75,17 +75,24 @@ function Q:PaintBadge(badge, entry, selected)
     badge.text:SetShadowColor(0,0,0,0.9)
   end
 end
-function Q:ShowQuestTooltip(owner, entry, target)
+function Q:ShowQuestTooltip(owner, entry, target, sourceName)
   local tip = WorldMapFrame:IsVisible() and WorldMapTooltip or GameTooltip
   tip:SetOwner(owner,"ANCHOR_LEFT")
-  tip:SetText(self:QuestTitle(entry),1,0.85,0.4)
-  if target then tip:AddLine(target.name,0.7,0.85,1) end
+  if sourceName then
+    tip:SetText(sourceName,1,1,1)
+    tip:AddLine(self:QuestTitle(entry),1,0.85,0.4,true)
+  else
+    tip:SetText(self:QuestTitle(entry),1,0.85,0.4)
+    if target then tip:AddLine(target.name,0.7,0.85,1) end
+  end
   if entry.failed then tip:AddLine("Quest failed",1,0.3,0.3)
   else for index,objective in ipairs(entry.objectives) do
+    if not (sourceName and target and target.kind=="item") or self:ObjectiveMatches(objective,target) then
     local lines=self:PartyObjectiveLines(entry,index,objective.text,entry.complete or objective.done,"")
     for _,line in ipairs(lines) do
       if line.done then tip:AddLine(line.text,0.35,1,0.4,true)
       else tip:AddLine(line.text,0.88,0.88,0.82,true) end
+    end
     end
   end
     if getn(entry.objectives)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
@@ -101,7 +108,7 @@ function Q:ShowQuestTooltip(owner, entry, target)
   local hint=self:MissingLocationHint(entry)
   if hint then tip:AddLine(hint..".",1,0.55,0.3,true) end
   tip:Show()
-  self.partyQuestTooltip={owner=owner,key=entry.key,target=target,tip=tip}
+  self.partyQuestTooltip={owner=owner,key=entry.key,target=target,sourceName=sourceName,tip=tip}
 end
 local function hideTooltip() GameTooltip:Hide();WorldMapTooltip:Hide() end
 local function sizeKey(panel) return panel.isMap and "mapSize" or "trackerSize" end

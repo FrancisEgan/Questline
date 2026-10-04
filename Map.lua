@@ -2,11 +2,19 @@ local Q, DB = Questline, QuestlineDB
 local getn = table.getn
 local texturePath = "Interface\\AddOns\\Questline\\Textures\\"
 local actionTextures={
-  loot=texturePath.."action-loot",kill=texturePath.."action-kill",
+  loot="Interface\\GossipFrame\\VendorGossipIcon",kill=texturePath.."action-kill",
   interact=texturePath.."action-interact",explore=texturePath.."action-interact",
   buy="Interface\\GossipFrame\\VendorGossipIcon",vendor="Interface\\GossipFrame\\VendorGossipIcon",
   talk="Interface\\GossipFrame\\GossipGossipIcon",
 }
+local function actionSize(icon,spawn)
+  if icon=="loot" or icon=="buy" or icon=="vendor" then return spawn and 12 or 14 end
+  return spawn and 14 or 18
+end
+local function vendorName(location,point)
+  local key=math.floor(point[1]*40+.5)..":"..math.floor(point[2]*40+.5)
+  return location.vendorNames and location.vendorNames[key]
+end
 local alphabet="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
 local digit={}
 for i=1,string.len(alphabet) do digit[string.byte(alphabet,i)]=i-1 end
@@ -160,7 +168,7 @@ function Q:GetPin(index,objective)
       pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
     else pin=self:MakeBadge(self.pinLayer,25) end
     pin:SetScript("OnClick",function() if this.entry then Q:Select(this.entry.key,IsControlKeyDown and IsControlKeyDown()) end end)
-    pin:SetScript("OnEnter",function() if this.entry then Q:ShowQuestTooltip(this,this.entry,this.target) end end)
+    pin:SetScript("OnEnter",function() if this.entry then Q:ShowQuestTooltip(this,this.entry,this.target,this.sourceName) end end)
     pin:SetScript("OnLeave",tooltipLeave)
     pool[index]=pin
   end
@@ -189,7 +197,9 @@ function Q:SelectedSpawns(zone)
       if not seen[identity] then
         seen[identity]=true
         local kind=location.spawnKinds and string.sub(location.spawnKinds,(i-1)/4+1,(i-1)/4+1)
-        table.insert(points,{coordinate(packed,i)/40,coordinate(packed,i+2)/40,entry=item.entry,target=item.target,icon=kind=="g" and "interact" or (kind=="l" and "loot" or (kind=="v" and "vendor" or nil))})
+        local point={coordinate(packed,i)/40,coordinate(packed,i+2)/40,entry=item.entry,target=item.target,icon=kind=="g" and "interact" or (kind=="l" and "loot" or (kind=="v" and "vendor" or nil))}
+        if kind=="v" then point.sourceName=vendorName(location,point) end
+        table.insert(points,point)
       end
     end
   end
@@ -206,7 +216,7 @@ function Q:SpawnPin(pool,index,parent,minimap)
     pin:SetScript("OnEnter",function()
       local p=this.spawn
       local entry=p and Q.byKey[p.entry.key]
-      if entry then Q:ShowQuestTooltip(this,entry,p.target) end
+      if entry then Q:ShowQuestTooltip(this,entry,p.target,p.sourceName) end
     end)
     pin:SetScript("OnLeave",tooltipLeave)
   end
@@ -217,8 +227,10 @@ function Q:RefreshSpawnMap(zone,width,height,inverseScale)
   if zone and QuestlineSettings.worldMapSpawns==true then
     for _,point in ipairs(self:SelectedSpawns(zone)) do
       count=count+1;local pin=self:SpawnPin(self.mapSpawns,count,self.pinLayer,false);pin.spawn=point
-      pin.texture:SetTexture(actionTextures[point.icon or point.target.icon] or actionTextures.interact)
-      pin:SetWidth(14*inverseScale);pin:SetHeight(14*inverseScale);self:PlacePin(pin,point,width,height)
+      local icon=point.icon or point.target.icon
+      pin.texture:SetTexture(actionTextures[icon] or actionTextures.interact)
+      local size=actionSize(icon,true)*inverseScale
+      pin:SetWidth(size);pin:SetHeight(size);self:PlacePin(pin,point,width,height)
     end
   end
   for i=count+1,getn(self.mapSpawns) do self.mapSpawns[i]:Hide() end
@@ -229,8 +241,10 @@ function Q:RefreshSpawnMinimap()
     local x,y=self:MinimapGiverPosition(point,c.x,c.y,c.size,c.diameter,c.facing)
     if x then
       count=count+1;local pin=self:SpawnPin(self.minimapSpawns,count,Minimap,true);pin.spawn=point
-      pin.texture:SetTexture(actionTextures[point.icon or point.target.icon] or actionTextures.interact)
-      pin:SetWidth(14);pin:SetHeight(14);pin:ClearAllPoints();pin:SetPoint("CENTER",Minimap,"CENTER",x,y);pin:Show()
+      local icon=point.icon or point.target.icon
+      pin.texture:SetTexture(actionTextures[icon] or actionTextures.interact)
+      local size=actionSize(icon,true)
+      pin:SetWidth(size);pin:SetHeight(size);pin:ClearAllPoints();pin:SetPoint("CENTER",Minimap,"CENTER",x,y);pin:Show()
     end
   end end
   for i=count+1,getn(self.minimapSpawns) do self.minimapSpawns[i]:Hide() end
@@ -360,8 +374,11 @@ function Q:RefreshMap()
           local faction=UnitFactionGroup("player")=="Horde" and "H" or "A"
           if string.find(target.faction,faction,1,true) then icon="talk" end
         end
-        local pin=self:GetPin(count,true);pin.entry=selected;pin.target=target;pin.texture:SetTexture(actionTextures[icon] or actionTextures.interact)
-        pin:SetWidth(18*inverseScale);pin:SetHeight(18*inverseScale)
+        local pin=self:GetPin(count,true);pin.entry=selected;pin.target=target
+        pin.sourceName=(icon=="vendor" or icon=="buy") and vendorName(location,point) or nil
+        pin.texture:SetTexture(actionTextures[icon] or actionTextures.interact)
+        local size=actionSize(icon,false)*inverseScale
+        pin:SetWidth(size);pin:SetHeight(size)
         -- Small action icons sit next to the numbered selector at shared anchors.
         self:PlacePin(pin,point,width,height)
         pin:SetFrameLevel(self.pinLayer:GetFrameLevel()+4)
