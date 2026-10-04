@@ -1191,29 +1191,46 @@ end
 local function giverClusterTests(Q)
   local mapPool,miniPool=Q.mapGivers,Q.minimapGivers
   Q.mapGivers={};Q.minimapGivers={};WorldMapFrame:Show()
-  local names={"A nearby giver","B nearby giver","C nearby giver","D distant giver","E hidden giver","B nearby giver"}
-  local coords={{100,100},{109,100},{114,112},{200,100},{104,100},{108,101}}
-  for i=1,6 do
+  local names={"A nearby giver","B nearby giver","C nearby giver","D distant giver","E hidden giver","B nearby giver","F separate giver"}
+  local coords={{100,100},{109,100},{106,104},{200,100},{104,100},{108,101},{100,118}}
+  for i=1,7 do
     local pin=Q:GetGiverPin(i,false)
     pin.giver={id=i==6 and 2 or i,name=names[i],quests={{title=names[i].." quest one"},{title=names[i].." quest two"}}}
     pin.giverX=coords[i][1];pin.giverY=coords[i][2];pin:Show()
   end
+  local shared={id=991111,title="Shared offer"}
+  table.insert(Q.mapGivers[1].giver.quests,shared);table.insert(Q.mapGivers[1].giver.quests,shared)
+  table.insert(Q.mapGivers[2].giver.quests,shared)
+  Q.mapGivers[1].giver.turnins={{id=991112,title="A turn-in"}}
+  Q.mapGivers[3].giver.turnins=Q.mapGivers[3].giver.quests;Q.mapGivers[3].giver.quests={}
   Q.mapGivers[5]:Hide()
   expect(#Q:GetNearbyGivers(Q.mapGivers[1],false)==3,"nearby giver hover combines three visible NPCs without duplicates, distant or hidden pins")
   this=Q.mapGivers[1];this.scripts.OnEnter();local text=WorldMapTooltip:GetText()
   for i=1,3 do
     expect(text:find(names[i].." quest one",1,true) and text:find(names[i].." quest two",1,true),"cluster tooltip includes each nearby NPC and all its quests")
   end
+  local a=text:find(names[1].."\n",1,true)
+  local b=text:find(names[2].."\n",1,true)
+  local c=text:find(names[3].."\n",1,true)
+  expect(a==1 and b and c and a<b and b<c,"cluster tooltip starts with alphabetically ordered NPC name headers")
+  expect(text:find("  Available",a,true)<text:find("  Complete",a,true) and text:find("A turn-in",1,true)<b,"each NPC's Available and Complete sections stay under its own name")
+  expect(not string.find(string.sub(text,b,c-1),"  Complete",1,true) and not string.find(string.sub(text,c),"  Available",1,true),"NPC sections omit empty Available and Complete subheaders")
+  local _,sharedCount=string.gsub(text,"Shared offer","")
+  expect(sharedCount==2,"shared offers appear once under each eligible NPC instead of losing NPC ownership or duplicating within an NPC")
+  expect(not text:find(names[7],1,true) and #Q:GetNearbyGivers(Q.mapGivers[7],false)==1,"individually hoverable icons eighteen pixels apart no longer bundle")
   expect(not text:find(names[4],1,true) and not text:find(names[5],1,true),"cluster tooltip excludes distant and hidden NPCs")
   expect(#Q:GetNearbyGivers(Q.mapGivers[2],false)==3,"hovering another overlapping giver still exposes its neighbors")
   for _,pin in ipairs(Q.mapGivers) do pin:SetWidth(3.5);pin:SetHeight(3.5) end
   expect(#Q:GetNearbyGivers(Q.mapGivers[1],false)==1,"world-map zoom separates clusters according to on-screen distance")
+  this=Q.mapGivers[2];this.scripts.OnEnter();text=WorldMapTooltip:GetText()
+  expect(string.find(text,names[2].."\n  Available",1,true)==1 and not string.find(text,"  Complete",1,true),"individual giver tooltips retain the NPC-first layout and omit empty state sections")
   for i=1,3 do
     local pin=Q:GetGiverPin(i,true);pin.giver=Q.mapGivers[i].giver
     pin.giverX=i==3 and 50 or (i-1)*8;pin.giverY=0;pin:Show()
   end
   this=Q.minimapGivers[1];this.scripts.OnEnter();text=GameTooltip:GetText()
   expect(text:find(names[1].." quest one",1,true) and text:find(names[2].." quest two",1,true) and not text:find(names[3],1,true),"minimap hover also combines nearby NPC names and quests")
+  expect(GameTooltipTextLeft1:GetText()==names[1] and GameTooltipTextLeft2:GetText()=="  Available" and string.find(text,names[2].."\n  Available",1,true),"minimap clusters use the same NPC-first section layout")
   for _,pool in ipairs({Q.mapGivers,Q.minimapGivers}) do for _,pin in ipairs(pool) do pin:Hide() end end
   Q.mapGivers=mapPool;Q.minimapGivers=miniPool;WorldMapFrame:Hide();GameTooltip:Hide();WorldMapTooltip:Hide()
 end

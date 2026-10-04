@@ -1,6 +1,6 @@
 local Q,DB=Questline,QuestlineDB
 local getn,insert=table.getn,table.insert
-local iconSize,hoverRadius=14,22
+local iconSize,hoverRadius=14,10
 local texturePath="Interface\\AddOns\\Questline\\Textures\\"
 local outside={[0]=466.6667,400,333.3333,266.6667,200,133.3333}
 local inside={[0]=300,240,180,120,80,50}
@@ -74,11 +74,10 @@ function Q:ShowGiverTooltip(pin,minimap)
   local nearby=self:GetNearbyGivers(pin,minimap)
   local tip=minimap and GameTooltip or WorldMapTooltip
   tip:SetOwner(pin,"ANCHOR_RIGHT")
-  if getn(nearby)==1 then
-    tip:SetText(pin.giver.name,1,.82,.32)
-  else tip:SetText("Quests",1,.82,.32) end
-  local available,complete,seenAvailable,seenComplete={},{},{},{}
-  for _,giver in ipairs(nearby) do
+  for index,giver in ipairs(nearby) do
+    if index==1 then tip:SetText(giver.name,1,1,1)
+    else tip:AddLine(" ");tip:AddLine(giver.name,1,1,1,true) end
+    local available,complete,seenAvailable,seenComplete={},{},{},{}
     for _,quest in ipairs(giver.quests or {}) do
       local key=quest.key or quest.id or quest.title
       if not seenAvailable[key] then seenAvailable[key]=true;insert(available,quest) end
@@ -87,15 +86,15 @@ function Q:ShowGiverTooltip(pin,minimap)
       local key=quest.key or quest.id or quest.title
       if not seenComplete[key] then seenComplete[key]=true;insert(complete,quest) end
     end
-  end
-  self:SortQuests(available);self:SortQuests(complete)
-  if getn(available)>0 then
-    tip:AddLine("Available",.8,.85,.9)
-    for _,quest in ipairs(available) do tip:AddLine("  "..self:QuestTitle(quest),1,.85,.4,true) end
-  end
-  if getn(complete)>0 then
-    tip:AddLine("Complete",.8,.85,.9)
-    for _,quest in ipairs(complete) do tip:AddLine("  "..self:QuestTitle(quest),1,.85,.4,true) end
+    self:SortQuests(available);self:SortQuests(complete)
+    if getn(available)>0 then
+      tip:AddLine("  Available",.8,.85,.9)
+      for _,quest in ipairs(available) do tip:AddLine("    "..self:QuestTitle(quest),1,.85,.4,true) end
+    end
+    if getn(complete)>0 then
+      tip:AddLine("  Complete",.8,.85,.9)
+      for _,quest in ipairs(complete) do tip:AddLine("    "..self:QuestTitle(quest),1,.85,.4,true) end
+    end
   end
   tip:Show()
 end
