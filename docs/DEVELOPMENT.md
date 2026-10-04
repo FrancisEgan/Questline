@@ -189,6 +189,16 @@ The API implementation was checked against the original [1.12 QuestLogFrame](htt
 
 ## Current limits and in-game checks
 
+Instant class/delivery turn-ins refresh the live quest log when capturing the
+reward dialogue and again before GetQuestReward. Exact IDs from Octo's optional
+C_QuestLog.GetQuestIDForLogIndex are validated against title and restrictions,
+with existing Vanilla link/text fallbacks when unavailable. This identifies
+same-title, empty-text priest quests such as Touch of Weakness (5658). Completion
+messages without a reward snapshot also stay pending while the quest remains
+active; history is committed after log removal so live-state repair cannot erase
+the completion. Regression tests cover the real priest quest, automation before
+the periodic scan, preserved collapsed headers/selection, and ID fallbacks.
+
 Item-vendor map pins carry names compiled from their exact recorded source
 coordinates. Hovering a vendor bag shows its NPC name first, then the quest
 title and live objective/party counts for the supplied item only, matched by

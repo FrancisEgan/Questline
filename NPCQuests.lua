@@ -70,6 +70,9 @@ function Q:CaptureTurnIn()
   self.turnInDialog=nil
   if not GetTitleText then return end
   local title=self:Normalize(GetTitleText());local found,count=nil,0
+  -- Auto-accepted delivery/class quests may reach the reward panel before
+  -- the periodic tracker scan. Read the current log before choosing the ID.
+  if self.ready and not self.scanning then self:ScanLog() end
   for _,entry in ipairs(self.quests) do
     if entry.id and entry.complete and not entry.failed and self:Normalize(entry.title)==title then found=entry.id;count=count+1 end
   end
@@ -186,7 +189,12 @@ function Q:ObserveQuestCompletion(message)
   for id,record in pairs(self.recentQuests or {}) do if record.title==title and GetTime()-record.time<=10 then matches[id]=true end end
   local found,count=nil,0
   for id in pairs(matches) do found=id;count=count+1 end
-  if count==1 then self:SetQuestCompleted(found,"Automatic") end
+  if count==1 then
+    if self.byKey[tostring(found)] then
+      self.pendingTurnIn={id=found,title=title,time=GetTime(),confirmed=true}
+      self.dirty=true
+    else self:SetQuestCompleted(found,"Automatic") end
+  end
   self.npcOffers={};self:InvalidateQuestAvailability()
 end
 function Q:ObserveNPCOffers(gossip)

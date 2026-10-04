@@ -245,6 +245,8 @@ local function completionHistoryTests(Q)
   Q:SetEntries({active})
   expect(not Q:SetQuestCompleted(991002,"Manual"),"cannot manually mark a live quest completed")
   Q:ObserveQuestCompletion("History quest 2 completed.")
+  expect(not QuestlineSettings.completedQuests[991002] and Q.pendingTurnIn and Q.pendingTurnIn.confirmed,"completion message before log removal creates a pending turn-in even without a reward snapshot")
+  Q:SetEntries({})
   expect(QuestlineSettings.completionSources[991002]=="Automatic","confirmed completion records automatic provenance")
   Q:SetEntries({});Q:InitializeNPCQuests()
   expect(QuestlineSettings.completedQuests[991001] and QuestlineSettings.completionSources[991001]=="Manual","initialization preserves manual history")
@@ -551,6 +553,7 @@ local function availabilityRegressionTests(Q)
   GetQuestReward=function(choice) expect(choice==1,"reward hook preserves selection argument") end
   AbandonQuest=function() end
   Q.rewardHooked=nil;Q.abandonHooked=nil;Q:InitializeNPCQuests();Q:SetEntries({first})
+  local scan=Q.ScanLog;Q.ScanLog=function() end
   fire("QUEST_COMPLETE")
   expect(not QuestlineSettings.completedQuests[a],"opening reward dialogue alone never records completion")
   GetQuestReward(1)
@@ -570,11 +573,61 @@ local function availabilityRegressionTests(Q)
   Q:RestoreCompletedQuest(a);Q:SetEntries({first});GetQuestReward(1);AbandonQuest();Q:SetEntries({})
   expect(not QuestlineSettings.completedQuests[a],"abandoning after an unsuccessful reward attempt is not a completion")
   GetQuestReward=reward;GetTitleText=title;AbandonQuest=abandon;Q.rewardHooked=rewardHook;Q.abandonHooked=abandonHook
+  Q.ScanLog=scan
   Q.pendingTurnIn=nil;Q.turnInDialog=nil;Q.recentQuests={}
   QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources
   QuestlineDB.quests[a]=nil;QuestlineDB.quests[b]=nil
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+local function instantClassTurnInTests(Q)
+  local original,savedLog,savedSelection=Q.quests,log,selection
+  local history,sources=QuestlineSettings.completedQuests,QuestlineSettings.completionSources
+  local oldClass,oldRace,oldAPI=UnitClass,UnitRace,C_QuestLog
+  local oldLink,oldLegacy=GetQuestLinkForLogIndex,GetQuestLink
+  local reward,title,rewardHook=GetQuestReward,GetTitleText,Q.rewardHooked
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={}
+  Q.pendingTurnIn=nil;Q.recentQuests={};Q:SetEntries({})
+  UnitClass=function() return "Priest","PRIEST" end
+  UnitRace=function() return "Undead","Scourge" end
+  local data=QuestlineDB.quests[5658]
+  GetQuestLinkForLogIndex=nil;GetQuestLink=nil
+  C_QuestLog={GetQuestIDForLogIndex=function() return 5658 end}
+  expect(Q:ResolveQuest(2,data.title,10,"","")==5658,"native client quest IDs identify the real empty-text Touch of Weakness among same-title variants")
+  GetQuestLink=function() return "|Hquest:5663:10|h[Touch of Weakness]|h" end
+  expect(Q:ResolveQuest(2,data.title,10,"","")==5658,"exact native ID takes precedence over a stale same-title link")
+  C_QuestLog.GetQuestIDForLogIndex=function() error("API unavailable") end
+  expect(Q:ResolveQuest(2,data.title,10,"","")==5663,"unavailable native ID API retains the supported link fallback")
+  GetQuestLink=nil;C_QuestLog.GetQuestIDForLogIndex=function() return 0 end
+  expect(Q:ResolveQuest(2,data.title,10,"","")==nil,"zero native ID does not guess a same-title class quest")
+  C_QuestLog.GetQuestIDForLogIndex=function() return 5658 end
+  local accepted=quest(5658,{})
+  log={{title="Undercity",header=true,closed=true,quests={accepted}}};selection=1
+  GetTitleText=function() return data.title end
+  GetQuestReward=function()
+    expect(Q.pendingTurnIn and Q.pendingTurnIn.id==5658,"reward hook captures a newly accepted class quest before the native reward call")
+    Q:ObserveQuestCompletion("Touch of Weakness completed.")
+    Q:ScanLog()
+    expect(not QuestlineSettings.completedQuests[5658] and Q.pendingTurnIn.confirmed,"early completion message survives an intermediate live-log scan")
+    log[1].quests={}
+  end
+  Q.rewardHooked=nil;Q:InitializeNPCQuests()
+  expect(not Q.byKey["5658"],"instant turn-in begins before the periodic tracker snapshot sees the quest")
+  fire("QUEST_COMPLETE")
+  expect(Q.turnInDialog and Q.turnInDialog.id==5658 and not QuestlineSettings.completedQuests[5658],"reward dialogue refreshes the log without prematurely recording history")
+  expect(log[1].closed and selection==1,"turn-in refresh preserves collapsed headers and the selected quest-log row")
+  -- Simulate an automation addon claiming the reward without waiting for the
+  -- normal QUEST_COMPLETE handler or tracker refresh.
+  Q:SetEntries({});GetQuestReward(1);Q:ScanLog()
+  expect(QuestlineSettings.completedQuests[5658] and QuestlineSettings.completionSources[5658]=="Automatic" and not Q.byKey["5658"],"Touch of Weakness clears and records automatically after reward and log removal")
+  for id=5659,5663 do expect(not QuestlineSettings.completedQuests[id],"turn-in does not complete another same-title priest quest") end
+  expect(not Q:IsQuestAvailable(5658) and not Q:IsQuestAvailable(5663),"automatic completion hides the completed priest quest and its mutually exclusive offers")
+  GetQuestReward=reward;GetTitleText=title;Q.rewardHooked=rewardHook
+  UnitClass=oldClass;UnitRace=oldRace;C_QuestLog=oldAPI;GetQuestLinkForLogIndex=oldLink;GetQuestLink=oldLegacy
+  QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources
+  Q.pendingTurnIn=nil;Q.turnInDialog=nil;Q.recentQuests={}
+  log=savedLog;selection=savedSelection;Q:SetEntries(original)
+end
+
 local function spawnDotTests(Q)
   expect(QuestlineDB.quests[5482].objectives[1].icon=="interact","Doom Weed uses gear for its world-object objective")
   local doom=QuestlineDB.locations["item:13702"][85]
@@ -1064,6 +1117,8 @@ local function npcQuestTests(Q)
   Q:SetEntries({mills});hover(name)
   expect(GameTooltipTextLeft5:GetText()=="    Notched Rib - 2/5" and GameTooltipTextLeft6:GetText()=="    Blackened Skull - 1/3","questgiver lists every live objective in log order")
   arg1="Completed [The Mills Overrun]!";fire("CHAT_MSG_SYSTEM");ERR_QUEST_COMPLETE_S=oldFormat
+  expect(not QuestlineSettings.completedQuests[426] and Q.pendingTurnIn,"localized completion message also waits for live quest removal")
+  Q:SetEntries({})
   expect(QuestlineSettings.completedQuests[426],"completion parsing honors the client's localized format and pattern punctuation")
   Q:SetEntries({});Q.recentQuests={};QuestlineSettings.completedQuests[404]=nil
   arg1="A Putrid Task completed.";fire("CHAT_MSG_SYSTEM")
@@ -1754,6 +1809,7 @@ function runTests()
   trackerMapTests(Q)
   completionHistoryTests(Q)
   availabilityRegressionTests(Q)
+  instantClassTurnInTests(Q)
   spawnDotTests(Q)
   objectTooltipTests(Q)
   requestedBehaviorTests(Q)

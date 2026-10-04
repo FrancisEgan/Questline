@@ -85,6 +85,17 @@ function Q:BuildIndexes()
   end
 end
 function Q:ResolveQuest(index, title, level, description, summary)
+  -- Octo's optional ClassicAPI supplies exact IDs even for same-title class
+  -- quests with empty text. Keep the Vanilla link/text fallbacks below.
+  if C_QuestLog and type(C_QuestLog.GetQuestIDForLogIndex)=="function" then
+    local ok,raw=pcall(C_QuestLog.GetQuestIDForLogIndex,index)
+    local id=ok and tonumber(raw)
+    if id and id>0 then
+      local data=DB.quests[id]
+      if not data then return nil,"unknown-id" end
+      if self:Normalize(data.title)==self:Normalize(title) and self:MeetsQuestRestrictions(data) then return id end
+    end
+  end
   local linkAPI=GetQuestLinkForLogIndex or GetQuestLink
   if linkAPI then
     local ok, link = pcall(linkAPI, index)
