@@ -245,9 +245,11 @@ end
 -- Shared by NPC tooltips and both maps. Observed server offers take precedence
 -- over database predictions, including an explicitly empty list, until a
 -- quest-log, level, or skill change invalidates the session cache.
-function Q:GetAvailableNPCQuests(name,ids)
+function Q:GetAvailableNPCQuests(name,ids,kind)
   local available={}
-  local offer=self.npcOffers and self.npcOffers[self:Normalize(name)]
+  -- Objects often share generic names (Wanted!, Notice Board). NPC dialogue
+  -- observations must not replace another object's own database quest list.
+  local offer=kind~="object" and self.npcOffers and self.npcOffers[self:Normalize(name)]
   if offer then
     for _,q in ipairs(offer.quests) do
       local found,count,known=nil,0,false

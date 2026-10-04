@@ -1289,6 +1289,45 @@ local function giverMapTests(Q)
   WorldMapFrame:Hide();Q:RefreshQuestGivers()
 end
 
+local function objectGiverTests(Q)
+  local original,history,sources=Q.quests,QuestlineSettings.completedQuests,QuestlineSettings.completionSources
+  local mapZone,physicalZone,offers=Q.GetMapZone,Q.GetPlayerZone,Q.npcOffers
+  local x,y,level=playerX,playerY,playerLevel
+  Q.GetMapZone=function() return 85 end;Q.GetPlayerZone=function() return 85 end
+  playerX,playerY=.607,.515;playerLevel=12
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={};Q:SetEntries({})
+  -- A generic name shared with another giver cannot erase this poster's offers.
+  Q.npcOffers={["wanted!"]={quests={}}};Q:InvalidateQuestAvailability()
+  local function find(pool)
+    for _,pin in ipairs(pool) do if pin:IsShown() and pin.giver.id==-711 then return pin end end
+  end
+  WorldMapFrame:Show();Q:RefreshQuestGivers()
+  local pin=find(Q.mapGivers)
+  expect(pin and pin.giver.kind=="object" and pin.giver.name=="Wanted!","wanted poster has a distinct named world-map giver marker")
+  expect(math.abs(pin.point[4]-.607*1002)<.001 and math.abs(pin.point[5]+.515*668)<.001,"wanted poster uses its upstream coordinates")
+  expect(pin.texture.textureValue[1]:find("AvailableQuestIcon",1,true),"wanted poster uses an exclamation")
+  this=pin;pin.scripts.OnEnter()
+  expect(WorldMapTooltip:GetText():find("Wanted!\n  Available",1,true) and WorldMapTooltip:GetText():find("Wanted: Maggot Eye",1,true),"poster tooltip shows its name and offered quest in the nearby cluster")
+  pin=find(Q.minimapGivers)
+  expect(pin and math.abs(pin.point[4])<.001 and math.abs(pin.point[5])<.001,"wanted poster also appears at the correct minimap position")
+  this=pin;pin.scripts.OnEnter()
+  expect(GameTooltip:GetText():find("Wanted!\n  Available",1,true) and GameTooltip:GetText():find("Wanted: Maggot Eye",1,true),"minimap poster tooltip names the poster and quest")
+  local active=quest(398);active.key="398";active.data=QuestlineDB.quests[398]
+  Q:SetEntries({active});Q:InvalidateQuestAvailability();Q:RefreshQuestGivers()
+  expect(not find(Q.mapGivers) and not find(Q.minimapGivers),"accepting the wanted quest removes its pickup markers")
+  Q:SetEntries({});Q:InvalidateQuestAvailability();Q:RefreshQuestGivers()
+  expect(find(Q.mapGivers) and find(Q.minimapGivers),"abandoning the wanted quest restores its pickup markers")
+  Q:SetQuestCompleted(398,"Automatic");Q:RefreshQuestGivers()
+  expect(not find(Q.mapGivers) and not find(Q.minimapGivers),"completed wanted quests are not advertised")
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={};playerLevel=5
+  Q:InvalidateQuestAvailability();Q:RefreshQuestGivers()
+  expect(not find(Q.mapGivers),"wanted posters respect the quest minimum level")
+  Q.GetMapZone=mapZone;Q.GetPlayerZone=physicalZone;playerX,playerY=x,y;playerLevel=level
+  QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources;Q:SetEntries(original)
+  Q.npcOffers=offers;Q:InvalidateQuestAvailability();WorldMapFrame:Hide();Q:RefreshQuestGivers()
+  GameTooltip:Hide();WorldMapTooltip:Hide()
+end
+
 local function giverClusterTests(Q)
   local mapPool,miniPool=Q.mapGivers,Q.minimapGivers
   Q.mapGivers={};Q.minimapGivers={};WorldMapFrame:Show()
@@ -1813,6 +1852,7 @@ function runTests()
   trackerClickTests(Q)
   npcQuestTests(Q)
   giverMapTests(Q)
+  objectGiverTests(Q)
   giverClusterTests(Q)
   questLevelAndRateTests(Q)
   partySyncTests(Q)

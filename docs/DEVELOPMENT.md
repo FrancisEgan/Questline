@@ -12,6 +12,13 @@ at Lillith's Dinner Table and explains the Candle of Beckoning interaction
 in the map tooltip. Canonical NPC coordinates and live objective progress
 remain authoritative; completion maps the ordinary quest finisher.
 
+Questgiver pickup markers include object starters, such as Wanted! (object
+711, quest 398 / Wanted: Maggot Eye), on both maps. Names, coordinates, and
+quest relations come from the upstream snapshot. Object giver keys are negative
+IDs so they cannot collide with unit IDs. Objects use the usual eligibility,
+active-log, and completion filters, but ignore name-based NPC offer observations
+because unrelated posters can share the same name. These are map markers only.
+
 Quest map destinations (0.1.60): the compiler omits vendor locations for items
 with at least ten unlimited-stock vendors, while retaining their quest
 objectives and any actual drop sources. Specialty and limited-stock vendors

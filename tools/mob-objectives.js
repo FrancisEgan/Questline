@@ -91,14 +91,18 @@ function mobDropRates(db) {
 function questGivers(db) {
   const givers={},byZone={};
   for(const [id,quest] of Object.entries(db.quests)) for(const target of quest.starters||[]) {
-    if(target.kind!=='unit') continue;
-    const unit=db.units[target.id];if(!unit?.name) continue;
-    const giver=givers[target.id]||(givers[target.id]={name:unit.name,quests:[],coordinates:[]});
+    if(target.kind!=='unit' && target.kind!=='object') continue;
+    const source=(target.kind==='object'?db.objects:db.units)?.[target.id];if(!source?.name) continue;
+    // Object and unit IDs are separate namespaces. Negative map keys keep
+    // objects distinct while preserving existing numeric NPC identities.
+    const key=target.kind==='object'?-target.id:target.id;
+    const giver=givers[key]||(givers[key]={name:source.name,kind:target.kind,quests:[],coordinates:[]});
     if(!giver.quests.includes(Number(id))) giver.quests.push(Number(id));
   }
   for(const [id,giver] of Object.entries(givers)) {
     const seen=new Set();
-    for(const p of db.units[id].coordinates||[]) {
+    const source=giver.kind==='object'?db.objects[-id]:db.units[id];
+    for(const p of source.coordinates||[]) {
       const key=p.slice(0,3).join(':');if(seen.has(key)) continue;seen.add(key);
       giver.coordinates.push(p.slice(0,3));
       const list=byZone[p[2]]||(byZone[p[2]]=[]);if(!list.includes(Number(id)))list.push(Number(id));

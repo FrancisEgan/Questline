@@ -16,11 +16,11 @@ function Q:GetAvailableGivers(zone)
   local entries={}
   for _,id in ipairs(DB.zoneGivers[zone] or {}) do
     local giver=DB.givers[id]
-    local quests=self:GetAvailableNPCQuests(giver.name,giver.quests)
+    local quests=self:GetAvailableNPCQuests(giver.name,giver.quests,giver.kind)
     if getn(quests)>0 then
       local points={}
       for _,point in ipairs(giver.coordinates) do if point[3]==zone then insert(points,point) end end
-      if getn(points)>0 then insert(entries,{id=id,name=giver.name,quests=quests,points=points}) end
+      if getn(points)>0 then insert(entries,{id=id,kind=giver.kind,name=giver.name,quests=quests,points=points}) end
     end
   end
   -- Only the displayed zones are queried. A short expiry also retires NPC
@@ -31,7 +31,7 @@ end
 function Q:GetMinimapQuestNPCs(zone)
   local entries,byID={},{}
   for _,giver in ipairs(self:GetAvailableGivers(zone)) do
-    local entry={id=giver.id,name=giver.name,quests=giver.quests,points=giver.points,turnins={}}
+    local entry={id=giver.id,kind=giver.kind,name=giver.name,quests=giver.quests,points=giver.points,turnins={}}
     insert(entries,entry);byID[entry.id]=entry
   end
   if not zone then return entries end

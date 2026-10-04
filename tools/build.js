@@ -123,7 +123,7 @@ function writeTable(file,field,records,append=false) {
   const lines=['-- Generated from Questie-Octo by tools/build.js. Correct quest data upstream, then import and rebuild.'];
   for(const [k,record] of Object.entries(records)) {
     const v=field==='locations'?Object.fromEntries(Object.entries(record).map(([zone,data])=>[zone,{...data,runs:packRuns(data.runs)}])):record;
-    lines.push('QuestlineDB.'+field+'['+lua(/^\d+$/.test(k)?Number(k):k)+']='+lua(v));
+    lines.push('QuestlineDB.'+field+'['+lua(/^-?\d+$/.test(k)?Number(k):k)+']='+lua(v));
   }
   fs[append?'appendFileSync':'writeFileSync'](path.join(output,file),lines.join('\n')+'\n');
 }

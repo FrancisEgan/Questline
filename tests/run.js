@@ -89,16 +89,19 @@ const npcFixture={
     2:{starters:[{kind:'unit',id:1}],finishers:[{kind:'unit',id:1}]},
     3:{starters:[{kind:'unit',id:3},{kind:'unit',id:999}],finishers:[]}},
   units:{1:{name:'  Quest   Giver ',coordinates:[[52.2,31,17,300],[52.2,31,17],[20,30,14]]},
-    2:{name:'Turn-in Only',coordinates:[[50,50,17]]},3:{name:'Unlocated Giver',coordinates:[]}}
+    2:{name:'Turn-in Only',coordinates:[[50,50,17]]},3:{name:'Unlocated Giver',coordinates:[]}},
+  objects:{4:{name:'Wanted!',coordinates:[[60,50,17],[60,50,17]]}}
 };
 const npcIndex=npcQuests(npcFixture),giverIndex=questGivers(npcFixture);
 assert.deepEqual(npcIndex['quest giver'],{starters:[1,2],finishers:[2]});checks++;
 assert.deepEqual(npcIndex['turn-in only'],{starters:[],finishers:[1]});checks++;
 assert.deepEqual(giverIndex.givers[1].quests,[1,2]);checks++;
 assert.deepEqual(giverIndex.givers[1].coordinates,[[52.2,31,17],[20,30,14]]);checks++;
-assert.deepEqual(giverIndex.byZone,{14:[1],17:[1]});checks++;
-check(!giverIndex.givers[2]&&!giverIndex.givers[4]&&!giverIndex.givers[999],'turn-in-only NPCs, objects and unresolved starters do not create giver pins');
-const giverData=questGivers({quests,units});
+assert.deepEqual(giverIndex.byZone,{14:[1],17:[1,-4]});checks++;
+assert.deepEqual(giverIndex.givers[-4],{name:'Wanted!',kind:'object',quests:[1],coordinates:[[60,50,17]]});checks++;
+check(!giverIndex.givers[2]&&!giverIndex.givers[4]&&!giverIndex.givers[999],'turn-in-only NPCs and unresolved starters do not create giver pins');
+const giverData=questGivers({quests,units,objects:read('objects')});
+check(giverData.byZone[85].includes(-711)&&giverData.givers[-711].name==='Wanted!'&&giverData.givers[-711].quests.includes(398),'Maggot Eye wanted poster is compiled from upstream object starters');
 check(giverData.byZone[17].includes(3338)&&giverData.givers[3338].quests.includes(844),'real Barrens starter and its quest chain are compiled');
 const sources=JSON.parse(fs.readFileSync(path.join(root,'reports/import.json'),'utf8'));
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'database/manifest.json'),'utf8'));
