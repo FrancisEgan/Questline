@@ -1090,6 +1090,8 @@ local function npcQuestTests(Q)
   local original,history,level=Q.quests,QuestlineSettings.completedQuests,playerLevel
   QuestlineSettings.completedQuests={};Q:SetEntries({});Q.npcOffers={};Q.recentQuests={}
   local name="Deathguard Dillinger"
+  expect(DB.quests[700001].disabled and not Q:IsQuestAvailable(700001),"absent Oink, Oink! quest is disabled by the upstream database")
+  expect(#Q:GetAvailableNPCQuests("Pig",{700001})==0,"absent Pig cannot generate an available quest marker")
   local function has(groups,title)
     for _,g in ipairs(groups) do if g.title==title then return g end end
   end
