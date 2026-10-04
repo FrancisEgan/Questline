@@ -386,6 +386,41 @@ local function vendorMapTooltipTests(Q)
   Q.spawnCache=nil;Q:SetEntries(original);Q.mapDirty=true;Q:RefreshMap()
 end
 
+local function sourceMapTooltipTests(Q)
+  local original,oldMapZone,spawns=Q.quests,Q.GetMapZone,QuestlineSettings.worldMapSpawns
+  local data=QuestlineDB.quests[408]
+  local entry={key="408",id=408,title=data.title,level=data.level,data=data,objectives={
+    {text="Wailing Ancestor slain: 0/8",kind="monster",done=false},
+    {text="Rotting Ancestor slain: 0/8",kind="monster",done=false},
+    {text="Dargol's Skull: 0/1",kind="item",done=false}}}
+  Q.GetMapZone=function() return 85 end;QuestlineSettings.worldMapSpawns=true
+  WorldMapFrame:Show();Q:SetEntries({entry});Q:Select(entry.key);Q:RefreshMap()
+  local pin,spawn,ancestor
+  for _,p in ipairs(Q.objectivePins) do if p:IsShown() and p.sourceName=="Captain Dargol" then pin=p end end
+  for _,p in ipairs(Q.mapSpawns) do if p:IsShown() then
+    if p.spawn.sourceName=="Captain Dargol" then spawn=p end
+    if p.spawn.sourceName=="Wailing Ancestor" then ancestor=p end
+  end end
+  expect(pin and spawn and ancestor,"real drop and kill sources retain NPC identities on precise and spawn markers")
+  this=pin;pin.scripts.OnEnter();local text=WorldMapTooltip:GetText()
+  expect(string.find(text,"Captain Dargol\n",1,true)==1 and string.find(text,Q:QuestTitle(entry),1,true),"Dargol's Skull marker shows its recorded drop NPC before the quest")
+  expect(string.find(text,"Dargol's Skull: 0/1",1,true) and not string.find(text,"Ancestor",1,true),"skull tooltip shows only the related item despite reordered quest-log objectives")
+  this=spawn;spawn.scripts.OnEnter()
+  expect(string.find(WorldMapTooltip:GetText(),"Captain Dargol\n",1,true)==1 and not string.find(WorldMapTooltip:GetText(),"Ancestor",1,true),"drop spawn tooltip applies the same source-first objective filtering")
+  this=ancestor;ancestor.scripts.OnEnter();text=WorldMapTooltip:GetText()
+  expect(string.find(text,"Wailing Ancestor\n",1,true)==1 and string.find(text,"Wailing Ancestor slain: 0/8",1,true) and not string.find(text,"Rotting Ancestor",1,true) and not string.find(text,"Dargol's Skull",1,true),"kill-source tooltips also keep only their matching live objective")
+  Q:ShowQuestTooltip(Q.tracker.rows[1],entry)
+  text=WorldMapTooltip:GetText()
+  expect(string.find(text,"Dargol's Skull: 0/1",1,true) and string.find(text,"Rotting Ancestor slain: 0/8",1,true),"tracker tooltip still provides the full quest overview")
+  local source={kind="item",name="Unknown-source item",key="unknown-source-item"}
+  entry.objectives={{text="Different live text: 0/1",kind="item",done=false}}
+  Q:ShowQuestTooltip(pin,entry,source,"Recorded NPC")
+  expect(string.find(WorldMapTooltip:GetText(),source.name,1,true) and not string.find(WorldMapTooltip:GetText(),"Different live text",1,true),"unmatched source objectives show their known name without guessing counters or including unrelated progress")
+  WorldMapTooltip:Hide();Q.partyQuestTooltip=nil
+  Q.GetMapZone=oldMapZone;QuestlineSettings.worldMapSpawns=spawns
+  Q.spawnCache=nil;Q:SetEntries(original);Q.mapDirty=true;Q:RefreshMap()
+end
+
 local function craftingHintTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
   local data=QuestlineDB.quests[60140]
@@ -1725,6 +1760,7 @@ function runTests()
   vendorTooltipTests(Q)
   craftingHintTests(Q)
   vendorMapTooltipTests(Q)
+  sourceMapTooltipTests(Q)
   QuestlineSettings.nameplateBadges=false
   Q:SetTrackerMode("world");Q.titleIndex={};fire("PLAYER_LOGIN");tick(.2)
   expect(QuestlineSettings.nameplateBadges==false,"login preserves a saved disabled nameplate badges preference")

@@ -18,7 +18,7 @@ function gather(kind,id,seen=new Set()) {
   seen.add(key);
   const record=db[tables[kind]]?.[id];
   if(!record) return [];
-  if(record.coordinates) return record.coordinates.map(p=>[p[0],p[1],p[2],p[3],kind]);
+  if(record.coordinates) return record.coordinates.map(p=>[p[0],p[1],p[2],p[3],kind,record.name]);
   let points=[];
   function sources(drops) {
     for(const [id,chance] of Object.entries(drops.units||{})) if(Number(chance)>=0) points.push(...gather('unit',id,seen));
@@ -58,6 +58,18 @@ function target(t,turnin) {
           (names[key]||=new Set()).add(p[5]);
         }
         if(Object.keys(names).length) location.vendorNames=Object.fromEntries(Object.entries(names).map(([key,names])=>[key,[...names].sort().join(' / ')]));
+      }
+      // Keep named drop/interaction sources compact: one packed coordinate
+      // string per source, rather than a repeated name at every spawn.
+      if(t.kind==='item' || t.kind==='use') {
+        const sources=new Map();
+        for(const p of areaCoords) if(p[5] && (p[4]==='unit' || p[4]==='object')) {
+          const key=p[4]+':'+p[5];
+          if(!sources.has(key)) sources.set(key,{name:p[5],kind:p[4],points:new Map()});
+          const xy=[Math.round(p[0]*40),Math.round(p[1]*40)];
+          sources.get(key).points.set(xy.join(':'),xy);
+        }
+        if(sources.size) location.sources=[...sources.values()].map(source=>({...source,points:packRuns([...source.points.values()].sort((a,b)=>a[0]-b[0]||a[1]-b[1]).flat())}));
       }
       if(!turnin && ['unit','object','item','use'].includes(t.kind)) {
         const unique=new Map();

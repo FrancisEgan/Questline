@@ -86,15 +86,19 @@ function Q:ShowQuestTooltip(owner, entry, target, sourceName)
     if target then tip:AddLine(target.name,0.7,0.85,1) end
   end
   if entry.failed then tip:AddLine("Quest failed",1,0.3,0.3)
-  else for index,objective in ipairs(entry.objectives) do
-    if not (sourceName and target and target.kind=="item") or self:ObjectiveMatches(objective,target) then
-    local lines=self:PartyObjectiveLines(entry,index,objective.text,entry.complete or objective.done,"")
-    for _,line in ipairs(lines) do
-      if line.done then tip:AddLine(line.text,0.35,1,0.4,true)
-      else tip:AddLine(line.text,0.88,0.88,0.82,true) end
+  else
+    local matched=false
+    for index,objective in ipairs(entry.objectives) do
+      if not (sourceName and target) or self:ObjectiveMatches(objective,target) then
+        matched=true
+        local lines=self:PartyObjectiveLines(entry,index,objective.text,entry.complete or objective.done,"")
+        for _,line in ipairs(lines) do
+          if line.done then tip:AddLine(line.text,0.35,1,0.4,true)
+          else tip:AddLine(line.text,0.88,0.88,0.82,true) end
+        end
+      end
     end
-    end
-  end
+    if sourceName and target and not matched and getn(entry.objectives)>0 then tip:AddLine(target.name,.7,.85,1,true) end
     if getn(entry.objectives)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
       tip:AddLine("Speak with "..entry.data.finishers[1].name,entry.complete and .35 or .88,entry.complete and 1 or .88,entry.complete and .4 or .82,true)
     end

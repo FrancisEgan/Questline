@@ -197,6 +197,14 @@ Markers without known source names retain their quest-first tooltip. All loot
 and vendor bags use native VendorGossipIcon at 14 pixels for precise map pins
 and 12 pixels for spawn pins, with world-map zoom compensation.
 
+The source-first tooltip also applies to known drop NPCs and interaction objects,
+including item sources reached through reference loot. Compact per-source packed
+coordinates are compiled into locations and cached by coordinate at runtime.
+Direct kill/object targets use their own recorded names. Only the hovered target's
+matching live objective and party counts appear; an unmatched live objective uses
+the known target name without inventing progress. Quest overview tooltips remain
+complete. Quest 408 / Dargol's Skull resolves to Captain Dargol from item drops.
+
 Unmapped objectives use "No known map location for this objective" in tracker,
 tooltip, and map-navigation feedback. An unfinished item objective whose live
 or imported quest summary explicitly says "You can make ... with the ... skill

@@ -36,6 +36,11 @@ Runtime `QuestlineDB.locations[targetKey][zoneId]` contains:
   x/y are coordinates rounded to percent times 40. These keys identify vendors
   at precise and packed spawn pins; names sharing a coordinate are joined with
   ` / `. This metadata comes directly from upstream vendor and unit records.
+- `sources`: optional named drop/interaction sources for item and use targets,
+  each `{name, kind, points}`. Kind is `unit` or `object`; points uses the same
+  packed coordinate pairs as `spawnPoints`. Names come from upstream source
+  records, including reference loot. Runtime derives and caches a coordinate
+  lookup, keeping source NPCs separate from vendors and world objects.
 
 Compiler display policy omits vendor coordinates for items stocked without a
 limit by at least ten vendors. Their objective records and actual drop sources

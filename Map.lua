@@ -11,15 +11,35 @@ local function actionSize(icon,spawn)
   if icon=="loot" or icon=="buy" or icon=="vendor" then return spawn and 12 or 14 end
   return spawn and 14 or 18
 end
-local function vendorName(location,point)
-  local key=math.floor(point[1]*40+.5)..":"..math.floor(point[2]*40+.5)
-  return location.vendorNames and location.vendorNames[key]
-end
 local alphabet="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
 local digit={}
 for i=1,string.len(alphabet) do digit[string.byte(alphabet,i)]=i-1 end
 local function coordinate(text,index)
   return digit[string.byte(text,index)]*64+digit[string.byte(text,index+1)]
+end
+local function sourceName(location,point,target,icon)
+  local key=math.floor(point[1]*40+.5)..":"..math.floor(point[2]*40+.5)
+  if icon=="vendor" or icon=="buy" then return location.vendorNames and location.vendorNames[key] end
+  if target.kind=="unit" or target.kind=="object" then return target.name end
+  if not location.sources then return nil end
+  if not location.sourceNameCache then
+    local cache={unit={},object={}}
+    for _,source in ipairs(location.sources) do
+      local pool=cache[source.kind]
+      if pool then for i=1,string.len(source.points),4 do
+        local identity=coordinate(source.points,i)..":"..coordinate(source.points,i+2)
+        pool[identity]=pool[identity] or {}
+        pool[identity][source.name]=true
+      end end
+    end
+    for _,pool in pairs(cache) do for identity,names in pairs(pool) do
+      local ordered={};for name in pairs(names) do table.insert(ordered,name) end
+      table.sort(ordered);pool[identity]=table.concat(ordered," / ")
+    end end
+    location.sourceNameCache=cache
+  end
+  local kind=(icon=="interact" or icon=="explore") and "object" or "unit"
+  return location.sourceNameCache[kind][key] or location.sourceNameCache[kind=="object" and "unit" or "object"][key]
 end
 function Q:CreateMap()
   if self.overlay then return end
@@ -198,7 +218,7 @@ function Q:SelectedSpawns(zone)
         seen[identity]=true
         local kind=location.spawnKinds and string.sub(location.spawnKinds,(i-1)/4+1,(i-1)/4+1)
         local point={coordinate(packed,i)/40,coordinate(packed,i+2)/40,entry=item.entry,target=item.target,icon=kind=="g" and "interact" or (kind=="l" and "loot" or (kind=="v" and "vendor" or nil))}
-        if kind=="v" then point.sourceName=vendorName(location,point) end
+        point.sourceName=sourceName(location,point,item.target,point.icon or item.target.icon)
         table.insert(points,point)
       end
     end
@@ -375,7 +395,7 @@ function Q:RefreshMap()
           if string.find(target.faction,faction,1,true) then icon="talk" end
         end
         local pin=self:GetPin(count,true);pin.entry=selected;pin.target=target
-        pin.sourceName=(icon=="vendor" or icon=="buy") and vendorName(location,point) or nil
+        pin.sourceName=sourceName(location,point,target,icon)
         pin.texture:SetTexture(actionTextures[icon] or actionTextures.interact)
         local size=actionSize(icon,false)*inverseScale
         pin:SetWidth(size);pin:SetHeight(size)
