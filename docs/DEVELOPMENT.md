@@ -4,6 +4,12 @@ Standalone quest tracker and selected-quest map areas for the English OctoWoW / 
 
 Current version: **0.1.60**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
+Absent quest correction (2026-10-04): a live player report identifies A Tusken
+Affair (80300) as nonexistent on Octo. Questie-Octo's compiler and compiled
+snapshot disable its predicted availability; importing and rebuilding Questline
+removes the stale Revantusk Watcher offer in Undercity and other starter zones.
+The quest record and relations remain available for identification.
+
 Summoned objectives: the import includes Questie-Octo's compiled scripted
 encounter presentation metadata. Role-scoped guidance supplies map positions
 only when canonical creature coordinates are absent. Object anchors use the

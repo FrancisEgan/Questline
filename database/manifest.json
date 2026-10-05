@@ -10,7 +10,7 @@
     },
     {
       "file": "Data/runtime/quests.lua",
-      "sha256": "3eee208bdc6ec6ce504765bac4cd39e9722dce468adeede4e2ca4e8a4b7549b5"
+      "sha256": "ba22eb894a3764f2508b68335c1b4775901aa4bb5bff8fa1d584b7c69b0d9c84"
     },
     {
       "file": "Data/runtime/items.lua",
