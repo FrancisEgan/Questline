@@ -588,6 +588,48 @@ local function availabilityRegressionTests(Q)
   QuestlineDB.quests[a]=nil;QuestlineDB.quests[b]=nil
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+local function activePrerequisiteTests(Q)
+  local original,history,sources,offers=Q.quests,QuestlineSettings.completedQuests,QuestlineSettings.completionSources,Q.npcOffers
+  local mapZone,physicalZone,x,y=Q.GetMapZone,Q.GetPlayerZone,playerX,playerY
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={};Q.npcOffers={};Q:SetEntries({})
+  local function entry(id,complete)
+    local e=quest(id,{},complete);e.key=tostring(id);e.data=QuestlineDB.quests[id];return e
+  end
+  local function helpers(available,message)
+    for _,id in ipairs({410,431}) do expect(Q:IsQuestAvailable(id)==available,message..": "..QuestlineDB.quests[id].title) end
+  end
+  local function find(pool,id)
+    for _,pin in ipairs(pool) do if pin:IsShown() and pin.giver.id==id then return pin end end
+  end
+  helpers(false,"summoning helpers require the parent in the live quest log")
+  Q:SetEntries({entry(409)});helpers(true,"accepting Proving Allegiance enables its summoning helpers")
+  Q.GetMapZone=function() return 85 end;Q.GetPlayerZone=function() return 85 end
+  playerX,playerY=.666,.449;WorldMapFrame:Show();Q:RefreshQuestGivers()
+  expect(find(Q.mapGivers,-1557) and find(Q.mapGivers,-1586),"active parent shows both helper object pickup markers")
+  expect(find(Q.minimapGivers,-1557),"active parent shows the nearby summoning table on the minimap")
+  Q:SetEntries({entry(409,true)});helpers(true,"killing Lillith retains the live parent until it is rewarded")
+  Q:SetEntries({});helpers(false,"abandoning the parent removes its helpers")
+  Q:SetQuestCompleted(409,"Automatic");helpers(false,"rewarding the parent cannot unlock active-only helper quests")
+  Q:SetEntries({entry(411,true)});helpers(false,"completed Prodigal Lich Returns awaiting turn-in cannot revive helpers")
+  Q:RefreshQuestGivers()
+  expect(not find(Q.mapGivers,-1557) and not find(Q.mapGivers,-1586),"reported follow-up state hides both Tirisfal helper pickup markers")
+  expect(not find(Q.minimapGivers,-1557) and not find(Q.minimapGivers,-1586),"reported follow-up state hides both minimap helper pickup markers")
+  Q.GetMapZone=function() return 1497 end;Q:RefreshQuestGivers()
+  local turnin=find(Q.mapGivers,1498)
+  expect(turnin and #turnin.giver.turnins==1 and turnin.giver.turnins[1].id==411,"Bethor Iceshard retains the real completed follow-up turn-in marker")
+  local id=992010
+  QuestlineDB.quests[id]={title="Alternative active requirement",level=1,minLevel=1,prerequisites={409,366},activePrerequisites={409}}
+  expect(not Q:IsQuestAvailable(id),"completed active-only parent does not satisfy a mixed requirement")
+  Q:SetQuestCompleted(366,"Server")
+  expect(Q:IsQuestAvailable(id),"an independent completed predecessor remains a valid alternative")
+  QuestlineDB.quests[id].prerequisites={};QuestlineDB.quests[id].activePrerequisites={409,366}
+  Q:SetEntries({entry(366)});expect(Q:IsQuestAvailable(id),"any live active predecessor can satisfy an active-only requirement")
+  Q:SetEntries({});expect(not Q:IsQuestAvailable(id),"completion history alone cannot satisfy any active-only predecessor")
+  QuestlineDB.quests[id]=nil
+  Q.GetMapZone=mapZone;Q.GetPlayerZone=physicalZone;playerX,playerY=x,y
+  QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources;Q:SetEntries(original)
+  Q.npcOffers=offers;Q:InvalidateQuestAvailability();WorldMapFrame:Hide();Q:RefreshQuestGivers()
+end
 local function instantClassTurnInTests(Q)
   local original,savedLog,savedSelection=Q.quests,log,selection
   local history,sources=QuestlineSettings.completedQuests,QuestlineSettings.completionSources
@@ -1862,6 +1904,7 @@ function runTests()
   trackerMapTests(Q)
   completionHistoryTests(Q)
   availabilityRegressionTests(Q)
+  activePrerequisiteTests(Q)
   instantClassTurnInTests(Q)
   spawnDotTests(Q)
   objectTooltipTests(Q)

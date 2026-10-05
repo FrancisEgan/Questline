@@ -26,6 +26,11 @@ Coordinates are arrays of `[x, y, zoneId, respawnSeconds?]`. X/Y use percentages
 
 All JSON entity tables are disposable import output. Import replaces them completely; build compiles them without applying any local corrections. Upstream zone IDs are preserved.
 
+Upstream `attributes.preActive` compiles to an `activePrerequisites` ID array.
+Availability requires any such predecessor in the live quest log. These IDs
+cannot also satisfy an ordinary `prerequisites` entry through completion history;
+other completed predecessors remain alternatives to the active requirement.
+
 Runtime `QuestlineDB.locations[targetKey][zoneId]` contains:
 
 - `anchor`: `[x,y]`, an actual spawn near the largest cluster's center, used for the quest selector.

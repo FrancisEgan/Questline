@@ -10,6 +10,15 @@ snapshot disable its predicted availability; importing and rebuilding Questline
 removes the stale Revantusk Watcher offer in Undercity and other starter zones.
 The quest record and relations remain available for identification.
 
+Active quest prerequisites (2026-10-04): the compiler preserves upstream
+`preActive` as `activePrerequisites`. These IDs require a quest in the live log,
+including one awaiting its reward; completing that quest cannot satisfy the
+same ID in the ordinary prerequisite list. Other completed predecessors remain
+alternatives. Candles of Beckoning and The Dormant Shade are available during
+Proving Allegiance, then disappear after it is rewarded, including while the
+completed The Prodigal Lich Returns is awaiting its Undercity turn-in. Runtime
+tests cover the helper lifecycle, both maps, and the retained Bethor turn-in.
+
 Summoned objectives: the import includes Questie-Octo's compiled scripted
 encounter presentation metadata. Role-scoped guidance supplies map positions
 only when canonical creature coordinates are absent. Object anchors use the

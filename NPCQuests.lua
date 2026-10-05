@@ -217,14 +217,21 @@ function Q:IsQuestAvailable(id)
   if not data or data.disabled or data.deprecated or self.byKey[tostring(id)] or not self:MeetsQuestRestrictions(data) then return false end
   if completed[id] and (not data.repeatable or QuestlineSettings.completionSources[id]=="Manual") then return false end
   for _,other in ipairs(data.blockedBy or {}) do if completed[other] or self.byKey[tostring(other)] then return false end end
-  if getn(data.prerequisites or {})>0 then
+  if getn(data.prerequisites or {})>0 or getn(data.activePrerequisites or {})>0 then
     local unlocked=false
-    for _,previous in ipairs(data.prerequisites) do
+    local activeSet={}
+    for _,previous in ipairs(data.activePrerequisites or {}) do
+      activeSet[previous]=true
+      if self.byKey[tostring(previous)] then unlocked=true end
+    end
+    for _,previous in ipairs(data.prerequisites or {}) do
       -- Live quest-log state is stronger evidence than stale/imported history:
       -- a predecessor still being worked on has not unlocked its successor.
       local source=QuestlineSettings.completionSources[previous]
       local trusted=source=="Automatic" or source=="Manual" or source=="Server"
-      if completed[previous] and trusted and not self.byKey[tostring(previous)] then unlocked=true;break end
+      -- An active prerequisite also listed in pre is an active-only condition,
+      -- not an alternative that becomes valid after the parent is rewarded.
+      if not activeSet[previous] and completed[previous] and trusted and not self.byKey[tostring(previous)] then unlocked=true;break end
     end
     if not unlocked then return false end
   end
