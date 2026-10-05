@@ -1,4 +1,4 @@
-// Compile Questline views of the Questie-Octo snapshot. No local data patches.
+// Compile Questline presentation views of the pinned OctoQuestDatabase snapshot.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -11,6 +11,15 @@ const { mobObjectives, vendorObjectives, mobDropRates, npcQuests, questGivers } 
 const root=path.resolve(__dirname,'..'), dir=path.join(root,'database');
 const kinds=['quests','units','objects','items','zones','events','lootGroups','itemUses','scriptedEncounters','reference'];
 const db=Object.fromEntries(kinds.map(k=>[k,JSON.parse(fs.readFileSync(path.join(dir,k+'.json'),'utf8'))]));
+const sourceManifest=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'),'utf8'));
+const sourceLock=JSON.parse(fs.readFileSync(path.join(root,'database-source.json'),'utf8'));
+if(sourceManifest.source!=='OctoQuestDatabase'||sourceManifest.sourceRevision!==sourceLock.revision||sourceManifest.repository!==sourceLock.repository) throw Error('Imported snapshot differs from the pinned source; import before building.');
+const sourceRevision=sourceManifest.sourceRevision;
+for(const kind of kinds) {
+  const file=kind+'.json',entry=sourceManifest.outputs?.find(entry=>entry.file===file);
+  const digest=crypto.createHash('sha256').update(fs.readFileSync(path.join(dir,file))).digest('hex');
+  if(!entry||digest!==entry.sha256) throw Error('Imported snapshot changed: '+file+'; correct shared source data and reimport.');
+}
 const issues=[], locations={}, runtimeQuests={}, zoneIndex={};
 const tables={unit:'units',object:'objects',item:'items',event:'events',use:'itemUses',zone:'zones'};
 function targetName(kind,id) {return db[tables[kind]]?.[id]?.name || (kind==='use'?db.items[id]?.name:'') || (kind==='event'?'Explore the quest location':kind+' '+id);}
@@ -121,15 +130,15 @@ for(const [id,q] of Object.entries(db.quests)) {
 }
 const output=path.join(root,'Data');fs.mkdirSync(output,{recursive:true});
 function writeTable(file,field,records,append=false) {
-  const lines=['-- Generated from Questie-Octo by tools/build.js. Correct quest data upstream, then import and rebuild.'];
+  const lines=['-- Generated from OctoQuestDatabase '+sourceRevision+' by tools/build.js. Correct source data there, then import and rebuild.'];
   for(const [k,record] of Object.entries(records)) {
     const v=field==='locations'?Object.fromEntries(Object.entries(record).map(([zone,data])=>[zone,{...data,runs:packRuns(data.runs)}])):record;
     lines.push('QuestlineDB.'+field+'['+lua(/^-?\d+$/.test(k)?Number(k):k)+']='+lua(v));
   }
   fs[append?'appendFileSync':'writeFileSync'](path.join(output,file),lines.join('\n')+'\n');
 }
-const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).update(fs.readFileSync(path.join(__dirname,'vendor-locations.js'))).update(fs.readFileSync(path.join(__dirname,'scripted-encounters.js'))).digest('hex').slice(0,16);
-fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
+const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(sourceRevision).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).update(fs.readFileSync(path.join(__dirname,'vendor-locations.js'))).update(fs.readFileSync(path.join(__dirname,'scripted-encounters.js'))).digest('hex').slice(0,16);
+fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",sourceRevision='+lua(sourceRevision)+',build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
 writeTable('Quests.lua','quests',runtimeQuests);
 writeTable('Locations.lua','locations',locations);
 writeTable('Zones.lua','zones',Object.fromEntries(Object.entries(db.zones).map(([id,zone])=>[id,{...zone,mapSize:db.reference.minimap[id]}])));
@@ -143,7 +152,7 @@ const giverData=questGivers(db);
 writeTable('QuestGivers.lua','givers',giverData.givers);
 writeTable('ZoneGivers.lua','zoneGivers',giverData.byZone);
 fs.mkdirSync(path.join(root,'reports'),{recursive:true});
-const report={build:digest,grid:GRID,quests:Object.keys(runtimeQuests).length,targets:Object.keys(locations).length,zones:Object.keys(zoneIndex).length,unmappedTargets:issues.length,issues,
+const report={build:digest,sourceRevision,grid:GRID,quests:Object.keys(runtimeQuests).length,targets:Object.keys(locations).length,zones:Object.keys(zoneIndex).length,unmappedTargets:issues.length,issues,
   barrens:{quests:zoneIndex[17]?.size,examples:[844,845,903,855,895,881,900].map(id=>({id,title:runtimeQuests[id]?.title,targets:runtimeQuests[id]?.objectives.map(t=>({key:t.key,spawns:locations[t.key][17]?.spawns,scanlines:(locations[t.key][17]?.runs.length||0)/3,points:locations[t.key][17]?.points.length}))}))}};
 fs.writeFileSync(path.join(root,'reports','build.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({...report,issues:undefined},null,2));

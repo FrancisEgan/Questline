@@ -1,2 +1,2 @@
 -- Generated; see database/manifest.json for upstream inputs.
-QuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",build="fd36bb1dddac829e",grid=1280,quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}
+QuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",sourceRevision="sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03",build="b1957b976152840f",grid=1280,quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}

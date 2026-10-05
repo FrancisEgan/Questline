@@ -40,4 +40,4 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 
 ## Credits
 
-Questie-Octo's compiled database is the sole source for quest data. Data fixes are contributed upstream and imported into Questline. The bag, sword, and gear marker artwork comes from pfQuest. Upstream notices are included in `licenses/`.
+Quest data comes from OctoQuestDatabase and is included with Questline; no separate database addon is needed. The bag, sword, and gear marker artwork comes from pfQuest. Upstream notices are included in `licenses/`.

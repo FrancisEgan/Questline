@@ -1,5 +1,5 @@
 {
-  "policy": "Questie-Octo compiled runtime snapshot is the sole database authority. Coordinates are validated and deduplicated; zone IDs are preserved. No local overrides or fallback database are applied.",
+  "policy": "OctoQuestDatabase is the sole database authority. This adapter consumes the pinned effective source tables. Coordinates are validated and deduplicated; zone IDs are preserved. No local overrides or fallback database are applied.",
   "issues": [
     {
       "issue": "duplicate-zone-name",

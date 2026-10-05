@@ -1,10 +1,12 @@
 # Database schema 1
 
-The current source snapshot is imported from Questie-Octo's compiled runtime
-with `npm run import:questie -- [path-to-Questie-Octo]`. The import records exact
-input hashes in `manifest.json`. Questie-Octo is the sole authority; there are
-no local overrides or fallback database. `npm run build` produces the in-game
-`Data/` files. Submit data corrections to Questie-Octo, then refresh the snapshot.
+The current source snapshot is imported from OctoQuestDatabase's resolved tables
+with `npm run import -- [path-to-OctoQuestDatabase]`. `database-source.json` pins
+the exact shared content revision; deliberate updates require `--update-lock`.
+The import records input hashes and generated snapshot hashes in `manifest.json`.
+OctoQuestDatabase is the sole authority; there are no local overrides or fallback
+databases. `npm run build` produces the in-game `Data/` files. Submit data
+corrections to OctoQuestDatabase, then refresh the snapshot and generated Lua.
 
 All entity tables are JSON objects keyed by numeric ID strings. Runtime Lua uses numeric entity keys and string location keys. IDs from different kinds are distinct.
 

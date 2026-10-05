@@ -1,4 +1,4 @@
--- Generated from Questie-Octo by tools/build.js. Correct quest data upstream, then import and rebuild.
+-- Generated from OctoQuestDatabase sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03 by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.zones[1]={["name"]="Dun Morogh",["coordinateCount"]=2230,["mapSize"]={[1]=4925,[2]=3283.34}}
 QuestlineDB.zones[2]={["name"]="Longshore",["coordinateCount"]=0,["mapSize"]=nil}
 QuestlineDB.zones[3]={["name"]="Badlands",["coordinateCount"]=1147,["mapSize"]={[1]=2487.5,[2]=1658.34}}

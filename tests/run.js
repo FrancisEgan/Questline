@@ -10,6 +10,7 @@ let fengari;
 try { fengari=require('fengari'); } catch (_) { fengari=require(path.join(root,'../.test-tools/node_modules/fengari')); }
 const {lua:Lapi,lauxlib,lualib,to_luastring,to_jsstring}=fengari;
 let checks=0;
+checks+=require('./database-pipeline')();
 const check=(value,message)=>{checks++;assert.ok(value,message);};
 const originalBlips=fs.readFileSync(path.join(root,'tools/sources/minimap-objecticons.blp'));
 const hiddenBlips=fs.readFileSync(path.join(root,'Textures/minimap-blips.blp'));
@@ -105,8 +106,14 @@ check(giverData.byZone[85].includes(-711)&&giverData.givers[-711].name==='Wanted
 check(giverData.byZone[17].includes(3338)&&giverData.givers[3338].quests.includes(844),'real Barrens starter and its quest chain are compiled');
 const sources=JSON.parse(fs.readFileSync(path.join(root,'reports/import.json'),'utf8'));
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'database/manifest.json'),'utf8'));
-check(manifest.source==='Questie-Octo compiled runtime'&&manifest.inputs.some(input=>input.file==='Data/runtime/quests.lua'),'Questie-Octo compiled runtime provenance is recorded');
-check(sources.policy.includes('Questie-Octo compiled runtime snapshot'),'Questie-Octo import policy is recorded');
+const lock=JSON.parse(fs.readFileSync(path.join(root,'database-source.json'),'utf8'));
+check(manifest.source==='OctoQuestDatabase'&&manifest.sourceRevision===lock.revision&&manifest.inputs.some(input=>input.file==='source/quests.json'),'Pinned shared database provenance is recorded');
+check(sources.policy.includes('OctoQuestDatabase is the sole database authority'),'Shared database import policy is recorded');
+for(const output of manifest.outputs) assert.equal(require('../tools/shared-database').sha256(fs.readFileSync(path.join(root,'database',output.file))),output.sha256,'Snapshot hash: '+output.file);
+checks++;
+const generatedSource={QuestlineDB:{}};
+readLua(path.join(root,'Data/Init.lua'),generatedSource);
+check(generatedSource.QuestlineDB.sourceRevision===lock.revision,'Generated runtime records the pinned shared revision');
 for(const kind of ['units','objects','events']) for(const [id,r] of Object.entries(read(kind))) {
   const seen=new Set();
   for(const p of r.coordinates) {

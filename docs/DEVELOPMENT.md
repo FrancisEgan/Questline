@@ -2,7 +2,7 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.60**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.63**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
 Absent quest correction (2026-10-04): a live player report identifies A Tusken
 Affair (80300) as nonexistent on Octo. Questie-Octo's compiler and compiled
@@ -165,20 +165,35 @@ pfQuest is optional. If it is enabled, Questline hides its world-map pins and ro
 | `/ql reset` | Reset both panels' positions and expand them |
 | `/ql status` | Version, database build, and identified quest count |
 
-## Owned database
+## Shared database
 
-Questie-Octo's `Data/runtime/` snapshot is the sole database source. The JSON
-under `database/` is a converted snapshot, and `Data/` contains generated Lua
-views and indexes for Questline. Both are regenerated; neither is a separate
-database to maintain. Data corrections should be contributed to Questie-Octo.
-No local overrides, quest deletions, coordinate remapping, or pfQuest fallback
-layers are applied. Questie-Octo is needed only when refreshing the snapshot.
+OctoQuestDatabase owns the resolved quest source tables. Its source schema and
+provenance retain the effective Questie-Octo 1.44 data that originally supplied
+Questline. `tools/import-database.js` is Questline's adapter into the existing
+JSON schema; `tools/build.js` compiles geometry and presentation indexes.
+`database/*.json`, `Data/`, and reports are generated and committed. Data
+corrections belong in OctoQuestDatabase; presentation policies belong here.
 
-`database/manifest.json` records input filenames, SHA-256 hashes, and counts.
-`reports/import.json` records duplicate zone names and missing references;
-`reports/build.json` records geometry coverage. Missing locations are never
-invented. A later shared database addon can replace the input provider while
-Questline keeps compiling its presentation indexes from the same entity data.
+`database-source.json` pins an exact SHA-256 content revision of the shared
+source/provenance inventory. The importer accepts a checkout path or the
+`OCTO_QUEST_DATABASE` environment variable, defaulting to a sibling
+OctoQuestDatabase directory. It verifies all manifest hashes and refuses a
+revision mismatch unless `--update-lock` is explicitly provided. The imported
+manifest records the revision, repository, input hashes, and counts. Generated
+Lua headers, `QuestlineDB.sourceRevision`, and the build report retain the pin.
+The build verifies the snapshot pin and needs no shared checkout once imported.
+
+Questline remains self-contained in game. Players need neither Questie-Octo nor
+OctoQuestDatabase. No local overrides, deletions, remapping, or fallback source
+layers are applied. The old `tools/import-questie.js` and `import:questie`
+commands are compatibility aliases to the shared importer and never read the
+other addon's runtime database. Imported notices are retained automatically in
+`licenses/OctoQuestDatabase/` alongside Questline's existing notices.
+
+The import report records duplicate zone names and missing references; the
+build report records geometry coverage. Missing locations are never invented.
+Existing vendor icons/tooltips, GudaPlates badges, remaining-objective areas,
+and green completed objectives retain their baseline data and presentation.
 
 Coordinates use `[xPercent, yPercent, zoneId, optionalRespawnSeconds]`. Quest targets use `{ "kind": "unit|object|item|event|use|zone", "id": 123 }`. See [database/SCHEMA.md](../database/SCHEMA.md).
 
@@ -187,8 +202,9 @@ Coordinates use `[xPercent, yPercent, zoneId, optionalRespawnSeconds]`. Quest ta
 Node.js is only for development. From `Interface/AddOns`:
 
 ```powershell
-# Refresh the snapshot from the neighboring Questie-Octo installation.
-node Questline/tools/import-questie.js
+# Refresh the snapshot from the pinned neighboring shared checkout.
+node Questline/tools/import-database.js
+# To deliberately adopt a changed shared revision, add --update-lock.
 node Questline/tools/build.js
 node Questline/tools/assets.js
 node Questline/tests/run.js
