@@ -2,7 +2,7 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.64**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.65**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
 Quest marker artwork (0.1.64): pickup exclamations and completed turn-in question
 marks use the installed Questie-Octo's unchanged 32x32 BLP artwork, bundled as
@@ -279,14 +279,26 @@ hint. Quest 60140 supplies this instruction for Linen Bandages / First Aid.
 No source records or recipe data are invented. Completed quests use their
 finisher locations; an unmapped finisher reports a missing turn-in location.
 
-Nameplate badges inspect GudaPlates' registry every frame for newly visible
-plates and changed names, painting those immediately. Unchanged visible plates
+Nameplate badges (0.1.65) use GudaPlates' registry when available; otherwise
+Questline discovers Blizzard's default Vanilla plates among WorldFrame children
+by the native Nameplate-Border texture, third (name) region, and StatusBar child.
+Child-count changes trigger immediate discovery, and the 0.2-second repaint
+also retries late region initialization and same-count child replacements.
+Cached plates are checked every frame for newly visible plates and changed
+names, painting those immediately. Unchanged visible plates
 retain the 0.2-second quest-progress/selection repaint interval. Hidden plates
 clear their badge state so reuse cannot retain another creature's badges.
+Native badges leave space beside the health bar for Blizzard's level/skull and
+preserve the plate's scripts, name, health bar, and click handling. Switching
+registries hides the previous badges so GudaPlates never gets a duplicate set.
 This does not bypass GudaPlates' own discovery or fresh-data show delay.
 General's Show nameplate badges checkbox defaults on and saves the per-character
 `nameplateBadges` preference. Turning it off immediately hides existing badges
 and skips the frame updater; turning it back on immediately repaints visible plates.
+In game, disable GudaPlates and reload, show enemy nameplates, and check a quest
+mob, an unrelated mob, selection changes, completed objectives, and hide/show
+or distance-based plate reuse. Check the Options toggle and Blizzard's level
+and skull placement, then re-enable GudaPlates and reload to verify its badges.
 
 - English quest identification uses quest links if the client supplies them; otherwise exact title, level, faction/class restrictions, and quest text. Ambiguous matches stay unmapped. Live objectives still appear in the tracker.
 - Completed objective names are matched to target names, never assumed to share the database's order. Unmatched custom objective text remains visible until the quest completes.

@@ -1,5 +1,7 @@
 local Q, DB = Questline, QuestlineDB
 local getn = table.getn
+local blizzardPlates={}
+local worldChildCount,lastRegistry
 
 function Q:NameplateQuests(name)
   local keys=DB.mobObjectives[self:Normalize(name or "")]
@@ -18,10 +20,31 @@ function Q:NameplateQuests(name)
 end
 
 local function plateName(nameplate)
+  if nameplate.questlineNameRegion then return nameplate.questlineNameRegion:GetText() end
   local original=nameplate.original
   local name=original and original.name and original.name:GetText()
   if not name or name=="" then name=nameplate.name and nameplate.name:GetText() end
   return name
+end
+
+local function blizzardParts(frame)
+  if not frame.GetObjectType or not frame.GetRegions or not frame.GetChildren then return end
+  local kind=frame:GetObjectType()
+  if kind~="Button" and kind~="Frame" then return end
+  local regions={frame:GetRegions()}
+  local border=false
+  for _,region in ipairs(regions) do
+    if region.GetObjectType and region:GetObjectType()=="Texture" and
+      region:GetTexture()=="Interface\\Tooltips\\Nameplate-Border" then border=true;break end
+  end
+  if not border then return end
+  -- Vanilla's regions are border, glow, name, level, skull, raid icon.
+  -- Keep the name region even while empty: the client fills it on plate reuse.
+  local name=regions[3]
+  if not name or not name.GetObjectType or name:GetObjectType()~="FontString" then return end
+  for _,child in ipairs({frame:GetChildren()}) do
+    if child.GetObjectType and child:GetObjectType()=="StatusBar" then return name,child end
+  end
 end
 
 local function hideBadges(nameplate)
@@ -31,13 +54,37 @@ local function hideBadges(nameplate)
   end
 end
 
+local function scanBlizzardPlates(changesOnly)
+  if not WorldFrame or not WorldFrame.GetChildren or not WorldFrame.GetNumChildren then return end
+  local count=WorldFrame:GetNumChildren()
+  -- Discover new children immediately; retry late initialization/replacement
+  -- on the regular repaint. Cached plates are still checked every frame.
+  if changesOnly and worldChildCount==count then return end
+  worldChildCount=count
+  local present={}
+  for _,frame in ipairs({WorldFrame:GetChildren()}) do
+    present[frame]=true
+    if not blizzardPlates[frame] then
+      local name,health=blizzardParts(frame)
+      if name then
+        frame.questlineNameRegion=name;frame.questlineHealthAnchor=health
+        blizzardPlates[frame]=frame
+      end
+    end
+  end
+  for frame in pairs(blizzardPlates) do if not present[frame] then
+    hideBadges(frame);blizzardPlates[frame]=nil
+  end end
+end
+
 function Q:PaintNameplate(nameplate)
   if not nameplate then return end
   if QuestlineSettings and QuestlineSettings.nameplateBadges==false then hideBadges(nameplate);return end
   local name=plateName(nameplate)
   local entries=self:NameplateQuests(name)
   nameplate.questlineBadges=nameplate.questlineBadges or {}
-  local anchor=nameplate.health or nameplate
+  local anchor=nameplate.questlineHealthAnchor or nameplate.health or nameplate
+  local gap=nameplate.questlineHealthAnchor and 24 or 5
   for index,entry in ipairs(entries) do
     local badge=nameplate.questlineBadges[index]
     if not badge then
@@ -46,7 +93,7 @@ function Q:PaintNameplate(nameplate)
     end
     self:SizeBadge(badge,18,.78)
     badge:ClearAllPoints()
-    if index==1 then badge:SetPoint("LEFT",anchor,"RIGHT",5,0)
+    if index==1 then badge:SetPoint("LEFT",anchor,"RIGHT",gap,0)
     else badge:SetPoint("LEFT",nameplate.questlineBadges[index-1],"RIGHT",2,0) end
     self:PaintBadge(badge,entry,self:IsSelected(entry.key));badge:Show()
   end
@@ -54,8 +101,13 @@ function Q:PaintNameplate(nameplate)
 end
 
 function Q:RefreshNameplates(changesOnly)
-  if not GudaPlates or not GudaPlates.registry then return end
-  for frame,nameplate in pairs(GudaPlates.registry) do
+  local registry=GudaPlates and GudaPlates.registry
+  if not registry then scanBlizzardPlates(changesOnly);registry=blizzardPlates end
+  if lastRegistry and lastRegistry~=registry then
+    for _,nameplate in pairs(lastRegistry) do hideBadges(nameplate) end
+  end
+  lastRegistry=registry
+  for frame,nameplate in pairs(registry) do
     if (not QuestlineSettings or QuestlineSettings.nameplateBadges~=false) and frame:IsShown() and nameplate:IsShown() then
       local name=plateName(nameplate)
       if not changesOnly or not nameplate.questlineVisible or nameplate.questlineName~=name then

@@ -79,6 +79,8 @@ function methods:GetFrameLevel() return self.level or 1 end
 function methods:GetEffectiveScale() return self.scale or (self.parent and self.parent:GetEffectiveScale()) or 1 end
 function methods:GetParent() return self.parent end
 function methods:GetName() return self.name end
+function methods:GetObjectType() return self.kind end
+function methods:GetTexture() return self.textureValue and self.textureValue[1] end
 function methods:GetFontObject() return self.fontObject end
 function methods:SetFontObject(value) self.fontObject=value end
 function methods:SetOwner(owner) self.owner=owner end
@@ -520,6 +522,88 @@ local function requestedBehaviorTests(Q)
   GudaPlates=savedGuda
   QuestlineDB.mobObjectives[Q:Normalize(second.name)]=nil
   Q:SetEntries(original)
+end
+
+local function blizzardNameplateTests(Q)
+  local original,savedGuda,savedWorld=Q.quests,GudaPlates,WorldFrame
+  local savedSetting=QuestlineSettings.nameplateBadges
+  local savedSelected,savedKeys=QuestlineSettings.selected,QuestlineSettings.selectedKeys
+  local target={kind="unit",id=992030,key="unit:992030",name="Native Quest Mob",icon="kill"}
+  local active={key="native-plate-quest",title="Native plate quest",level=5,
+    objectives={{text="Native Quest Mob: 0/1",done=false}},data={objectives={target},finishers={}}}
+  local key=Q:Normalize(target.name);local oldIndex=QuestlineDB.mobObjectives[key]
+  QuestlineDB.mobObjectives[key]={target.key}
+  Q:SetEntries({active});QuestlineSettings.selected=active.key;QuestlineSettings.selectedKeys=nil
+  QuestlineSettings.nameplateBadges=true;GudaPlates=nil
+  local world=CreateFrame("Frame",nil,UIParent);WorldFrame=world
+  local children,scans={},0
+  world.GetNumChildren=function() return #children end
+  world.GetChildren=function() scans=scans+1;return unpack(children) end
+  local function nativePlate(name)
+    local frame=CreateFrame("Button",nil,world)
+    local border=frame:CreateTexture(nil,"ARTWORK");border:SetTexture("Interface\\Tooltips\\Nameplate-Border")
+    local glow=frame:CreateTexture(nil,"ARTWORK")
+    local title=frame:CreateFontString(nil,"OVERLAY");title:SetText(name)
+    local level=frame:CreateFontString(nil,"OVERLAY");level:SetText("5")
+    local skull=frame:CreateTexture(nil,"ARTWORK")
+    local raid=frame:CreateTexture(nil,"ARTWORK")
+    local health=CreateFrame("StatusBar",nil,frame)
+    frame.GetRegions=function() return border,glow,title,level,skull,raid end
+    frame.GetChildren=function() return health end
+    return frame,title,health,border
+  end
+  local plate,name,health=nativePlate(target.name)
+  local unrelated=nativePlate("Unrelated Creature")
+  local impostor,_,_,border=nativePlate(target.name);border:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
+  local onShow,onUpdate,onClick=function() end,function() end,function() end
+  plate:SetScript("OnShow",onShow);plate:SetScript("OnUpdate",onUpdate);plate:SetScript("OnClick",onClick)
+  children={plate,unrelated,impostor};Q:RefreshNameplates(true)
+  local badge=plate.questlineBadges and plate.questlineBadges[1]
+  expect(badge and badge:IsShown() and badge.text:GetText()==tostring(active.number),"default Blizzard plates discover matching quest mobs without GudaPlates")
+  expect(badge.glow:IsShown() and badge.parent==plate and badge.mouseEnabled==false,"native badge inherits plate visibility and preserves target clicks")
+  expect(badge.point[2]==health and badge.point[4]==24,"native badge anchors beside the health bar with space for level and skull")
+  expect(not unrelated.questlineBadges[1] and not impostor.questlineBadges,"unrelated mobs and non-nameplate WorldFrame children get no badges")
+  expect(plate:GetScript("OnShow")==onShow and plate:GetScript("OnUpdate")==onUpdate and plate:GetScript("OnClick")==onClick and name:GetText()==target.name,"native discovery preserves Blizzard scripts and name text")
+  local before=scans;Q:RefreshNameplates(true)
+  expect(scans==before,"unchanged WorldFrame child count avoids full discovery on every frame")
+  name:SetText("Unrelated Creature");Q:RefreshNameplates(true)
+  expect(not badge:IsShown(),"native plate name reuse clears stale badges immediately")
+  name:SetText(target.name);Q:RefreshNameplates(true)
+  expect(badge:IsShown(),"reused native quest mob restores its badge immediately")
+  plate:Hide();Q:RefreshNameplates(true)
+  expect(not badge:IsShown() and not plate.questlineVisible,"hidden native plate clears badge reuse state")
+  plate:Show();Q:RefreshNameplates(true)
+  expect(badge:IsShown(),"returning native plate restores badges on its first visible frame")
+  QuestlineSettings.selected=nil;Q:RefreshNameplates(false)
+  expect(not badge.glow:IsShown(),"native selected-quest highlight follows the periodic repaint")
+  active.objectives[1].done=true;Q:RefreshNameplates(false)
+  expect(not badge:IsShown(),"finished objective removes its native nameplate badge")
+  active.objectives[1].done=false;Q:RefreshNameplates(false)
+  QuestlineSettings.nameplateBadges=false;Q:RefreshNameplates()
+  expect(not badge:IsShown(),"nameplate option immediately hides Blizzard badges")
+  QuestlineSettings.nameplateBadges=true;Q:RefreshNameplates()
+  expect(badge:IsShown(),"nameplate option restores Blizzard badges")
+  local fresh=nativePlate(target.name);table.insert(children,fresh);Q:RefreshNameplates(true)
+  expect(fresh.questlineBadges[1]:IsShown(),"new WorldFrame child discovers its native badge immediately")
+  local replacement=nativePlate(target.name);children[4]=replacement;Q:RefreshNameplates(false)
+  expect(replacement.questlineBadges[1]:IsShown() and not fresh.questlineBadges[1]:IsShown(),"periodic scan handles same-count replacement and retires removed plate badges")
+  local late,lateName,_,lateBorder=nativePlate("");lateBorder:SetTexture(nil)
+  table.insert(children,late);Q:RefreshNameplates(true)
+  expect(not late.questlineBadges,"uninitialized native regions are deferred")
+  lateBorder:SetTexture("Interface\\Tooltips\\Nameplate-Border");Q:RefreshNameplates(false)
+  expect(late.questlineBadges and not late.questlineBadges[1],"periodic discovery retains an initialized plate with an empty name")
+  lateName:SetText(target.name);Q:RefreshNameplates(true)
+  expect(late.questlineBadges[1]:IsShown(),"late native name population paints on the first frame")
+  local guda=CreateFrame("Frame",nil,plate);guda.health=CreateFrame("StatusBar",nil,guda)
+  guda.original={name=name};GudaPlates={registry={[plate]=guda}};Q:RefreshNameplates(true)
+  expect(not badge:IsShown() and not replacement.questlineBadges[1]:IsShown() and guda.questlineBadges[1]:IsShown(),"GudaPlates backend hides native badge sets before painting its own")
+  expect(guda.questlineBadges[1].point[2]==guda.health and guda.questlineBadges[1].point[4]==5,"GudaPlates keeps its existing badge placement")
+  GudaPlates=nil;Q:RefreshNameplates(true)
+  expect(badge:IsShown() and not guda.questlineBadges[1]:IsShown(),"returning to native plates hides the GudaPlates badge set")
+  children={};Q:RefreshNameplates(false);world:Hide()
+  WorldFrame=savedWorld;GudaPlates=savedGuda;QuestlineSettings.nameplateBadges=savedSetting
+  QuestlineSettings.selected=savedSelected;QuestlineSettings.selectedKeys=savedKeys
+  QuestlineDB.mobObjectives[key]=oldIndex;Q:SetEntries(original)
 end
 
 local function vendorTooltipTests(Q)
@@ -1909,6 +1993,7 @@ function runTests()
   spawnDotTests(Q)
   objectTooltipTests(Q)
   requestedBehaviorTests(Q)
+  blizzardNameplateTests(Q)
   vendorTooltipTests(Q)
   craftingHintTests(Q)
   vendorMapTooltipTests(Q)
