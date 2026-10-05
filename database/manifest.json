@@ -3,160 +3,24 @@
   "locale": "enUS",
   "profile": "octo",
   "source": "OctoQuestDatabase",
-  "sourceRevision": "sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03",
+  "sourceRevision": "sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b",
   "repository": "https://github.com/FrancisEgan/OctoQuestDatabase.git",
   "inputs": [
     {
       "file": "LICENSE",
-      "sha256": "126d566e971ea0a5e3b62037fe7b9a9d4584dbba777e2e79b772a39a8f2fab56"
+      "sha256": "0fbf6953ae9e8f8f4fc431620d6261de91c79475802a8430cbcd5ea00e6f8a77"
     },
     {
-      "file": "LICENSES/Ace3v-LICENSE.txt",
-      "sha256": "afe050a430bafdbca7da69d95897751239f4fab415784a419a3cdc2519eee9b2"
-    },
-    {
-      "file": "LICENSES/ClassicAPI-GPL-3.0.txt",
-      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
-    },
-    {
-      "file": "LICENSES/GPL-3.0.txt",
-      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
-    },
-    {
-      "file": "LICENSES/LevelRange-LICENSE.txt",
-      "sha256": "c86754c466c70dfd3b74b7a7e9843c313e717106fbefe35d7d806443493d3e07"
-    },
-    {
-      "file": "LICENSES/LibStub-PUBLIC-DOMAIN.txt",
-      "sha256": "150609251c6024fc7e6ad7161ddb43d6d90ba6c2da54e40eb1e60956f439ced9"
-    },
-    {
-      "file": "LICENSES/Questie-LICENSE-METADATA.txt",
-      "sha256": "e750e9a662273e52d07a77e76bec0d3b26475829673d96ed024883a69538c45b"
-    },
-    {
-      "file": "LICENSES/Questie-Octo-MIT.txt",
-      "sha256": "b2ce23d96b1c0e9eebb8fac5519fb07403cf6a309ecbb5c368b4c6ec0d2d3d8e"
-    },
-    {
-      "file": "LICENSES/Questie-Octo-SCOPE-NOTICE.txt",
-      "sha256": "c1f3da3bb758e909d439d0da2a6867d4fef616024a2a85d66f370ca5a0d05310"
-    },
-    {
-      "file": "LICENSES/README.md",
-      "sha256": "7b5b2178e54862b11d425fb7d685b80c671247aad96ed2a7f4e02424b75305c2"
-    },
-    {
-      "file": "LICENSES/ShaguTweaks-MIT.txt",
-      "sha256": "7c35b79f9f9834f0e9d5720008b56d483071f87c53dc3c9ff4a9cb66954dc552"
-    },
-    {
-      "file": "LICENSES/ShaguTweaks-extras-MIT.txt",
-      "sha256": "9317b10df0d255f5997f6cfc6b00b865645c799aa49fea0308bec7602413e48d"
-    },
-    {
-      "file": "LICENSES/Tortoise-AGPL-3.0.txt",
-      "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef"
-    },
-    {
-      "file": "LICENSES/pfQuest-MIT.txt",
-      "sha256": "7ee3c5402cd719de230f3bbc59a6506a3b2b65981d0d793f143fa5b08f926510"
-    },
-    {
-      "file": "LICENSES/pfQuest-classicAPI-MIT.txt",
-      "sha256": "7ee3c5402cd719de230f3bbc59a6506a3b2b65981d0d793f143fa5b08f926510"
-    },
-    {
-      "file": "LICENSES/pfQuest-octo-MIT.txt",
-      "sha256": "abbeec2d8248c4da9784dfa8828bf522949edff11853573186e6f391a1c17ff8"
-    },
-    {
-      "file": "LICENSES/pfQuest-turtle-MIT.txt",
-      "sha256": "77a39be6182fba6c23e3979da4eb353e1668d16b3da53d53c060d3f2b46adb9f"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/CalendarEventRules.lua",
-      "sha256": "9c996976b07eeaf52fd2b20e013468b0cce221bd2816fd7fdbb0f267ff9faa2a"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/EliteQuestTypes.lua",
-      "sha256": "0dc9685fa5e1dffa16a5ce51235e1f9a70cf864dd77d94bf13be03998171317e"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/EventSchedule.lua",
-      "sha256": "c86b143d6232bb84fcc687b21dbd44d846733e2a5151441a616372579ab80831"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/PvPQuestTypes.lua",
-      "sha256": "ad3c3d83488ea60b2fc14117e6ea1d15a805513d35b6e4eab992a49e8c106494"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/QuestChainAvailability.lua",
-      "sha256": "2d9bebd400433cd6eea455b1f20b076142637fe31d60eec1418e7a197b5ab74a"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/QuestDirectProgression.lua",
-      "sha256": "8aa067bee955dc53bbb9b26784592d33b387f6b0c21ee3a4e894c232ec98b7e2"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/QuestObjectiveRequirements.lua",
-      "sha256": "9905756ba32fb5fdb789c4cfa179d68db1292439b69d492fce4eab46079d1aaf"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/QuestProgression.lua",
-      "sha256": "c97404637cc715088a98f5ca45b46e454237beab42305e6031ecc171e4bdfc13"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/QuestRewards.lua",
-      "sha256": "33d37a1510516c9a3edcb6e055cd8a1bf9aa2d01246b07ecb243650d00faa374"
-    },
-    {
-      "file": "provenance/Questie-Octo/Data/ScriptedEncounters.lua",
-      "sha256": "67afcc82898cc0d168e1a8c06abf4d388b18bf4ba25f3ea1e208da61d3dd886b"
-    },
-    {
-      "file": "provenance/Questie-Octo/Docs/ARCHITECTURE.md",
-      "sha256": "313844f09d257434a104fad92094efb823553c8e0e4f804d0470ed1f39a5918a"
-    },
-    {
-      "file": "provenance/Questie-Octo/Docs/SOURCE_PROVENANCE.md",
-      "sha256": "a1fe00f89ee9b4b4d71958de41724f4beabbb09c38331435c993135f74a35ed8"
-    },
-    {
-      "file": "provenance/Questie-Octo/LICENSE",
-      "sha256": "67edc0ce5e7edb23b9b30de62212b2d900ae79c41474ba9b8cb4aab45665a71b"
-    },
-    {
-      "file": "provenance/Questie-Octo/PROJECT_IDENTITY.md",
-      "sha256": "718cfa01b0e0d3049f190326a54baeb801930534de502ebab0d6f26d0cf4c288"
-    },
-    {
-      "file": "provenance/Questie-Octo/THIRD_PARTY_NOTICES.md",
-      "sha256": "15eca56cc3a490ae0dc38596492f1381c5b50711b0942ecbc35970dfb80c5e8b"
-    },
-    {
-      "file": "provenance/Questie-Octo/Tools/compile_runtime_db.lua",
-      "sha256": "2dc98b0bb7be6e35f9bfce7d1fe0377bcb5c0d95f4c7d0adfc2d8a7e331b9624"
-    },
-    {
-      "file": "provenance/Questie-Octo/Tools/validate_runtime_db.lua",
-      "sha256": "ca934567ec226084b9554c3b7b3bec02d0ab065a00e288fb634fd3068794e4a0"
-    },
-    {
-      "file": "provenance/SHARED_LICENSE_SCOPE.md",
-      "sha256": "c7250999e950b5c6241107ba7f62cd45754faed6f96b0f00f83e06649a04b4f5"
-    },
-    {
-      "file": "provenance/migration.json",
-      "sha256": "321a625c9a174f825c7c6500ac9d32ffc6919813c46dc4d1d36f387e498a4905"
+      "file": "NOTICE.md",
+      "sha256": "44bead30c7dce9cde2a158d8cba26bf6989b32cbb6fbb96f37ce37e6d481d065"
     },
     {
       "file": "source/areatrigger.json",
-      "sha256": "95236ab6dfdb32fb7d9ad1b7670cb02c89ae40384e6aaa6130d161e44c6036cd"
+      "sha256": "5a6516f3ed0c812a0c14256cf76bbfc18b3f994bc8518e67f115366400b3da0e"
     },
     {
       "file": "source/items.json",
-      "sha256": "3e14d172e556c93595f8d1508ab0e9d47c82b07501a8427d82c3053dffa37cd1"
+      "sha256": "c1052422082b5e6510a12281969028721f44aa78deb29e539f58d63c8f556407"
     },
     {
       "file": "source/locales.json",
@@ -168,11 +32,11 @@
     },
     {
       "file": "source/minimap.json",
-      "sha256": "6ebf7d7f0ba3c057ddbd7c9afcd75429a72bc91567778d23404eb70bc3b6e655"
+      "sha256": "2e67bca3e9b2fcdcadedbca2a9b3f599a80fdcb38eb7d2d42599eedbe1372851"
     },
     {
       "file": "source/objects.json",
-      "sha256": "f24df10a2cd71af40c829f583dce449f572cc434ceeeafed6e0a56ccbdabd797"
+      "sha256": "0acd425060a0743488bedbe333d9c3f39775e0ef5f4b7dbcf3c748157f09e143"
     },
     {
       "file": "source/quests-itemreq.json",
@@ -180,7 +44,7 @@
     },
     {
       "file": "source/quests.json",
-      "sha256": "1c131d4265a023069d89ff16c93313d42a7d94ac5d2a42990b12cc49eae316fd"
+      "sha256": "4ee750300d2acf8153c01bbffce8c2ed752bd6026a5099300f96d0514e743abc"
     },
     {
       "file": "source/refloot.json",
@@ -188,19 +52,19 @@
     },
     {
       "file": "source/scriptedEncounters.json",
-      "sha256": "5673a3f66db41e3c139c0fa8a1f12452e9deb40d490bd4248d6b7742f94db6ee"
+      "sha256": "942bf332adab1e700745b716574263b4c926cd1599f8f0c5c4a4eb816ae3eec9"
     },
     {
       "file": "source/supplemental.json",
-      "sha256": "7a215e23e57751a704a41663b3a8e2c0998f17af0fbe432868f5470136ed36d4"
+      "sha256": "3ac8306079e1173c1e95800986b5425cf0adb3b97b25d26d0689f3bc7cb2b9e3"
     },
     {
       "file": "source/units.json",
-      "sha256": "2fbb5051dea362be9eebaa0613d12bd7fd87ca42d43e2705cc545f7ad0d522d0"
+      "sha256": "663bf1ba83bcf944dbd26c939374e804a71d269e5a94f7d920d7e8dc1ebb078c"
     },
     {
       "file": "source/zones.json",
-      "sha256": "7ab2c9d91b261006c70b0df8e9952028fb2abc53e57dd9148760494c523794ad"
+      "sha256": "f28daef1b49a221a7115d03424d55cf6faa93010914ef1e01701e3e805576be5"
     }
   ],
   "outputs": [

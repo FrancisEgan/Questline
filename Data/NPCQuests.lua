@@ -1,4 +1,4 @@
--- Generated from OctoQuestDatabase sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03 by tools/build.js. Correct source data there, then import and rebuild.
+-- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.npcQuests["\"auntie\" bernice stonefield"]={["starters"]={84,85},["finishers"]={86,87}}
 QuestlineDB.npcQuests["\"pretty boy\" duncan"]={["starters"]={1036},["finishers"]={}}
 QuestlineDB.npcQuests["\"sea wolf\" mackinley"]={["starters"]={606,609,613,2872},["finishers"]={607,609,613,2874}}

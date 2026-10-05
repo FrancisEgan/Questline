@@ -1,4 +1,4 @@
--- Generated from OctoQuestDatabase sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03 by tools/build.js. Correct source data there, then import and rebuild.
+-- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.mobObjectives["\"pretty boy\" duncan"]={"item:1529","item:1708","item:2725","item:2728","item:2730","item:2732","item:2734","item:2735","item:2738","item:2740","item:2742","item:2744","item:2745","item:2748","item:2749","item:2750","item:2751","item:3827","item:3864","item:3910","item:4027","item:4306","item:4338","item:55250","item:7909"}
 QuestlineDB.mobObjectives["\"squealer\" thornmantle"]={"item:159","item:51826"}
 QuestlineDB.mobObjectives["'moonshine' marty"]={"item:60217"}
@@ -5822,7 +5822,7 @@ QuestlineDB.mobObjectives["zulian panther"]={"item:19221","item:19698","item:196
 QuestlineDB.mobObjectives["zulian stalker"]={"item:19221","item:19815"}
 QuestlineDB.mobObjectives["zulian tiger"]={"item:12361","item:13464","item:14047","item:19221","item:19698","item:19699","item:19700","item:19701","item:19702","item:19703","item:19704","item:19705","item:19706","item:19813","item:19814","item:19815","item:19816","item:19817","item:19818","item:19819","item:19820","item:19821","item:2449","item:3820","item:55250","item:7909","item:7910","item:8831","item:8838"}
 QuestlineDB.mobObjectives["zzarc' vul"]={"item:1205","item:1206","item:1529","item:1705","item:1968","item:2455","item:2592","item:2770","item:2794","item:2997","item:3355","item:3770","item:3864","item:422","item:4306","item:929"}
--- Generated from OctoQuestDatabase sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03 by tools/build.js. Correct source data there, then import and rebuild.
+-- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.objectObjectives["'grimmen greens'"]={"item:41750"}
 QuestlineDB.objectObjectives["'on the powers of blood'"]={"item:61421"}
 QuestlineDB.objectObjectives["a dusty tome"]={"item:18356","item:18357","item:18358","item:18359","item:18360","item:18361","item:18362","item:18363","item:18401"}
@@ -6640,7 +6640,7 @@ QuestlineDB.objectObjectives["yellow raptor nest"]={"object:6908"}
 QuestlineDB.objectObjectives["zeppelin cargo"]={"item:81284"}
 QuestlineDB.objectObjectives["ziata'jai trophy skulls"]={"item:3907"}
 QuestlineDB.objectObjectives["zul'mamwe trophy skulls"]={"item:3908"}
--- Generated from OctoQuestDatabase sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03 by tools/build.js. Correct source data there, then import and rebuild.
+-- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.vendorObjectives["'ale saint' grida"]={"item:2686"}
 QuestlineDB.vendorObjectives["'sly' duncan"]={"item:4608"}
 QuestlineDB.vendorObjectives["'stickypaws'"]={"item:4608"}
@@ -7425,7 +7425,7 @@ QuestlineDB.vendorObjectives["zlagk"]={"item:1179","item:1205","item:159","item:
 QuestlineDB.vendorObjectives["zohze"]={"item:1179","item:1205","item:159","item:1708","item:3770","item:3771","item:422","item:4599","item:4601","item:8932"}
 QuestlineDB.vendorObjectives["zora guthrek"]={"item:14341","item:2320","item:2321","item:2604","item:3371","item:3372","item:3466","item:3713","item:3857","item:50231","item:8925"}
 QuestlineDB.vendorObjectives["zorbin fandazzle"]={"item:3466","item:4361","item:4363","item:4371","item:4382","item:4389"}
--- Generated from OctoQuestDatabase sha256:2f7e88aa32e798ba9494474247e3a303aff7522759221bb41115afc74807ea03 by tools/build.js. Correct source data there, then import and rebuild.
+-- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.mobDropRates["\"pretty boy\" duncan"]={["item:2725"]=0.72,["item:2728"]=0.62,["item:2730"]=0.62,["item:2732"]=0.87,["item:2734"]=0.62,["item:2735"]=0.68,["item:2738"]=0.53,["item:2740"]=0.59,["item:2742"]=0.47,["item:2744"]=0.53,["item:2745"]=0.65,["item:2748"]=0.68,["item:2749"]=0.59,["item:2750"]=0.78,["item:2751"]=0.9,["item:3910"]=80,["item:4027"]=100,["item:1529"]=0.03,["item:4306"]=28.52,["item:3864"]=0.06,["item:1708"]=2.18,["item:3827"]=0.72,["item:4338"]=4.89,["item:7909"]=0.03,["item:55250"]=0.03}
 QuestlineDB.mobDropRates["\"squealer\" thornmantle"]={["item:159"]=6.55,["item:51826"]=100}
 QuestlineDB.mobDropRates["'moonshine' marty"]={["item:60217"]=100}

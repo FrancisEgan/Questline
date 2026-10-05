@@ -175,9 +175,9 @@ JSON schema; `tools/build.js` compiles geometry and presentation indexes.
 corrections belong in OctoQuestDatabase; presentation policies belong here.
 
 `database-source.json` pins an exact SHA-256 content revision of the shared
-source/provenance inventory. The importer accepts a checkout path or the
+source files plus LICENSE/NOTICE.md. The importer accepts a checkout path or the
 `OCTO_QUEST_DATABASE` environment variable, defaulting to a sibling
-OctoQuestDatabase directory. It verifies all manifest hashes and refuses a
+OctoQuestDatabase directory. It computes input hashes directly from the data-only checkout and refuses a
 revision mismatch unless `--update-lock` is explicitly provided. The imported
 manifest records the revision, repository, input hashes, and counts. Generated
 Lua headers, `QuestlineDB.sourceRevision`, and the build report retain the pin.
