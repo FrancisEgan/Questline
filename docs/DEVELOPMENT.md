@@ -2,7 +2,17 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.63**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.64**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Quest marker artwork (0.1.64): pickup exclamations and completed turn-in question
+marks use the installed Questie-Octo's unchanged 32x32 BLP artwork, bundled as
+Textures/quest-available.blp and quest-complete.blp. Both maps render these at
+16 pixels, matching Questie-Octo's default size; world-map zoom compensation,
+the selected turn-in's blue halo, and pooled marker state resets are retained.
+Standalone turn-in destinations use the same texture and size. Provenance and
+source hashes are recorded in Textures/README.md and the retained asset audit
+in licenses/. No runtime dependency on Questie-Octo is introduced. In game,
+compare both marks on both maps and zoom the world map to check the outlines.
 
 Absent quest correction (2026-10-04): a live player report identifies A Tusken
 Affair (80300) as nonexistent on Octo. Questie-Octo's compiler and compiled
@@ -110,7 +120,7 @@ Map tracker visibility is saved per character in `QuestlineSettings.mapTracker`,
 
 Availability fixes (0.1.28): Known NPC offers now obey class/race/level restrictions and exclude live/completed entries before resolving same-title candidates; unavailable class identity cannot allow a restricted mask. Quest identification prefers GetQuestLinkForLogIndex over generic GetQuestLink and validates linked titles/restrictions. Reward handling snapshots a uniquely identified completed live quest before GetQuestReward, then records it only after removal from the log or a matching completion message. Pending snapshots expire after 30 seconds; AbandonQuest clears them. Opening the reward dialog alone does not mark completion. Since 0.1.52, every completion record contradicted by a live non-repeatable quest is removed together with its source metadata. Automatic is retained as an internal source value for saved-data compatibility. Tests include a real rogue-only quest, observed-offer filtering, same-title chain transitions, delayed completion messages, incorrect legacy live history, and failed reward followed by abandonment. Historical entries cannot be broadly corrected without evidence or user-supplied quest IDs.
 
-World-map turn-ins use the native GossipFrame/ActiveQuestIcon at 14 pixels, matching minimap turn-ins. Highlighted quests show a soft blue 26-pixel halo generated as Textures/turnin-glow.tga by tools/contour-assets.js. Unselected turn-ins have no halo. Both sizes compensate for map zoom. Pooled markers restore their numbered text and gold halo texture when reused for unfinished quests. Tracker badges retain their existing appearance.
+World-map turn-ins use the bundled Questie-Octo question mark at 16 pixels, matching minimap turn-ins. Highlighted quests show a soft blue 26-pixel halo generated as Textures/turnin-glow.tga by tools/contour-assets.js. Unselected turn-ins have no halo. Both sizes compensate for map zoom. Pooled markers restore their numbered text and gold halo texture when reused for unfinished quests. Tracker badges retain their existing appearance.
 
 Selected-quest spawn markers (0.1.30): unit, object, item-source and item-use positions are compiled into location.spawnPoints as deduplicated sorted four-character coordinate pairs (base64-pairs, percent times 40). They supplement the precomputed areas; no clustering happens in game. Only highlighted quests' unfinished targets are decoded, cached for the physical/displayed zones, and displayed using 14-pixel bag/sword/gear icons (talk uses the native conversation icon). Shared targets are deduplicated across selected quests. Frame pools reuse markers and reset their textures. The world-map option worldMapSpawns defaults off (since 0.1.34; existing saved choices are preserved) and is exposed in Options; it controls only world-map spawn markers, independently of the blue areas and precise objective markers. Nearby minimap markers are always enabled for highlighted quests, using the existing zoom/rotation/indoor-scale/clipping and same-zone position sampling. Turn-ins and finished objectives have no spawn markers. Positions are database locations, not live mob tracking. Tests cover coordinate bounds/deduplication, selection, shared objectives, completion, map browsing, minimap clipping, pooling, texture changes, and the independent world-map toggle.
 

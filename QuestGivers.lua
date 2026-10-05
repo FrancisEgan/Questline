@@ -1,6 +1,6 @@
 local Q,DB=Questline,QuestlineDB
 local getn,insert=table.getn,table.insert
-local iconSize,hoverRadius=14,10
+local iconSize,hoverRadius=16,10
 local texturePath="Interface\\AddOns\\Questline\\Textures\\"
 local outside={[0]=466.6667,400,333.3333,266.6667,200,133.3333}
 local inside={[0]=300,240,180,120,80,50}
@@ -105,7 +105,7 @@ function Q:GetGiverPin(index,minimap)
     local pin=CreateFrame("Button",nil,parent)
     pin:SetWidth(iconSize);pin:SetHeight(iconSize);pin:SetFrameLevel(parent:GetFrameLevel()+3)
     pin.texture=pin:CreateTexture(nil,"ARTWORK");pin.texture:SetAllPoints(pin)
-    pin.texture:SetTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+    pin.texture:SetTexture(texturePath.."quest-available")
     if not minimap then
       pin.glow=pin:CreateTexture(nil,"BACKGROUND");pin.glow:SetPoint("CENTER",pin,"CENTER",0,0);pin.glow:SetTexture(texturePath.."turnin-glow");pin.glow:Hide()
       pin:RegisterForClicks("RightButtonUp")
@@ -132,7 +132,7 @@ function Q:RefreshGiverMap()
     local pin=self:GetGiverPin(count,false);pin.giver=giver
     pin:SetWidth(iconSize*scale);pin:SetHeight(iconSize*scale)
     local hasTurnin=getn(giver.turnins or {})>0
-    pin.texture:SetTexture("Interface\\GossipFrame\\"..(hasTurnin and "ActiveQuestIcon" or "AvailableQuestIcon"))
+    pin.texture:SetTexture(texturePath..(hasTurnin and "quest-complete" or "quest-available"))
     local selected=false
     for _,quest in ipairs(giver.turnins or {}) do if self:IsSelected(quest.key) then selected=true;break end end
     if selected then pin.glow:SetWidth(26*scale);pin.glow:SetHeight(26*scale);pin.glow:Show() else pin.glow:Hide() end
@@ -229,7 +229,7 @@ function Q:RefreshGiverMinimap(motionOnly)
     if bestX then
       count=count+1
       local pin=self:GetGiverPin(count,true);pin.giver=giver
-      pin.texture:SetTexture("Interface\\GossipFrame\\"..(getn(giver.turnins)>0 and "ActiveQuestIcon" or "AvailableQuestIcon"))
+      pin.texture:SetTexture(texturePath..(getn(giver.turnins)>0 and "quest-complete" or "quest-available"))
       pin.giverX=bestX;pin.giverY=bestY
       pin:ClearAllPoints();pin:SetPoint("CENTER",Minimap,"CENTER",bestX,bestY);pin:Show()
     end
