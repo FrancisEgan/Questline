@@ -2,8 +2,7 @@
 
 A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean map highlights, discover nearby questgivers, and track your party's progress in creature tooltips.
 
-![Quest tracker](screenshot1.png)
-![Quest areas and questgivers on the map](screenshot2.png)
+<img width="2024" height="1236" alt="image" src="https://github.com/user-attachments/assets/9defc6e3-119a-45dc-b71e-5940de608611" />
 
 ## Features
 
