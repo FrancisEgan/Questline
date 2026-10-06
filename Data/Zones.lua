@@ -108,7 +108,7 @@ QuestlineDB.zones[126]={["name"]="Tkashi Ruins",["coordinateCount"]=0,["mapSize"
 QuestlineDB.zones[127]={["name"]="Balia'mah Ruins",["coordinateCount"]=0,["bounds"]={["parent"]=33,["width"]=5.49,["height"]=6.74,["x"]=41.67,["y"]=31.06},["mapSize"]=nil}
 QuestlineDB.zones[128]={["name"]="Ziata'jai Ruins",["coordinateCount"]=0,["bounds"]={["parent"]=33,["width"]=4.49,["height"]=11.98,["x"]=40.67,["y"]=41.17},["mapSize"]=nil}
 QuestlineDB.zones[129]={["name"]="Mizjah Ruins",["coordinateCount"]=0,["bounds"]={["parent"]=33,["width"]=3.99,["height"]=5.24,["x"]=36.93,["y"]=29.57},["mapSize"]=nil}
-QuestlineDB.zones[130]={["name"]="Silverpine Forest",["coordinateCount"]=2039,["mapSize"]={[1]=4200,[2]=2800}}
+QuestlineDB.zones[130]={["name"]="Silverpine Forest",["coordinateCount"]=2038,["mapSize"]={[1]=4200,[2]=2800}}
 QuestlineDB.zones[131]={["name"]="Kharanos",["coordinateCount"]=0,["bounds"]={["parent"]=1,["width"]=10.98,["height"]=-18.71,["x"]=49.9,["y"]=67.74},["mapSize"]=nil}
 QuestlineDB.zones[132]={["name"]="Coldridge Valley",["coordinateCount"]=0,["bounds"]={["parent"]=1,["width"]=14.97,["height"]=17.22,["x"]=26.45,["y"]=75.22},["mapSize"]=nil}
 QuestlineDB.zones[133]={["name"]="Gnomeregan",["coordinateCount"]=0,["bounds"]={["parent"]=1,["width"]=7.49,["height"]=11.98,["x"]=24.2,["y"]=38.17},["mapSize"]=nil}
@@ -177,7 +177,7 @@ QuestlineDB.zones[211]={["name"]="Iceflow Lake",["coordinateCount"]=0,["bounds"]
 QuestlineDB.zones[212]={["name"]="Helm's Bed Lake",["coordinateCount"]=0,["bounds"]={["parent"]=1,["width"]=7.98,["height"]=14.22,["x"]=76.85,["y"]=54.27},["mapSize"]=nil}
 QuestlineDB.zones[213]={["name"]="Deep Elem Mine",["coordinateCount"]=0,["bounds"]={["parent"]=130,["width"]=6.49,["height"]=11.23,["x"]=56.14,["y"]=48.28},["mapSize"]=nil}
 QuestlineDB.zones[214]={["name"]="The Great Sea",["coordinateCount"]=0,["mapSize"]=nil}
-QuestlineDB.zones[215]={["name"]="Mulgore",["coordinateCount"]=2698,["mapSize"]={[1]=5137.5,[2]=3425}}
+QuestlineDB.zones[215]={["name"]="Mulgore",["coordinateCount"]=2697,["mapSize"]={[1]=5137.5,[2]=3425}}
 QuestlineDB.zones[219]={["name"]="Alexston Farmstead",["coordinateCount"]=0,["bounds"]={["parent"]=40,["width"]=11.48,["height"]=16.47,["x"]=38.17,["y"]=52.4},["mapSize"]=nil}
 QuestlineDB.zones[220]={["name"]="Red Cloud Mesa",["coordinateCount"]=0,["bounds"]={["parent"]=215,["width"]=21.96,["height"]=21.71,["x"]=44.91,["y"]=82.71},["mapSize"]=nil}
 QuestlineDB.zones[221]={["name"]="Camp Narache",["coordinateCount"]=0,["mapSize"]=nil}

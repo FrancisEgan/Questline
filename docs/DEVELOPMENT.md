@@ -2,7 +2,19 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.70**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.71**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Horde Warbringer maps (0.1.71): the shared unit 15350 record contained outdoor
+aliases of its Undercity and Thunder Bluff spawns. Existing WorldMapArea bounds
+in Questie-Octo/Map/ContinentProjection.lua place Silverpine 74.7/14.8 and
+Undercity 58.3/97.9 at world positions about 1252/313 and 1251/314; Mulgore
+41.6/32.4 and Thunder Bluff 57.8/76.3 similarly match within three yards.
+OctoQuestDatabase removes those two outdoor coordinates, retaining the city
+coordinates and all other recorded spawns. Both consumers are rebuilt.
+Questline already filters pickups, turn-ins, and objective locations by exact
+zone ID; it does not project city markers onto neighboring zone maps. Compiler
+checks cover excluded outdoor pickups and retained city destinations. No
+generic removal of overlapping-zone spawns is inferred from this correction.
 
 Resize triangle (0.1.70): replace the two corner strokes with a seven-pixel
 gold triangle, matching the previous inner stroke's size, and a thin dark

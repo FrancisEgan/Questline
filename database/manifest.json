@@ -3,7 +3,7 @@
   "locale": "enUS",
   "profile": "octo",
   "source": "OctoQuestDatabase",
-  "sourceRevision": "sha256:e5f4e0842a9c8128773b44f5caabac9f5b4cfd0c93150812387f6d5e7f043f94",
+  "sourceRevision": "sha256:f801b92190a2747ce4fd349abc40acb9adfbc4126e592e4b1dd94e2e614f3192",
   "repository": "https://github.com/FrancisEgan/OctoQuestDatabase.git",
   "inputs": [
     {
@@ -60,7 +60,7 @@
     },
     {
       "file": "source/units.json",
-      "sha256": "663bf1ba83bcf944dbd26c939374e804a71d269e5a94f7d920d7e8dc1ebb078c"
+      "sha256": "9d7c4d4f6554e832dc2dae745acb673decef04c481a1e9a81c8314050f1f9309"
     },
     {
       "file": "source/zones.json",
@@ -74,7 +74,7 @@
     },
     {
       "file": "units.json",
-      "sha256": "241a6cd437b2f04fd2b7e858552729454faa65e43d82e8e7b4bfb6c4e903274d"
+      "sha256": "b932d0e6a0a77d17f9291c591660de3a35eef34548e2b5552ca24ecd22595251"
     },
     {
       "file": "objects.json",
@@ -86,7 +86,7 @@
     },
     {
       "file": "zones.json",
-      "sha256": "45634340409f869f6d892327f3efd8cf5586183b6ed6e0c3e7197dca93a75d96"
+      "sha256": "296ce399f48e2c34a5d661161dc29246cbf12c2d2d2e7c2311e85a0c00b7d276"
     },
     {
       "file": "events.json",
@@ -121,7 +121,7 @@
     "scriptedEncounters": 12
   },
   "stats": {
-    "coordinatesRead": 147205,
+    "coordinatesRead": 147203,
     "invalidCoordinates": 0,
     "duplicateCoordinates": 80
   }
