@@ -63,9 +63,9 @@ function Q:SizeBadge(badge,size,scale)
   badge.text:SetWidth(size*scale);badge.text:SetHeight(size*scale)
   badge.text:SetShadowColor(0,0,0,0.9);badge.text:SetShadowOffset(0,-0.6*scale)
 end
-function Q:PaintBadge(badge, entry, selected)
+function Q:PaintBadge(badge, entry, selected, number)
   badge.texture:SetTexture(path .. (selected and "circle-selected-v2" or "circle-v2"))
-  local label=entry.complete and "?" or tostring(entry.number)
+  local label=entry.complete and "?" or tostring(number or entry.number)
   badge.text:SetText(label)
   badge.text:ClearAllPoints()
   -- The narrow standalone 1 needs a little more optical correction.
@@ -327,6 +327,7 @@ end
 function Q:RenderTracker(panel,entries,zone,zoneName)
   if panel.layoutBusy then return end
   panel.layoutBusy=true
+  local numbers=(panel.isMap or QuestlineSettings.trackerMode=="zone") and self:GetZoneQuestNumbers(zone) or {}
   local saved=QuestlineSettings[sizeKey(panel)]
   local width=saved and math.max(258,math.min(700,tonumber(saved.width) or 258)) or 258
   local requestedHeight=saved and math.max(140,math.min(900,tonumber(saved.height) or 180))
@@ -377,7 +378,7 @@ function Q:RenderTracker(panel,entries,zone,zoneName)
     local height=math.max(25,row.title:GetHeight()+row.detail:GetHeight()+15)
     row:SetHeight(height)
     local selected=self:IsSelected(entry.key)
-    self:PaintBadge(row.badge,entry,selected)
+    self:PaintBadge(row.badge,entry,selected,numbers[entry.key])
     local transparent=QuestlineSettings.transparentTracker==true and not panel.isMap
     if selected and not transparent then row.shade:Show() else row.shade:Hide() end
     if selected and transparent then row.glow:Show() else row.glow:Hide() end

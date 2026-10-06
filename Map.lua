@@ -324,6 +324,7 @@ function Q:RefreshMap()
   end end
   self:DrawAreas(targets,zone,width,height)
   local markerCount=0;local used={}
+  local numbers=self:GetZoneQuestNumbers(zone)
   for _,entry in ipairs(self.quests) do if not entry.failed then
     local selected=self:IsSelected(entry.key)
     local anchor,anchorArea,anchorSpawns
@@ -344,7 +345,7 @@ function Q:RefreshMap()
       markerCount=markerCount+1
       local pin=self:GetPin(markerCount,false);pin.entry=entry;pin.target=nil
       self:SizeBadge(pin,25,inverseScale)
-      self:PaintBadge(pin,entry,selected)
+      self:PaintBadge(pin,entry,selected,numbers[entry.key])
       if entry.complete then
         pin:SetWidth(16*inverseScale);pin:SetHeight(16*inverseScale)
         pin.texture:SetTexture(texturePath.."quest-complete")

@@ -82,6 +82,7 @@ function Q:PaintNameplate(nameplate)
   if QuestlineSettings and QuestlineSettings.nameplateBadges==false then hideBadges(nameplate);return end
   local name=plateName(nameplate)
   local entries=self:NameplateQuests(name)
+  local numbers=QuestlineSettings.trackerMode=="zone" and self:GetZoneQuestNumbers(self:GetPlayerZone()) or {}
   nameplate.questlineBadges=nameplate.questlineBadges or {}
   local anchor=nameplate.questlineHealthAnchor or nameplate.health or nameplate
   local gap=nameplate.questlineHealthAnchor and 24 or 5
@@ -95,7 +96,7 @@ function Q:PaintNameplate(nameplate)
     badge:ClearAllPoints()
     if index==1 then badge:SetPoint("LEFT",anchor,"RIGHT",gap,0)
     else badge:SetPoint("LEFT",nameplate.questlineBadges[index-1],"RIGHT",2,0) end
-    self:PaintBadge(badge,entry,self:IsSelected(entry.key));badge:Show()
+    self:PaintBadge(badge,entry,self:IsSelected(entry.key),numbers[entry.key]);badge:Show()
   end
   for index=getn(entries)+1,getn(nameplate.questlineBadges) do nameplate.questlineBadges[index]:Hide() end
 end

@@ -7,6 +7,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 ## Features
 
 - Zone-based quest tracker that follows you as you travel, with a Show World toggle for your full quest log
+- Zone quest badges count from 1 without gaps, with matching numbers on the map and zone list
 - Quest levels with difficulty-colored numbers and level-based sorting; elite quests show a plus, such as `[15+]`
 - Click a quest to highlight its map area without changing your tracker page or sorting
 - Ctrl-click to highlight multiple quests and move the group to the top, sorted by level

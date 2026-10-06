@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.72", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.73", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -216,6 +216,17 @@ function Q:GetTrackerEntries()
     if QuestlineSettings.trackerMode~="zone" or self:HasZone(entry,zone) then insert(entries,entry) end
   end
   return self:PrioritizeSelected(entries),zone,name
+end
+function Q:GetZoneQuestNumbers(zone)
+  local numbers,count={},0
+  -- Number before highlight prioritization and pagination so selections and
+  -- page changes keep their labels. Turn-in question marks consume no number.
+  for _,entry in ipairs(self.quests) do
+    if not entry.complete and self:HasZone(entry,zone) then
+      count=count+1;numbers[entry.key]=count
+    end
+  end
+  return numbers
 end
 function Q:IsSelected(key)
   -- A missing set preserves the single-selection settings of older versions.

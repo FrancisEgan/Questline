@@ -2,7 +2,16 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.72**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.73**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Zone quest numbers (0.1.73): each zone counts its unfinished quests from one
+in level order, skipping completed question-mark entries. The map and its
+tracker use the browsed zone; the HUD in Zone mode and nameplate badges use
+the physical zone. World mode retains full-log numbering. Display numbers do
+not mutate entries or selection keys and remain stable across pagination and
+highlight prioritization. Removing or finishing an objective compacts the
+affected zone's sequence. In game, check matching map/list numbers, turn-ins,
+travel, and browsing another zone while the HUD remains in Zone mode.
 
 Elite quest labels (0.1.72): the compiler retains the shared quest `type` as
 runtime `questType`. Type 1 produces a plus inside the difficulty-colored
@@ -214,11 +223,11 @@ Both trackers can be resized from the bottom-right corner. The 16-pixel handle i
 
 New characters start in **Quests - <current zone>**, showing quests with unfinished objectives or turn-ins in the physical zone, for example **Quests - Mulgore**. An existing saved World or Zone preference is preserved. Click **Show World** to return to all quests. Zone mode follows you as you travel, independently of the map you browse. Long zone names shorten to **Quests - Zone**; hover over the header for the full name. Unmapped quests are always available in World mode. Your mode choice is saved per character.
 
-Quest labels include a **[level]** prefix in both trackers, quest tooltips, NPC sections, and questgiver marker tooltips. Only the number changes difficulty color (gray, green, yellow, orange, or red); quest names keep their existing color. In Ctrl-selection mode, both trackers show highlighted quests first, then the remaining quests. Normal single selection keeps the full level order and the current page. Each group sorts from lowest level to highest, preserving quest-log order for ties. Quest numbers stay attached to the global level order so moving a highlight does not renumber the map. Unknown levels have no prefix and sort last within their group. The actual Blizzard quest log is not rearranged. Colors refresh as you level up.
+Quest labels include a **[level]** prefix in both trackers, quest tooltips, NPC sections, and questgiver marker tooltips. Only the number changes difficulty color (gray, green, yellow, orange, or red); quest names keep their existing color. In Ctrl-selection mode, both trackers show highlighted quests first, then the remaining quests. Normal single selection keeps the full level order and the current page. Each group sorts from lowest level to highest, preserving quest-log order for ties. World quest numbers follow the global level order; zone numbers follow the filtered level order and skip turn-ins. Moving a highlight does not renumber the map. Unknown levels have no prefix and sort last within their group. The actual Blizzard quest log is not rearranged. Colors refresh as you level up.
 
 **Ctrl-left-click** a map circle, map action icon, tracker row, or tracker badge to add or remove that quest from the highlighted group. Each Ctrl-selection change returns both trackers to page one; more than five highlighted quests continue onto subsequent pages before the other quests. A normal left-click replaces the entire group with that one quest, exits selected-first sorting, and preserves the current tracker pages (clamped only if the filtered list shrinks). Ctrl-clicking the last highlighted quest leaves no highlights. Selections are saved per character, survive completion and zone changes, and are removed when their quests leave the log. Each tracker's zone filter still applies, so an off-zone highlight stays selected without appearing in that zone's list. All selected areas share the blue shading; overlaps are merged to avoid darker patches. Selected single-point objectives retain their action icons.
 
-The map panel lists quests with mapped objectives in the displayed zone. Selection and numbering are shared across both trackers and modes. Normal circles have a shaded burgundy center and beveled gold rim; each selected circle has a yellow fill, dark numeral, and soft gold halo. Drag either panel's header to move it; `-` collapses it. Use the arrows or mouse wheel for additional pages; the scroll hint appears when there is more than one page. Positions and selection are saved per character.
+The map panel lists quests with mapped objectives in the displayed zone. Selection is shared across both trackers and modes. Each zone has its own compact numbering, shared by its map and zone tracker; World mode uses full-log numbers. Normal circles have a shaded burgundy center and beveled gold rim; each selected circle has a yellow fill, dark numeral, and soft gold halo. Drag either panel's header to move it; `-` collapses it. Use the arrows or mouse wheel for additional pages; the scroll hint appears when there is more than one page. Positions and selection are saved per character.
 
 In either tracker, **Shift-left-click** a quest row or its numbered circle while chat is open to insert its quest link at the cursor. **Right-click** to open that quest in the Blizzard quest log, expanding its category and scrolling it into view. Linking and opening the log preserve the highlighted map quest. Ordinary left-click still highlights the quest. Links use Octo's native quest-link API, with standard `GetQuestLink`, pfQuest's configured format, or a bracketed quest title as fallbacks. Nothing is sent until you submit the chat message.
 
