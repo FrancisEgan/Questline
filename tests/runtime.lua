@@ -1900,6 +1900,8 @@ function runTests()
   selection=3 -- second header's quest in the collapsed view
   playerZone="Mulgore";fire("PLAYER_LOGIN");tick(.2)
   local Q=Questline
+  expect(QuestlineSettings.mapTracker==false and not Q.mapTracker:IsShown(),"new settings hide the world-map tracker by default")
+  Q:Command("maptracker on")
   expect(QuestlineSettings.nameplateBadges==true,"new settings enable nameplate badges by default")
   expect(QuestlineSettings.transparentTracker==true and Q.tracker.backdropColor[4]==0,"new settings default to the transparent HUD tracker")
   expect(Q.ready,"login initialized")

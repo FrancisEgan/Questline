@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.66", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.67", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -446,7 +446,7 @@ events:SetScript("OnEvent",function()
   if event=="PLAYER_LOGIN" or (event=="PLAYER_ENTERING_WORLD" and not Q.ready) then
     QuestlineSettings=QuestlineSettings or {}
     if QuestlineSettings.tracker==nil then QuestlineSettings.tracker=true end
-    if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=true end
+    if QuestlineSettings.mapTracker==nil then QuestlineSettings.mapTracker=false end
     if QuestlineSettings.worldMapSpawns==nil then QuestlineSettings.worldMapSpawns=false end
     if QuestlineSettings.nameplateBadges==nil then QuestlineSettings.nameplateBadges=true end
     if QuestlineSettings.transparentTracker==nil then
