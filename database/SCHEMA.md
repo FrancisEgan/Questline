@@ -10,6 +10,9 @@ corrections to OctoQuestDatabase, then refresh the snapshot and generated Lua.
 
 All entity tables are JSON objects keyed by numeric ID strings. Runtime Lua uses numeric entity keys and string location keys. IDs from different kinds are distinct.
 
+The compiler preserves quest `attributes.type` as runtime `questType` (1 is
+Elite, 62 Raid, 81 Dungeon). Live quest-log tags can override its presentation.
+
 | File | Record fields |
 | --- | --- |
 | `quests.json` | `title`, `level`, `minLevel`, `raceMask`, `classMask`, `description`, `summary`, `starters`, `finishers`, `objectives`, `prerequisites`, `closes`, `attributes` |

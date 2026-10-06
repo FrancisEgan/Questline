@@ -122,6 +122,7 @@ for(const [id,q] of Object.entries(db.quests)) {
     prerequisites:q.prerequisites,blockedBy:blockedBy[id]||[],skill:q.attributes.skill ? (db.reference.professions[q.attributes.skill]||'Unknown profession') : undefined,
     event:q.attributes.event,repeatable:q.attributes.repeatable ? true : undefined,
     disabled:q.attributes.disabled ? true : undefined};
+  if(q.attributes.type!==undefined) runtimeQuests[id].questType=q.attributes.type;
   if(q.attributes.preActive) runtimeQuests[id].activePrerequisites=Object.values(q.attributes.preActive).map(Number);
   if(/^\[deprecated\]/i.test(q.title)) runtimeQuests[id].deprecated=true;
   for(const t of [...objectives,...finishers]) for(const zone of Object.keys(locations[t.key])) {

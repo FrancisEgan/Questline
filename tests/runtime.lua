@@ -212,7 +212,7 @@ end
 function QuestLog_Update() QuestLogFrame.updateCount=(QuestLogFrame.updateCount or 0)+1 end
 function GetQuestLogTitle(index)
   local q=visible()[index];if not q then return end
-  return q.title,q.level,nil,q.header,q.closed,q.complete
+  return q.title,q.level,q.tag,q.header,q.closed,q.complete
 end
 function ExpandQuestHeader(index) visible()[index].closed=nil end
 function CollapseQuestHeader(index) visible()[index].closed=true end
@@ -1559,6 +1559,34 @@ local function giverClusterTests(Q)
   expect(GameTooltipTextLeft1:GetFontObject()==GameTooltipHeaderText,"closing the NPC tooltip restores the shared header font")
 end
 
+local function eliteQuestTests(Q)
+  local savedLog,savedSelection,savedMode=log,selection,QuestlineSettings.trackerMode
+  local mapZone=Q.GetMapZone
+  local arugal=quest(99,{{text="Pyrewood Shackles: 0/6",kind="item"}})
+  log={{title="Silverpine Forest",header=true,closed=true,quests={arugal}}};selection=1
+  Q:ScanLog();Q:SetTrackerMode("world");Q:Select("99")
+  local entry=Q.byKey["99"]
+  expect(entry and entry.data.questType==1,"Arugal's Folly retains the shared elite quest type")
+  expect(Q.tracker.rows[1].title:GetText():find("15+|r]",1,true),"tracker level marks the elite Arugal step with a plus")
+  expect(log[1].closed and selection==1 and entry.title==arugal.title,"elite presentation preserves raw quest titles, headers, and log selection")
+  Q.GetMapZone=function() return 130 end;WorldMapFrame:Show();Q.mapDirty=true;Q:RefreshMap()
+  Q:ShowQuestTooltip(Q.mapPins[1],entry)
+  expect(WorldMapTooltip:GetText():find("15+|r]",1,true),"elite quest's world-map tooltip uses the same level suffix")
+  local sections=Q:GetNPCSections("Dalar Dawnweaver")
+  expect(sections and #sections[2].groups>0 and Q:QuestTitle(sections[2].groups[1]):find("15+|r]",1,true),"NPC progress groups retain elite classification")
+  entry.complete=true;Q:SetEntries({entry});sections=Q:GetNPCSections("Dalar Dawnweaver")
+  expect(sections and #sections[3].groups==1 and Q:QuestTitle(sections[3].groups[1]):find("15+|r]",1,true),"completed NPC quest groups retain elite classification")
+  expect(Q:QuestTitle({id=99,title=arugal.title,level=15}):find("15+|r]",1,true),"available map quest labels use elite metadata before acceptance")
+  expect(not Q:QuestTitle({id=422,title=arugal.title,level=11}):find("11+",1,true),"ordinary same-title Arugal steps are not marked elite")
+  local unknown={title="Unmapped elite",level=15,tag="Elite",objectives={}}
+  log={{title="Unmapped",header=true,closed=true,quests={unknown}}};Q:ScanLog()
+  expect(not Q.quests[1].id and Q.quests[1].tag=="Elite" and Q:QuestTitle(Q.quests[1]):find("15+|r]",1,true),"live elite tags mark unresolved quests without guessing a database match")
+  expect(not Q:QuestTitle({id=99,title=arugal.title,level=15,tag="Dungeon"}):find("15+",1,true),"explicit live non-elite tags override stored elite types")
+  expect(Q:QuestTitle({title="Unknown level",tag="Elite"})=="Unknown level (Elite)","elite quests without a known level retain an explicit label")
+  Q.GetMapZone=mapZone;WorldMapFrame:Hide();WorldMapTooltip:Hide()
+  log=savedLog;selection=savedSelection;Q:ScanLog();Q:SetTrackerMode(savedMode)
+end
+
 local function questLevelAndRateTests(Q)
   local savedLog,savedSelection,savedLevel=log,selection,playerLevel
   local selected=QuestlineSettings.selected
@@ -2039,6 +2067,7 @@ function runTests()
   objectGiverTests(Q)
   giverClusterTests(Q)
   questLevelAndRateTests(Q)
+  eliteQuestTests(Q)
   partySyncTests(Q)
   areaAnchorTests(Q)
   multiSelectionTests(Q)

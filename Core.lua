@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.71", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.72", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -53,9 +53,18 @@ function Q:SortQuests(entries)
     return order[a]<order[b]
   end)
 end
+function Q:QuestIsElite(entry)
+  local live=entry.key and self.byKey[entry.key] or entry
+  local tag=entry.tag or live.tag
+  -- The live log can correct stale database types, including unknown quests.
+  if tag and tag~="" then return self:Normalize(tag)=="elite" end
+  local data=entry.data or (entry.id and DB.quests[entry.id]) or live.data
+  return (entry.questType or (data and data.questType))==1
+end
 function Q:QuestTitle(entry)
   local level=self:QuestLevel(entry)
-  if not level then return entry.title end
+  local elite=self:QuestIsElite(entry)
+  if not level then return entry.title..(elite and " (Elite)" or "") end
   local difficulty=GetQuestDifficultyColor or GetDifficultyColor
   local color=difficulty and difficulty(level)
   if not color then
@@ -68,7 +77,7 @@ function Q:QuestTitle(entry)
   end
   -- Only the number is difficulty-colored. Reset before the bracket and title
   -- so each label keeps its usual gold/off-white text color.
-  return "["..string.format("|cff%02x%02x%02x%d|r",math.floor(color.r*255),math.floor(color.g*255),math.floor(color.b*255),level).."] "..entry.title
+  return "["..string.format("|cff%02x%02x%02x%d%s|r",math.floor(color.r*255),math.floor(color.g*255),math.floor(color.b*255),level,elite and "+" or "").."] "..entry.title
 end
 function Q:BuildIndexes()
   for id, data in pairs(DB.quests) do
@@ -254,12 +263,12 @@ function Q:Select(key,toggle)
   if self.RefreshTrackers then self:RefreshTrackers() end
   if self.RefreshMap then self:RefreshMap() end
 end
-function Q:ReadQuest(index, title, level, complete)
+function Q:ReadQuest(index, title, level, complete, tag)
   SelectQuestLogEntry(index)
   local description, summary = GetQuestLogQuestText()
   local id, reason = self:ResolveQuest(index, title, level, description, summary)
   local data = id and DB.quests[id]
-  local entry = { id=id, data=data, title=title, level=level, objectives={}, summary=summary or "", description=description or "", reason=reason,
+  local entry = { id=id, data=data, title=title, level=level, tag=tag, objectives={}, summary=summary or "", description=description or "", reason=reason,
     complete=present(complete), failed=complete == -1 }
   entry.key = id and tostring(id) or (title .. ":" .. tostring(level) .. ":" .. (summary or ""))
   local count = GetNumQuestLeaderBoards(index) or 0
@@ -303,7 +312,7 @@ function Q:QuestLogAction(entry,open)
       header=index
       if closed then insert(collapsed,index);ExpandQuestHeader(index) end
     elseif title==entry.title and level==entry.level then
-      local candidate=self:ReadQuest(index,title,level,complete)
+      local candidate=self:ReadQuest(index,title,level,complete,tag)
       if candidate.key==entry.key and (entry.id or candidate.description==entry.description) then
         matches=matches+1;found={index=index,header=header,link=not open and questLink(index)}
       end
@@ -390,7 +399,7 @@ function Q:ScanLog()
     if header and closed then
       insert(collapsed, index)
       ExpandQuestHeader(index)
-    elseif title and not header then insert(entries, self:ReadQuest(index, title, level, complete)) end
+    elseif title and not header then insert(entries, self:ReadQuest(index, title, level, complete, tag)) end
     index = index + 1
   end
   for i=getn(collapsed),1,-1 do CollapseQuestHeader(collapsed[i]) end

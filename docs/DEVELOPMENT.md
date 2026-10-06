@@ -2,7 +2,19 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.71**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.72**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Elite quest labels (0.1.72): the compiler retains the shared quest `type` as
+runtime `questType`. Type 1 produces a plus inside the difficulty-colored
+level bracket, such as `[15+] Arugal's Folly` (quest 99). Live quest-log tags
+are retained and take precedence when nonempty; unresolved live Elite quests
+also receive the suffix. An elite quest without a known level uses `(Elite)`.
+The common formatter resolves active tooltip groups through their live key,
+and available quests through their database ID. Raw titles, quest matching,
+level sorting, and chat links are unchanged. Dungeon/Raid tags retain their
+ordinary level labels. Tests cover the tracker, map tooltip, available and
+completed NPC labels, same-title ordinary steps, unknown quests, and live tag
+precedence. Run both Questline and ClassicBestiary tests for shared tooltips.
 
 Horde Warbringer maps (0.1.71): the shared unit 15350 record contained outdoor
 aliases of its Undercity and Thunder Bluff spawns. Existing WorldMapArea bounds
