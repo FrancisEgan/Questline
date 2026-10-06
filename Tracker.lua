@@ -94,7 +94,9 @@ function Q:SetSourceTooltipTitle(tip,name)
 end
 function Q:ShowQuestTooltip(owner, entry, target, sourceName)
   local tip = WorldMapFrame:IsVisible() and WorldMapTooltip or GameTooltip
-  tip:SetOwner(owner,"ANCHOR_LEFT")
+  local parent=owner:GetParent()
+  local mapPin=parent==self.pinLayer or parent==Minimap
+  tip:SetOwner(owner,mapPin and "ANCHOR_CURSOR" or "ANCHOR_LEFT")
   if sourceName then
     self:SetSourceTooltipTitle(tip,sourceName)
     tip:AddLine(self:QuestTitle(entry),1,0.85,0.4,true)

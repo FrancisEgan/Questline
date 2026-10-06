@@ -4,6 +4,12 @@ Standalone quest tracker and selected-quest map areas for the English OctoWoW / 
 
 Current version: **0.1.65**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
+Map marker tooltips use the native `ANCHOR_CURSOR`, matching Questie-Octo,
+for quest selectors, objectives, spawns, and questgivers on both maps. Tracker
+rows retain `ANCHOR_LEFT`. Party progress refreshes keep the same anchor by
+identifying map pins from their parent. In game, hover each marker type and
+move within its hit area to check cursor positioning, including a zoomed map.
+
 Quest marker artwork (0.1.64): pickup exclamations and completed turn-in question
 marks use the installed Questie-Octo's unchanged 32x32 BLP artwork, bundled as
 Textures/quest-available.blp and quest-complete.blp. Both maps render these at

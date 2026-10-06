@@ -73,7 +73,7 @@ function Q:ShowGiverTooltip(pin,minimap)
   if not pin.giver then return end
   local nearby=self:GetNearbyGivers(pin,minimap)
   local tip=minimap and GameTooltip or WorldMapTooltip
-  tip:SetOwner(pin,"ANCHOR_RIGHT")
+  tip:SetOwner(pin,"ANCHOR_CURSOR")
   for index,giver in ipairs(nearby) do
     if index==1 then self:SetSourceTooltipTitle(tip,giver.name)
     else tip:AddLine(" ");tip:AddLine(giver.name,1,1,1,true) end
