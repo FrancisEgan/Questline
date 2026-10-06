@@ -37,16 +37,18 @@ function Q:GetMinimapQuestNPCs(zone)
   if not zone then return entries end
   for _,quest in ipairs(self.quests) do if quest.complete and not quest.failed and quest.data then
     local seen={}
-    for _,target in ipairs(quest.data.finishers or {}) do if target.kind=="unit" and not seen[target.id] then
-      seen[target.id]=true
+    for _,target in ipairs(quest.data.finishers or {}) do
+      local id=target.kind=="object" and -target.id or target.id
+      if (target.kind=="unit" or target.kind=="object") and not seen[id] then
+      seen[id]=true
       local location=DB.locations[target.key] and DB.locations[target.key][zone]
       if location then
-        local entry=byID[target.id]
+        local entry=byID[id]
         if not entry then
           local points=location.points or {}
           if getn(points)==0 and location.anchor then points={location.anchor} end
-          entry={id=target.id,name=target.name,quests={},points=points,turnins={}}
-          insert(entries,entry);byID[target.id]=entry
+          entry={id=id,kind=target.kind,name=target.name,quests={},points=points,turnins={}}
+          insert(entries,entry);byID[id]=entry
         end
         insert(entry.turnins,quest)
       end

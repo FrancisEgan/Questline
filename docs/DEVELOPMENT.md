@@ -2,7 +2,16 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.65**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.66**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Object turn-ins (0.1.66): completed, non-failed live quests include object
+finishers in the shared questgiver markers on both maps. Objects use negative
+IDs, matching object pickups, so equal creature IDs cannot collide. Corpse
+Laden Boat for The Decrepit Ferry uses the gold completion question mark at
+its recorded Silverpine coordinates. Object destinations say `Interact with`
+in tracker details and quest tooltips. Runtime checks cover both maps, tooltip
+wording, pickup merging, ID collisions, and failed/removed quests. In game,
+check the boat within minimap range and after rewarding the quest.
 
 Generated data files omit boilerplate headers and per-file source revision
 comments. Source locks, manifests, and runtime initialization retain the shared

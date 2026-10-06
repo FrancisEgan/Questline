@@ -1455,6 +1455,38 @@ local function objectGiverTests(Q)
   QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={};playerLevel=5
   Q:InvalidateQuestAvailability();Q:RefreshQuestGivers()
   expect(not find(Q.mapGivers),"wanted posters respect the quest minimum level")
+  Q.GetMapZone=function() return 130 end;Q.GetPlayerZone=function() return 130 end
+  playerX,playerY=.584,.349
+  local boatData=QuestlineDB.quests[438]
+  local boat={id=438,key="438",title=boatData.title,level=boatData.level,complete=true,objectives={},data=boatData}
+  Q:SetEntries({boat});Q:Select("438");Q:RefreshMap();Q:RefreshQuestGivers()
+  local function boatPin(pool)
+    for _,p in ipairs(pool) do if p:IsShown() and p.giver.id==-1593 then return p end end
+  end
+  for _,pool in ipairs({Q.mapGivers,Q.minimapGivers}) do
+    local p=boatPin(pool)
+    expect(p and p.giver.kind=="object" and p.giver.name=="Corpse Laden Boat","object turn-in appears on both maps under its own identity")
+    expect(p.texture.textureValue[1]:find("quest-complete",1,true) and #p.giver.turnins==1,"boat uses a single gold turn-in question mark")
+    this=p;p.scripts.OnEnter()
+    local tip=pool==Q.mapGivers and WorldMapTooltip or GameTooltip
+    expect(tip:GetText():find("Corpse Laden Boat\n  Complete",1,true) and tip:GetText():find("The Decrepit Ferry",1,true),"boat marker tooltip identifies the object and ready quest")
+  end
+  local p=boatPin(Q.minimapGivers)
+  expect(math.abs(p.point[4])<.001 and math.abs(p.point[5])<.001,"boat minimap turn-in uses the real object coordinates")
+  Q:ShowQuestTooltip(UIParent,boat)
+  expect(WorldMapTooltip:GetText():find("Interact with Corpse Laden Boat",1,true),"object destination tooltip uses interaction wording")
+  local available=Q.GetAvailableGivers
+  Q.GetAvailableGivers=function() return {
+    {id=1593,kind="unit",name="Same ID NPC",quests={},points={{58.4,34.9}}},
+    {id=-1593,kind="object",name="Corpse Laden Boat",quests={{id=439,title="Follow-up",level=16}},points={{58.4,34.9}}}
+  } end
+  local entries=Q:GetMinimapQuestNPCs(130)
+  expect(#entries==2 and #entries[1].turnins==0 and #entries[2].turnins==1 and #entries[2].quests==1,"object turn-ins merge with object pickups without colliding with equal NPC IDs")
+  Q.GetAvailableGivers=available
+  boat.failed=true;Q:SetEntries({boat});Q:RefreshQuestGivers()
+  expect(not boatPin(Q.mapGivers) and not boatPin(Q.minimapGivers),"failed quests cannot advertise object turn-ins")
+  Q:SetEntries({});Q:RefreshQuestGivers()
+  expect(not boatPin(Q.minimapGivers),"removing the quest retires its object turn-in")
   Q.GetMapZone=mapZone;Q.GetPlayerZone=physicalZone;playerX,playerY=x,y;playerLevel=level
   QuestlineSettings.completedQuests=history;QuestlineSettings.completionSources=sources;Q:SetEntries(original)
   Q.npcOffers=offers;Q:InvalidateQuestAvailability();WorldMapFrame:Hide();Q:RefreshQuestGivers()

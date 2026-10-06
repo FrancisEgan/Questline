@@ -1,6 +1,9 @@
 local Q, DB = Questline, QuestlineDB
 local getn = table.getn
 local path = "Interface\\AddOns\\Questline\\Textures\\"
+local function finisherText(target)
+  return (target.kind=="object" and "Interact with " or "Speak with ")..target.name
+end
 function Q:ApplyTrackerAppearance()
   local transparent=QuestlineSettings.transparentTracker==true
   for _,panel in ipairs({self.tracker,self.mapTracker}) do
@@ -119,7 +122,7 @@ function Q:ShowQuestTooltip(owner, entry, target, sourceName)
     end
     if sourceName and target and not matched and getn(entry.objectives)>0 then tip:AddLine(target.name,.7,.85,1,true) end
     if getn(entry.objectives)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
-      tip:AddLine("Speak with "..entry.data.finishers[1].name,entry.complete and .35 or .88,entry.complete and 1 or .88,entry.complete and .4 or .82,true)
+      tip:AddLine(finisherText(entry.data.finishers[1]),entry.complete and .35 or .88,entry.complete and 1 or .88,entry.complete and .4 or .82,true)
     end
   end
   if entry.complete or entry.failed or getn(entry.objectives)==0 then
@@ -287,7 +290,7 @@ local function detailText(entry)
   local lines={}
   for _,o in ipairs(entry.objectives) do table.insert(lines,((entry.complete or o.done) and "|cff69d979- " or "|cffffffff- ")..o.text.."|r") end
   if getn(lines)==0 and entry.data and entry.data.finishers and entry.data.finishers[1] then
-    table.insert(lines,(entry.complete and "|cff69d979" or "|cffffffff").."Speak with "..entry.data.finishers[1].name.."|r")
+    table.insert(lines,(entry.complete and "|cff69d979" or "|cffffffff")..finisherText(entry.data.finishers[1]).."|r")
   elseif getn(lines)==0 then table.insert(lines,Q:ExpandText(entry.summary)) end
   if not entry.id then table.insert(lines,"|cffdbaa78Location unavailable|r") end
   local hint=Q:MissingLocationHint(entry)
