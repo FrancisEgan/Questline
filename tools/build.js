@@ -130,7 +130,7 @@ for(const [id,q] of Object.entries(db.quests)) {
 }
 const output=path.join(root,'Data');fs.mkdirSync(output,{recursive:true});
 function writeTable(file,field,records,append=false) {
-  const lines=['-- Generated from OctoQuestDatabase '+sourceRevision+' by tools/build.js. Correct source data there, then import and rebuild.'];
+  const lines=[];
   for(const [k,record] of Object.entries(records)) {
     const v=field==='locations'?Object.fromEntries(Object.entries(record).map(([zone,data])=>[zone,{...data,runs:packRuns(data.runs)}])):record;
     lines.push('QuestlineDB.'+field+'['+lua(/^-?\d+$/.test(k)?Number(k):k)+']='+lua(v));
@@ -138,7 +138,7 @@ function writeTable(file,field,records,append=false) {
   fs[append?'appendFileSync':'writeFileSync'](path.join(output,file),lines.join('\n')+'\n');
 }
 const digest=crypto.createHash('sha256').update(JSON.stringify(db)).update(sourceRevision).update(fs.readFileSync(__filename)).update(fs.readFileSync(path.join(__dirname,'geometry.js'))).update(fs.readFileSync(path.join(__dirname,'packed-runs.js'))).update(fs.readFileSync(path.join(__dirname,'mob-objectives.js'))).update(fs.readFileSync(path.join(__dirname,'vendor-locations.js'))).update(fs.readFileSync(path.join(__dirname,'scripted-encounters.js'))).digest('hex').slice(0,16);
-fs.writeFileSync(path.join(output,'Init.lua'),'-- Generated; see database/manifest.json for upstream inputs.\nQuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",sourceRevision='+lua(sourceRevision)+',build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
+fs.writeFileSync(path.join(output,'Init.lua'),'QuestlineDB={schemaVersion=2,runEncoding="base64-pairs",profile="octo",locale="enUS",sourceRevision='+lua(sourceRevision)+',build='+lua(digest)+',grid='+GRID+',quests={},locations={},zones={},zoneQuests={},mobObjectives={},objectObjectives={},vendorObjectives={},mobDropRates={},npcQuests={},givers={},zoneGivers={}}\n');
 writeTable('Quests.lua','quests',runtimeQuests);
 writeTable('Locations.lua','locations',locations);
 writeTable('Zones.lua','zones',Object.fromEntries(Object.entries(db.zones).map(([id,zone])=>[id,{...zone,mapSize:db.reference.minimap[id]}])));

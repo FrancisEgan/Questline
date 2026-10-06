@@ -1,4 +1,3 @@
--- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.zones[1]={["name"]="Dun Morogh",["coordinateCount"]=2230,["mapSize"]={[1]=4925,[2]=3283.34}}
 QuestlineDB.zones[2]={["name"]="Longshore",["coordinateCount"]=0,["mapSize"]=nil}
 QuestlineDB.zones[3]={["name"]="Badlands",["coordinateCount"]=1147,["mapSize"]={[1]=2487.5,[2]=1658.34}}

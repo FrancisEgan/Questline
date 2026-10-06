@@ -4,6 +4,16 @@ Standalone quest tracker and selected-quest map areas for the English OctoWoW / 
 
 Current version: **0.1.65**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
+Generated data files omit boilerplate headers and per-file source revision
+comments. Source locks, manifests, and runtime initialization retain the shared
+SHA-256 revision; unchanged data tables stay unchanged when that revision advances.
+
+Thwarting Kolkar Aggression (2026-10-06): the live Octo offer from Lar Prowltusk
+confirms quest 786 is available. OctoQuestDatabase removes its stale prerequisite
+on absent quest 785; both addons are rebuilt from the updated shared revision.
+Starter, finisher, restrictions, and all three attack-plan coordinates are retained.
+Runtime checks cover Lar's predicted pickup on both maps without completion history.
+
 Map marker tooltips use the native `ANCHOR_CURSOR`, matching Questie-Octo,
 for quest selectors, objectives, spawns, and questgivers on both maps. Tracker
 rows retain `ANCHOR_LEFT`. Party progress refreshes keep the same anchor by

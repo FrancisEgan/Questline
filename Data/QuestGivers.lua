@@ -1,4 +1,3 @@
--- Generated from OctoQuestDatabase sha256:70cb026880ca6919eb23a7ba28af17fc5224d9bb533eb7ab569f4b5a955b6f2b by tools/build.js. Correct source data there, then import and rebuild.
 QuestlineDB.givers[196]={["name"]="Eagan Peltskinner",["kind"]="unit",["quests"]={33},["coordinates"]={{48.9,40.2,12}}}
 QuestlineDB.givers[197]={["name"]="Marshal McBride",["kind"]="unit",["quests"]={7,15,21,54,3100,3101,3102,3103,3104,3105,41130,60145},["coordinates"]={{48.9,41.6,12}}}
 QuestlineDB.givers[228]={["name"]="Avette Fellwood",["kind"]="unit",["quests"]={41797},["coordinates"]={{73,44.4,10}}}

@@ -1215,6 +1215,13 @@ local function npcQuestTests(Q)
   local DB=QuestlineDB
   local original,history,level=Q.quests,QuestlineSettings.completedQuests,playerLevel
   QuestlineSettings.completedQuests={};Q:SetEntries({});Q.npcOffers={};Q.recentQuests={}
+  expect(Q:IsQuestAvailable(786),"Thwarting Kolkar Aggression is available without the absent quest 785 or completion history")
+  local lar
+  for _,giver in ipairs(Q:GetAvailableGivers(14)) do if giver.id==3140 then lar=giver end end
+  expect(lar and lar.quests[1].id==786,"Lar Prowltusk has a predicted Durotar pickup marker")
+  local minimapLar
+  for _,giver in ipairs(Q:GetMinimapQuestNPCs(14)) do if giver.id==3140 then minimapLar=giver end end
+  expect(minimapLar and minimapLar.quests[1].id==786,"minimap NPC data retains Lar's available quest")
   local name="Deathguard Dillinger"
   expect(DB.quests[700001].disabled and not Q:IsQuestAvailable(700001),"absent Oink, Oink! quest is disabled by the upstream database")
   expect(#Q:GetAvailableNPCQuests("Pig",{700001})==0,"absent Pig cannot generate an available quest marker")
