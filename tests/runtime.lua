@@ -902,12 +902,21 @@ local function trackerMapTests(Q)
 end
 local function trackerResizeTests(Q)
   local original,mode=Q.quests,QuestlineSettings.trackerMode
+  local oldMouseIsOver=MouseIsOver
+  local hovered
+  MouseIsOver=function(frame) return hovered==frame end
   local entries={}
   for i=1,12 do entries[i]={key="resize:"..i,title="Resize quest "..i,level=i,summary="",objectives={{text="Collect quest items: 0/8",done=false}}} end
   Q:SetEntries(entries);Q:SetTrackerMode("world");Q:Command("reset")
   local panel=Q.tracker
   expect(panel:GetWidth()==258 and panel.pages==3,"unresized tracker retains five quests per page")
   expect(not panel.grip.texture:IsShown(),"resize grip is invisible by default")
+  hovered=panel;this=panel;panel.scripts.OnUpdate()
+  expect(panel.grip.texture:IsShown(),"hovering anywhere within tracker bounds reveals the corner grip")
+  this=panel.grip;panel.grip.scripts.OnLeave()
+  expect(panel.grip.texture:IsShown(),"moving from grip to another part of the tracker keeps the anchor visible")
+  hovered=nil;this=panel;panel.scripts.OnUpdate()
+  expect(not panel.grip.texture:IsShown(),"leaving tracker bounds hides the resize anchor")
   this=panel.grip;panel.grip.scripts.OnEnter()
   expect(panel.grip.texture:IsShown(),"resize grip appears on corner hover")
   arg1="RightButton";panel.grip.scripts.OnMouseDown()
@@ -922,9 +931,15 @@ local function trackerResizeTests(Q)
   panel.grip.scripts.OnMouseUp()
   expect(not panel.resizing and not panel.grip.texture:IsShown(),"releasing resize stops sizing and hides grip")
   expect(QuestlineSettings.trackerPosition.x==panel:GetLeft(),"resize saves the new top-left anchor")
+  hovered=panel;this=panel.grip;arg1="LeftButton";panel.grip.scripts.OnMouseDown();panel.grip.scripts.OnMouseUp()
+  expect(panel.grip.texture:IsShown(),"releasing resize while hovering the tracker keeps its anchor visible")
+  hovered=nil;this=panel;panel.scripts.OnUpdate()
   Q:RefreshTrackers();expect(panel:GetWidth()==420 and panel:GetHeight()==600,"ordinary refresh retains saved dimensions")
   expect(Q.mapTracker:GetWidth()==258 and not QuestlineSettings.mapSize,"HUD resize does not resize map tracker")
   click(panel.toggle);expect(panel:GetHeight()==33 and not panel.grip:IsShown(),"collapsed tracker hides resize handle")
+  hovered=panel;this=panel;panel.scripts.OnUpdate()
+  expect(not panel.grip.texture:IsShown(),"collapsed tracker cannot reveal its resize anchor on hover")
+  hovered=nil
   click(panel.toggle);expect(panel:GetWidth()==420 and panel:GetHeight()==600,"expansion restores expanded dimensions")
   QuestlineSettings.trackerSize={width=258,height=180};Q:RefreshTrackers()
   local seen={}
@@ -942,9 +957,11 @@ local function trackerResizeTests(Q)
   this=map.grip;arg1="LeftButton";map.grip.scripts.OnMouseDown()
   map:SetWidth(350);map:SetHeight(400);this=map;map.scripts.OnSizeChanged();map.scripts.OnHide()
   expect(not map.resizing and QuestlineSettings.mapSize.width==350,"hiding map during resize finalizes its independent size")
+  expect(not map.grip.texture:IsShown(),"hiding tracker clears its resize anchor")
   Q:Command("reset")
   expect(not QuestlineSettings.trackerSize and not QuestlineSettings.mapSize and panel:GetWidth()==258,"reset restores automatic tracker sizing")
   Q:SetEntries(original);Q:SetTrackerMode(mode)
+  MouseIsOver=oldMouseIsOver
 end
 local function trackerModeTests(Q)
   local original,selected=Q.quests,QuestlineSettings.selected

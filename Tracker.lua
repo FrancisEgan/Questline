@@ -142,12 +142,18 @@ local function sizeKey(panel) return panel.isMap and "mapSize" or "trackerSize" 
 local function saveSize(panel)
   QuestlineSettings[sizeKey(panel)]={width=panel:GetWidth(),height=panel:GetHeight()}
 end
+local function updateResizeGrip(panel)
+  local visible=panel.grip:IsShown() and (panel.resizing or MouseIsOver(panel))
+  if visible then
+    if not panel.grip.texture:IsShown() then panel.grip.texture:Show() end
+  elseif panel.grip.texture:IsShown() then panel.grip.texture:Hide() end
+end
 local function finishResize(panel,hidden)
   if not panel.resizing then return end
   panel.resizing=nil;panel:StopMovingOrSizing();saveSize(panel)
   local position={x=panel:GetLeft(),y=panel:GetTop()}
   if panel.isMap then QuestlineSettings.mapPosition=position else QuestlineSettings.trackerPosition=position end
-  panel.grip.texture:Hide()
+  if hidden then panel.grip.texture:Hide() else updateResizeGrip(panel) end
   if not hidden then Q:RefreshTrackers() end
 end
 local function makeRow(panel)
@@ -252,18 +258,39 @@ local function makePanel(name,parent,isMap)
   panel:SetScript("OnMouseWheel",function() this.page=math.max(1,math.min(this.pages or 1,this.page-(arg1 or 0)));Q:RefreshTrackers() end)
   panel.grip=CreateFrame("Button",nil,panel);panel.grip:SetWidth(16);panel.grip:SetHeight(16)
   panel.grip:SetPoint("BOTTOMRIGHT",panel,"BOTTOMRIGHT",-3,3)
-  panel.grip.texture=panel.grip:CreateTexture(nil,"OVERLAY");panel.grip.texture:SetAllPoints(panel.grip)
-  panel.grip.texture:SetTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up");panel.grip.texture:Hide()
+  panel.grip:SetFrameLevel(panel:GetFrameLevel()+10)
+  -- Draw the corner ourselves: the ChatIM grabber artwork is not available
+  -- on every Vanilla client. Solid textures also keep it legible over terrain.
+  panel.grip.texture=CreateFrame("Frame",nil,panel.grip);panel.grip.texture:SetAllPoints(panel.grip)
+  panel.grip.texture:EnableMouse(false)
+  -- Seven-pixel triangle with a thin dark edge, keeping the larger hit area.
+  for y=0,8 do
+    local shadow=panel.grip.texture:CreateTexture(nil,"BACKGROUND")
+    shadow:SetTexture(0,0,0,.8)
+    shadow:SetPoint("BOTTOMRIGHT",panel.grip.texture,"BOTTOMRIGHT",-1,1+y)
+    shadow:SetWidth(9-y);shadow:SetHeight(1)
+  end
+  for y=0,6 do
+    local line=panel.grip.texture:CreateTexture(nil,"OVERLAY")
+    line:SetTexture(1,.82,.32,1)
+    line:SetPoint("BOTTOMRIGHT",panel.grip.texture,"BOTTOMRIGHT",-2,2+y)
+    line:SetWidth(7-y);line:SetHeight(1)
+  end
+  panel.grip.texture:Hide()
   panel.grip:SetScript("OnEnter",function() this.texture:Show() end)
-  panel.grip:SetScript("OnLeave",function() if not this:GetParent().resizing then this.texture:Hide() end end)
+  panel.grip:SetScript("OnLeave",function() updateResizeGrip(this:GetParent()) end)
   panel.grip:SetScript("OnMouseDown",function()
     if arg1~="LeftButton" then return end
     local p=this:GetParent();hideTooltip()
     local x,y=p:GetLeft(),p:GetTop();p:ClearAllPoints();p:SetPoint("TOPLEFT",UIParent,"BOTTOMLEFT",x,y)
-    p.resizing=true;p:StartSizing("BOTTOMRIGHT")
+    p.resizing=true;updateResizeGrip(p);p:StartSizing("BOTTOMRIGHT")
   end)
   panel.grip:SetScript("OnMouseUp",function() if arg1=="LeftButton" then finishResize(this:GetParent()) end end)
-  panel:SetScript("OnHide",function() finishResize(this,true) end)
+  -- Parent enter/leave events miss child buttons. A bounds check covers the
+  -- header, quest rows, badges, and empty transparent space without replacing
+  -- their tooltip handlers.
+  panel:SetScript("OnUpdate",function() updateResizeGrip(this) end)
+  panel:SetScript("OnHide",function() finishResize(this,true);this.grip.texture:Hide() end)
   panel:SetScript("OnSizeChanged",function()
     if this.resizing and not this.layoutBusy then saveSize(this);Q:RefreshTrackers() end
   end)

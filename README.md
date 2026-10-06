@@ -24,7 +24,7 @@ A quest tracker for OctoWoW and Vanilla 1.12. Find quest objectives with clean m
 - `/ql` options pane with General, Appearance, and Completed Quests sidebar sections
 - Double-click a tracker quest to open its objective or turn-in map
 - Shift-click to link a quest in open chat; right-click to open it in the quest log
-- Movable, resizable, collapsible trackers with saved sizes, positions, and highlights
+- Movable, resizable, collapsible trackers with saved sizes, positions, and highlights; hover a tracker to reveal its bottom-right resize handle
 - Transparent HUD tracker by default, with an optional bordered style; optional world-map tracker, hidden by default
 - Standalone quest database; no pfQuest dependency
 

@@ -2,7 +2,30 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.67**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.70**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Resize triangle (0.1.70): replace the two corner strokes with a seven-pixel
+gold triangle, matching the previous inner stroke's size, and a thin dark
+edge. Solid one-pixel rows keep the artwork independent of client assets.
+The 16-pixel hit area and hover/drag behavior are retained.
+
+Resize anchor artwork (0.1.69): a live report shows no visible grabber after
+the hover change. Replace the external ChatIM texture with two gold corner
+strokes drawn from solid textures, with opaque dark outlines. The grip sits
+above row controls and retains the 16-pixel hit area and hover/drag behavior.
+This removes dependence on client-specific artwork; runtime tests cannot
+verify textures bundled in the game archives. Check the bottom-right corner
+over light and dark terrain in game after reloading.
+
+Resize grip discovery (0.1.68): the existing 16-pixel bottom-right anchor
+appears whenever the cursor is within an expanded tracker's bounds, including
+over child controls and transparent space. A native Lua 5.0-compatible
+`MouseIsOver` check on the visible panel updates only changed texture state;
+child tooltip scripts are preserved. The grip stays visible while resizing,
+then follows tracker hover on release. Collapsed and hidden panels suppress
+the anchor. Runtime checks cover hover, leaving, release inside/outside,
+collapse, and hiding during resize. In game, hover header, rows, badges, and
+empty space, then resize and move the cursor off the tracker.
 
 Object turn-ins (0.1.66): completed, non-failed live quests include object
 finishers in the shared questgiver markers on both maps. Objects use negative
