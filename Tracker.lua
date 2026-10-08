@@ -327,7 +327,7 @@ end
 function Q:RenderTracker(panel,entries,zone,zoneName)
   if panel.layoutBusy then return end
   panel.layoutBusy=true
-  local numbers=(panel.isMap or QuestlineSettings.trackerMode=="zone") and self:GetZoneQuestNumbers(zone) or {}
+  local numbers=QuestlineSettings.trackerMode=="zone" and self:GetZoneQuestNumbers(zone) or {}
   local saved=QuestlineSettings[sizeKey(panel)]
   local width=saved and math.max(258,math.min(700,tonumber(saved.width) or 258)) or 258
   local requestedHeight=saved and math.max(140,math.min(900,tonumber(saved.height) or 180))

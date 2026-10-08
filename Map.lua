@@ -324,7 +324,7 @@ function Q:RefreshMap()
   end end
   self:DrawAreas(targets,zone,width,height)
   local markerCount=0;local used={}
-  local numbers=self:GetZoneQuestNumbers(zone)
+  local numbers=QuestlineSettings.trackerMode=="zone" and self:GetZoneQuestNumbers(zone) or {}
   for _,entry in ipairs(self.quests) do if not entry.failed then
     local selected=self:IsSelected(entry.key)
     local anchor,anchorArea,anchorSpawns

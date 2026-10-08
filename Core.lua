@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.73", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.74", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -245,7 +245,10 @@ end
 function Q:SetTrackerMode(mode)
   QuestlineSettings.trackerMode=mode=="zone" and "zone" or "world"
   if self.tracker then self.tracker.page=1 end
+  self.mapDirty=true
   self:RefreshTrackers()
+  if self.RefreshMap then self:RefreshMap() end
+  if self.RefreshNameplates then self:RefreshNameplates() end
 end
 function Q:Select(key,toggle)
   if not self.byKey[key] then return end
@@ -423,7 +426,12 @@ end
 function Q:SetEntries(entries)
   self:SortQuests(entries)
   self.quests, self.byKey = entries, {}
-  for i, entry in ipairs(entries) do entry.number=i; self.byKey[entry.key]=entry end
+  local number=0
+  for _,entry in ipairs(entries) do
+    entry.number=nil
+    if not entry.complete then number=number+1;entry.number=number end
+    self.byKey[entry.key]=entry
+  end
   if self.BuildTooltipProgress then self:BuildTooltipProgress() end
   if self.UpdateNPCQuestState then self:UpdateNPCQuestState() end
   if self.party then self.party.dirty=true end

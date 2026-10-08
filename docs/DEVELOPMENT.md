@@ -2,12 +2,22 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.73**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.74**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+Compact numbering in both modes (0.1.74): the world-map badges and filtered map
+tracker now follow the HUD's selected mode. World mode counts all unfinished
+quests from one, including dungeon and unmapped quests, skipping completed
+question marks. These unique numbers are shared by the HUD, map, map tracker,
+and nameplates, fixing conflicting labels when dungeon and ordinary quests
+share the log. Zone mode retains compact zone numbers. Switching modes
+invalidates and immediately refreshes map badges and nameplates, including an
+otherwise cached open map. Tests cover mixed quest tags, off-zone entries,
+turn-ins, pagination, both mode transitions, and matching map/list numbers.
 
 Zone quest numbers (0.1.73): each zone counts its unfinished quests from one
-in level order, skipping completed question-mark entries. The map and its
+in level order, skipping completed question-mark entries. In Zone mode, the map and its
 tracker use the browsed zone; the HUD in Zone mode and nameplate badges use
-the physical zone. World mode retains full-log numbering. Display numbers do
+the physical zone. As of 0.1.74, World mode also skips completed question marks. Zone display numbers do
 not mutate entries or selection keys and remain stable across pagination and
 highlight prioritization. Removing or finishing an objective compacts the
 affected zone's sequence. In game, check matching map/list numbers, turn-ins,

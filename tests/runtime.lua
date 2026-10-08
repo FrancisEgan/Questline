@@ -502,11 +502,11 @@ local function requestedBehaviorTests(Q)
   expect(plate.questlineBadges[1].glow:IsShown(),"the selected tracker quest highlights its nameplate badge")
   local locationKey=second.key
   local oldLocation=QuestlineDB.locations[locationKey]
-  QuestlineDB.locations[locationKey]={[Q:GetPlayerZone()]={anchor={50,50}}}
+  QuestlineDB.locations[locationKey]={[Q:GetPlayerZone()]={anchor={50,50},runs="",points={}}}
   Q:SetTrackerMode("zone");Q:PaintNameplate(plate)
   expect(plate.questlineBadges[1].text:GetText()=="1" and Q.tracker.rows[1].badge.text:GetText()=="1","nameplate badges match the physical Zone tracker after skipping full-log turn-ins")
   Q:SetTrackerMode("world");Q:PaintNameplate(plate)
-  expect(plate.questlineBadges[1].text:GetText()==tostring(active.number),"World mode restores full-log numbering on nameplates")
+  expect(plate.questlineBadges[1].text:GetText()=="1" and active.number==1,"World nameplate numbering also skips completed quests")
   QuestlineDB.locations[locationKey]=oldLocation
   click(Q.optionsPanel.nameplateBadges)
   expect(QuestlineSettings.nameplateBadges==false and not Q.optionsPanel.nameplateBadges:GetChecked() and not plate.questlineBadges[1]:IsShown(),"disabling nameplate badges immediately hides existing badges and updates the checkbox")
@@ -1044,7 +1044,24 @@ local function trackerModeTests(Q)
   expect(#Q:GetTrackerEntries()==14,"World remains usable in an unmapped zone")
 
   -- Four unfinished quests remain among off-zone quests and two turn-ins.
-  entries[3].complete=true;Q:SetEntries(entries);Q:RefreshMap()
+  entries[3].complete=true;entries[6].tag="Dungeon";Q:SetEntries(entries);Q:RefreshMap()
+  local nextNumber=0
+  for _,entry in ipairs(Q.quests) do
+    if not entry.complete then
+      nextNumber=nextNumber+1
+      expect(entry.number==nextNumber,"World quest numbers are contiguous across dungeon, ordinary, off-zone, and unmapped quests")
+    else expect(entry.number==nil,"completed question marks consume no World number") end
+  end
+  for _,p in ipairs(Q.mapPins) do if p:IsShown() and not p.entry.complete then
+    expect(p.text:GetText()==tostring(p.entry.number),"World map uses full-log numbers for dungeon and ordinary quests mixed with off-zone quests")
+  end end
+  for page=1,Q.mapTracker.pages do
+    Q.mapTracker.page=page;Q:RefreshTrackers()
+    for _,r in ipairs(Q.mapTracker.rows) do if r:IsShown() and not r.entry.complete then
+      expect(r.badge.text:GetText()==tostring(r.entry.number),"filtered map tracker uses the World tracker's full-log numbers across pages")
+    end end
+  end
+  Q:SetTrackerMode("zone")
   local expected={[entries[2].key]="1",[entries[3].key]="?",[entries[4].key]="2",[entries[5].key]="3",[entries[6].key]="4",[entries[14].key]="?"}
   for page=1,Q.mapTracker.pages do
     Q.mapTracker.page=page;Q:RefreshTrackers()
@@ -1061,6 +1078,13 @@ local function trackerModeTests(Q)
   entries[4].objectives={{text="Objective: 1/1",done=true}};Q:SetEntries(entries);Q:RefreshMap()
   expect(Q:GetZoneQuestNumbers(14)[entries[6].key]==3,"finishing another zone quest closes its numbering gap")
   expect(Q:GetZoneQuestNumbers(nil)[entries[6].key]==nil,"unknown zones have no invented local numbers")
+  Q:SetTrackerMode("world")
+  for _,p in ipairs(Q.mapPins) do if p:IsShown() and not p.entry.complete then
+    expect(p.text:GetText()==tostring(p.entry.number),"switching to World immediately repaints cached map badges without a map or quest update")
+  end end
+  for _,r in ipairs(Q.mapTracker.rows) do if r:IsShown() and not r.entry.complete then
+    expect(r.badge.text:GetText()==tostring(r.entry.number),"switching to World immediately restores matching map tracker numbers")
+  end end
   expect(Q.tracker.rows[1].badge.text:GetText()==tostring(Q.tracker.rows[1].entry.number),"World tracker retains full-log numbering")
 
   playerZone="The Barrens";SetMapZoom(1,1)
@@ -1630,7 +1654,7 @@ local function questLevelAndRateTests(Q)
   expect(Q.mapTracker.rows[1].entry.id==844 and Q.mapTracker.rows[2].entry.id==845,"zone-filtered map tracker prioritizes highlights before other quests")
   local mapped
   for _,pin in ipairs(Q.mapPins) do if pin:IsShown() and pin.entry.id==845 then mapped=pin end end
-  expect(mapped and mapped.text:GetText()=="2" and Q.mapTracker.rows[2].badge.text:GetText()=="2","map circle and zone tracker share compact numbers independent of the World tracker")
+  expect(mapped and mapped.text:GetText()=="3" and Q.mapTracker.rows[2].badge.text:GetText()=="3","World tracker, filtered map tracker, and map circle share the full-log quest number")
   playerLevel=12
   local expected={{18,"ff1919"},{15,"ff7f3f"},{12,"ffff00"},{8,"3fbf3f"},{1,"7f7f7f"}}
   for _,case in ipairs(expected) do
