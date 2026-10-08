@@ -31,6 +31,13 @@ local function blizzardParts(frame)
   if not frame.GetObjectType or not frame.GetRegions or not frame.GetChildren then return end
   local kind=frame:GetObjectType()
   if kind~="Button" and kind~="Frame" then return end
+  -- pfUI hides the native bar and draws a scaled/offset replacement overlay.
+  -- Use its visible health bar, including when the native border is blanked.
+  local replacement=frame.nameplate
+  local original=replacement and replacement.original
+  if original and original.healthbar and original.name and original.level and replacement.health then
+    return original.name,replacement.health,replacement
+  end
   local regions={frame:GetRegions()}
   local border=false
   for _,region in ipairs(regions) do
@@ -64,16 +71,17 @@ local function scanBlizzardPlates(changesOnly)
   local present={}
   for _,frame in ipairs({WorldFrame:GetChildren()}) do
     present[frame]=true
-    if not blizzardPlates[frame] then
-      local name,health=blizzardParts(frame)
-      if name then
-        frame.questlineNameRegion=name;frame.questlineHealthAnchor=health
-        blizzardPlates[frame]=frame
-      end
+    local name,health,replacement=blizzardParts(frame)
+    if name then
+      local plate=replacement or frame
+      if blizzardPlates[frame] and blizzardPlates[frame]~=plate then hideBadges(blizzardPlates[frame]) end
+      plate.questlineNameRegion=name;plate.questlineHealthAnchor=health
+      plate.questlineHealthGap=replacement and 5 or 24
+      blizzardPlates[frame]=plate
     end
   end
-  for frame in pairs(blizzardPlates) do if not present[frame] then
-    hideBadges(frame);blizzardPlates[frame]=nil
+  for frame,plate in pairs(blizzardPlates) do if not present[frame] then
+    hideBadges(plate);blizzardPlates[frame]=nil
   end end
 end
 
@@ -85,7 +93,7 @@ function Q:PaintNameplate(nameplate)
   local numbers=QuestlineSettings.trackerMode=="zone" and self:GetZoneQuestNumbers(self:GetPlayerZone()) or {}
   nameplate.questlineBadges=nameplate.questlineBadges or {}
   local anchor=nameplate.questlineHealthAnchor or nameplate.health or nameplate
-  local gap=nameplate.questlineHealthAnchor and 24 or 5
+  local gap=nameplate.questlineHealthGap or (nameplate.questlineHealthAnchor and 24 or 5)
   for index,entry in ipairs(entries) do
     local badge=nameplate.questlineBadges[index]
     if not badge then

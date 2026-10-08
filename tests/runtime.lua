@@ -608,7 +608,39 @@ local function blizzardNameplateTests(Q)
   expect(guda.questlineBadges[1].point[2]==guda.health and guda.questlineBadges[1].point[4]==5,"GudaPlates keeps its existing badge placement")
   GudaPlates=nil;Q:RefreshNameplates(true)
   expect(badge:IsShown() and not guda.questlineBadges[1]:IsShown(),"returning to native plates hides the GudaPlates badge set")
+  -- pfUI can finish constructing its replacement after native discovery,
+  -- and hides/blanks the original artwork rather than moving the native bar.
+  local pf=CreateFrame("Button",nil,plate)
+  pf.original={name=name,healthbar=health,level=plate:CreateFontString(nil,"OVERLAY")}
+  pf.health=CreateFrame("StatusBar",nil,pf)
+  pf.health:SetWidth(180);pf.health:SetPoint("BOTTOM",pf,"BOTTOM",0,-20)
+  plate.nameplate=pf
+  local nativeBorder=plate:GetRegions();nativeBorder:SetTexture(nil)
+  Q:RefreshNameplates(false)
+  local pfBadge=pf.questlineBadges and pf.questlineBadges[1]
+  expect(pfBadge and pfBadge:IsShown() and not badge:IsShown(),"late pfUI overlay replaces native badges even with a blank native border")
+  expect(pfBadge.parent==pf and pfBadge.point[1]=="LEFT" and pfBadge.point[2]==pf.health and pfBadge.point[3]=="RIGHT" and pfBadge.point[4]==5 and pfBadge.point[5]==0,"pfUI badge inherits overlay scaling and anchors beside the visible health bar")
+  pf.health:SetWidth(250);Q:RefreshNameplates(false)
+  expect(pfBadge.point[2]==pf.health and pfBadge.point[4]==5,"pfUI target zoom keeps badges attached to the visible bar")
+  local extra={key="pf-extra",title="Second plate quest",level=6,
+    objectives={{text="Native Quest Mob: 0/1",done=false}},data={objectives={target},finishers={}}}
+  Q:SetEntries({active,extra});Q:RefreshNameplates(false)
+  expect(pf.questlineBadges[2]:IsShown() and pf.questlineBadges[2].point[2]==pfBadge and pf.questlineBadges[2].point[4]==2,"multiple pfUI badges extend neatly to the right")
+  Q:SetEntries({active});Q:RefreshNameplates(false)
+  expect(not pf.questlineBadges[2]:IsShown(),"pfUI hides surplus badges when a quest is removed")
+  pf:Hide();Q:RefreshNameplates(true)
+  expect(not pfBadge:IsShown() and not pf.questlineVisible,"hidden pfUI overlay clears its badge state while the native parent stays visible")
+  pf:Show();Q:RefreshNameplates(true)
+  expect(pfBadge:IsShown(),"pfUI overlay shows badges immediately on reuse")
+  name:SetText("Unrelated Creature");Q:RefreshNameplates(true)
+  expect(not pfBadge:IsShown(),"pfUI reads the original name to remove stale badges on reuse")
+  name:SetText(target.name);Q:RefreshNameplates(true)
+  GudaPlates={registry={[plate]=guda}};Q:RefreshNameplates(true)
+  expect(not pfBadge:IsShown() and guda.questlineBadges[1]:IsShown() and guda.questlineBadges[1].point[4]==5,"switching from pfUI to GudaPlates preserves Guda placement and hides pfUI badges")
+  GudaPlates=nil;Q:RefreshNameplates(true)
+  expect(pfBadge:IsShown() and not guda.questlineBadges[1]:IsShown(),"returning from GudaPlates restores only pfUI badges")
   children={};Q:RefreshNameplates(false);world:Hide()
+  expect(not pfBadge:IsShown(),"removing a pfUI native parent retires its overlay badges")
   WorldFrame=savedWorld;GudaPlates=savedGuda;QuestlineSettings.nameplateBadges=savedSetting
   QuestlineSettings.selected=savedSelected;QuestlineSettings.selectedKeys=savedKeys
   QuestlineDB.mobObjectives[key]=oldIndex;Q:SetEntries(original)

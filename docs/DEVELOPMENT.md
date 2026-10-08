@@ -2,7 +2,20 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.74**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.75**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+pfUI nameplate badges (0.1.75): discover the replacement through the native
+parent's `nameplate` overlay and preserved original health/name/level references.
+Parent badges to that overlay and anchor five pixels to the right of its visible
+health bar, inheriting scaling and following bar resizing, target zoom, and
+vertical offsets. The hidden native health bar no longer determines placement.
+Periodic discovery adopts overlays initialized after the native plate and hides
+the old badge set. GudaPlates retains registry priority and its existing placement;
+default and BlizzNameplatesPlus native anchors retain their level/skull spacing.
+Runtime checks cover late initialization with blank native artwork, multiple
+badges, visibility, reuse, removal, and switching between pfUI and GudaPlates.
+In game, reload and check pfUI badges beside quest mobs at normal and target-zoom
+sizes, with vertical offsets and multiple quests, then check GudaPlates separately.
 
 Compact numbering in both modes (0.1.74): the world-map badges and filtered map
 tracker now follow the HUD's selected mode. World mode counts all unfinished
