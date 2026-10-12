@@ -2,7 +2,17 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.75**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.76**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+HUD window layering (0.1.76): the HUD tracker uses BACKGROUND strata and frame
+level zero so ordinary overlapping windows take rendering and mouse priority.
+Rows, badges, header controls, pagination, and the resize grip inherit that strata;
+the grip's local frame-level offset stays within BACKGROUND. The world-map
+tracker retains FULLSCREEN strata and its map-relative frame level. Runtime
+checks cover all HUD click surfaces after interaction, resize, collapse, and
+reset, and preserve map layering. In game, overlap Bagshui and other windows
+with the HUD and click items, empty bag space, and window controls over quest
+rows, badges, and the grip; verify exposed tracker controls still work.
 
 pfUI nameplate badges (0.1.75): discover the replacement through the native
 parent's `nameplate` overlay and preserved original health/name/level references.
@@ -36,6 +46,11 @@ highlight prioritization. Removing or finishing an objective compacts the
 affected zone's sequence. In game, check matching map/list numbers, turn-ins,
 travel, and browsing another zone while the HUD remains in Zone mode.
 
+Dungeon quest labels: type 81 and live Dungeon tags append `D` inside the
+difficulty-colored level bracket, such as `[16D]`. Live tags take precedence
+over database types, including unresolved quests and active tooltip groups.
+Dungeon quests without a known level use `(Dungeon)`. Elite labels retain `+`.
+
 Elite quest labels (0.1.72): the compiler retains the shared quest `type` as
 runtime `questType`. Type 1 produces a plus inside the difficulty-colored
 level bracket, such as `[15+] Arugal's Folly` (quest 99). Live quest-log tags
@@ -43,7 +58,7 @@ are retained and take precedence when nonempty; unresolved live Elite quests
 also receive the suffix. An elite quest without a known level uses `(Elite)`.
 The common formatter resolves active tooltip groups through their live key,
 and available quests through their database ID. Raw titles, quest matching,
-level sorting, and chat links are unchanged. Dungeon/Raid tags retain their
+level sorting, and chat links are unchanged. Raid tags retain their
 ordinary level labels. Tests cover the tracker, map tooltip, available and
 completed NPC labels, same-title ordinary steps, unknown quests, and live tag
 precedence. Run both Questline and ClassicBestiary tests for shared tooltips.

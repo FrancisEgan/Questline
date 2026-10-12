@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.75", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.76", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -53,18 +53,27 @@ function Q:SortQuests(entries)
     return order[a]<order[b]
   end)
 end
-function Q:QuestIsElite(entry)
+function Q:QuestType(entry)
   local live=entry.key and self.byKey[entry.key] or entry
   local tag=entry.tag or live.tag
   -- The live log can correct stale database types, including unknown quests.
-  if tag and tag~="" then return self:Normalize(tag)=="elite" end
+  if tag and tag~="" then
+    local normalized=self:Normalize(tag)
+    if normalized=="elite" then return 1 end
+    if normalized=="dungeon" then return 81 end
+    return 0
+  end
   local data=entry.data or (entry.id and DB.quests[entry.id]) or live.data
-  return (entry.questType or (data and data.questType))==1
+  return entry.questType or (data and data.questType)
+end
+function Q:QuestIsElite(entry)
+  return self:QuestType(entry)==1
 end
 function Q:QuestTitle(entry)
   local level=self:QuestLevel(entry)
-  local elite=self:QuestIsElite(entry)
-  if not level then return entry.title..(elite and " (Elite)" or "") end
+  local questType=self:QuestType(entry)
+  local suffix=questType==81 and "D" or (questType==1 and "+" or "")
+  if not level then return entry.title..(questType==81 and " (Dungeon)" or (questType==1 and " (Elite)" or "")) end
   local difficulty=GetQuestDifficultyColor or GetDifficultyColor
   local color=difficulty and difficulty(level)
   if not color then
@@ -75,9 +84,9 @@ function Q:QuestTitle(entry)
     elseif difference>=-(GetQuestGreenRange and GetQuestGreenRange() or 5) then color={r=.25,g=.75,b=.25}
     else color={r=.5,g=.5,b=.5} end
   end
-  -- Only the number is difficulty-colored. Reset before the bracket and title
+  -- The level and suffix are difficulty-colored. Reset before the bracket and title
   -- so each label keeps its usual gold/off-white text color.
-  return "["..string.format("|cff%02x%02x%02x%d%s|r",math.floor(color.r*255),math.floor(color.g*255),math.floor(color.b*255),level,elite and "+" or "").."] "..entry.title
+  return "["..string.format("|cff%02x%02x%02x%d%s|r",math.floor(color.r*255),math.floor(color.g*255),math.floor(color.b*255),level,suffix).."] "..entry.title
 end
 function Q:BuildIndexes()
   for id, data in pairs(DB.quests) do

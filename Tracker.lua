@@ -180,8 +180,11 @@ local function makePanel(name,parent,isMap)
   local panel=CreateFrame("Frame",name,parent)
   panel:SetWidth(258);panel:SetHeight(180);panel:SetMovable(true);panel:EnableMouse(true);panel:SetClampedToScreen(true)
   panel:SetResizable(true);panel:SetMinResize(258,140);panel:SetMaxResize(700,900)
-  panel:SetFrameStrata(isMap and "FULLSCREEN" or "MEDIUM")
-  if isMap then panel:SetFrameLevel(WorldMapFrame:GetFrameLevel()+40) end
+  -- The HUD is behind ordinary windows for both rendering and mouse input.
+  -- Child buttons inherit this strata, including badges and the resize grip.
+  panel:SetFrameStrata(isMap and "FULLSCREEN" or "BACKGROUND")
+  if isMap then panel:SetFrameLevel(WorldMapFrame:GetFrameLevel()+40)
+  else panel:SetFrameLevel(0) end
   panel:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
   local transparent=QuestlineSettings.transparentTracker==true and not isMap
   panel:SetBackdropColor(0.025,0.045,0.065,transparent and 0 or .9);panel:SetBackdropBorderColor(0.35,0.30,0.16,transparent and 0 or .85)

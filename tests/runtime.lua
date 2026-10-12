@@ -76,6 +76,8 @@ function methods:IsShown() return self.shown end
 function methods:IsVisible() return self.shown and (not self.parent or self.parent:IsVisible()) end
 function methods:SetFrameLevel(level) self.level=level end
 function methods:GetFrameLevel() return self.level or 1 end
+function methods:SetFrameStrata(strata) self.strata=strata end
+function methods:GetFrameStrata() return self.strata or (self.parent and self.parent:GetFrameStrata()) or "MEDIUM" end
 function methods:GetEffectiveScale() return self.scale or (self.parent and self.parent:GetEffectiveScale()) or 1 end
 function methods:GetParent() return self.parent end
 function methods:GetName() return self.name end
@@ -132,7 +134,7 @@ function methods:AddLine(text,...)
   end
 end
 function methods:SetTextColor(...) self.color={...} end
-for _,key in ipairs({"SetMovable","SetClampedToScreen","SetFrameStrata","SetBackdrop","RegisterForDrag","EnableMouseWheel","SetJustifyH","SetJustifyV","StartMoving","StopMovingOrSizing"}) do methods[key]=function() end end
+for _,key in ipairs({"SetMovable","SetClampedToScreen","SetBackdrop","RegisterForDrag","EnableMouseWheel","SetJustifyH","SetJustifyV","StartMoving","StopMovingOrSizing"}) do methods[key]=function() end end
 function methods:SetBackdropColor(...) self.backdropColor={...} end
 function methods:SetBackdropBorderColor(...) self.backdropBorderColor={...} end
 local function widget(kind,name,parent)
@@ -1000,6 +1002,11 @@ local function trackerResizeTests(Q)
   expect(not map.grip.texture:IsShown(),"hiding tracker clears its resize anchor")
   Q:Command("reset")
   expect(not QuestlineSettings.trackerSize and not QuestlineSettings.mapSize and panel:GetWidth()==258,"reset restores automatic tracker sizing")
+  expect(panel:GetFrameStrata()=="BACKGROUND" and panel:GetFrameLevel()==0,"HUD tracker stays at the back after clicking, resizing, collapsing and resetting")
+  for _,control in ipairs({panel.header,panel.mode,panel.toggle,panel.previous,panel.next,panel.grip,panel.rows[1],panel.rows[1].badge}) do
+    expect(control:GetFrameStrata()=="BACKGROUND","all HUD click surfaces remain behind ordinary windows")
+  end
+  expect(map:GetFrameStrata()=="FULLSCREEN" and map:GetFrameLevel()==WorldMapFrame:GetFrameLevel()+40,"world-map tracker preserves its elevated map layer")
   Q:SetEntries(original);Q:SetTrackerMode(mode)
   MouseIsOver=oldMouseIsOver
 end
@@ -1668,6 +1675,17 @@ local function eliteQuestTests(Q)
   expect(not Q.quests[1].id and Q.quests[1].tag=="Elite" and Q:QuestTitle(Q.quests[1]):find("15+|r]",1,true),"live elite tags mark unresolved quests without guessing a database match")
   expect(not Q:QuestTitle({id=99,title=arugal.title,level=15,tag="Dungeon"}):find("15+",1,true),"explicit live non-elite tags override stored elite types")
   expect(Q:QuestTitle({title="Unknown level",tag="Elite"})=="Unknown level (Elite)","elite quests without a known level retain an explicit label")
+  local dungeon={title="Unmapped dungeon",level=16,tag="Dungeon",objectives={}}
+  log={{title="Unmapped",header=true,closed=true,quests={dungeon}}};Q:ScanLog()
+  expect(not Q.quests[1].id and Q.tracker.rows[1].title:GetText():find("16D|r]",1,true),"live dungeon tags mark unresolved tracker quests with D")
+  Q:ShowQuestTooltip(Q.tracker.rows[1],Q.quests[1])
+  expect(WorldMapTooltip:GetText():find("16D|r]",1,true),"dungeon quest tooltips share the level suffix")
+  expect(Q:QuestTitle({key=Q.quests[1].key,title=dungeon.title,level=16}):find("16D|r]",1,true),"active tooltip groups resolve live dungeon tags through their key")
+  expect(Q:QuestTitle({title="Stored dungeon",level=16,data={questType=81}}):find("16D|r]",1,true),"database dungeon types mark quests before acceptance")
+  expect(Q:QuestTitle({id=99,title=arugal.title,level=15,tag="Dungeon"}):find("15D|r]",1,true),"live dungeon tags override stored elite types")
+  expect(Q:QuestTitle({title="Live elite",level=16,questType=81,tag="Elite"}):find("16+|r]",1,true),"live elite tags override stored dungeon types")
+  expect(not Q:QuestTitle({title="Live raid",level=16,questType=81,tag="Raid"}):find("16D",1,true),"live raid tags suppress stored dungeon suffixes")
+  expect(Q:QuestTitle({title="Unknown level",tag="Dungeon"})=="Unknown level (Dungeon)","dungeon quests without a known level retain an explicit label")
   Q.GetMapZone=mapZone;WorldMapFrame:Hide();WorldMapTooltip:Hide()
   log=savedLog;selection=savedSelection;Q:ScanLog();Q:SetTrackerMode(savedMode)
 end
