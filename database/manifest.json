@@ -3,7 +3,7 @@
   "locale": "enUS",
   "profile": "octo",
   "source": "OctoQuestDatabase",
-  "sourceRevision": "sha256:f801b92190a2747ce4fd349abc40acb9adfbc4126e592e4b1dd94e2e614f3192",
+  "sourceRevision": "sha256:3e3a787de08525f0aa8853212141a9517ddd30b1734b453fc5d1f4011ddeefaf",
   "repository": "https://github.com/FrancisEgan/OctoQuestDatabase.git",
   "inputs": [
     {
@@ -36,7 +36,7 @@
     },
     {
       "file": "source/objects.json",
-      "sha256": "0acd425060a0743488bedbe333d9c3f39775e0ef5f4b7dbcf3c748157f09e143"
+      "sha256": "a98514f46d2c5fcd36f3b0cd3cd942984e3624971d2e4c5ceb057113ffe230b8"
     },
     {
       "file": "source/quests-itemreq.json",
@@ -78,7 +78,7 @@
     },
     {
       "file": "objects.json",
-      "sha256": "a0eaa56466981e98eba25ccbdc1e439dddb562dce4235ef2579faf8a9c83af78"
+      "sha256": "ba4cf2d2fd6ec04c48f7626876c29512429e8943f2fc66bcb3e77666a8fa8934"
     },
     {
       "file": "items.json",
