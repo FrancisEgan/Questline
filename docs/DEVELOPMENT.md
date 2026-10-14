@@ -2,7 +2,28 @@
 
 Standalone quest tracker and selected-quest map areas for the English OctoWoW / Vanilla 1.12 client. This is the first questing proof of concept, not a leveling route guide yet.
 
-Current version: **0.1.76**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+Current version: **0.1.77**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
+
+City minimap scale (0.1.77): invalidate the cached diameter on
+`MINIMAP_UPDATE_ZOOM` and `MINIMAP_ZONE_CHANGED`, in addition to physical zone
+events. Native minimap mode changes can preserve both saved zoom values and
+the physical zone, leaving the old diameter cached. The active minimap zoom
+CVar selects the scale, regardless of an extended client's physical
+`IsIndoors` result. Equal saved zooms use the existing temporary zoom probe;
+its own synchronous/queued zoom events are suppressed for 0.25 seconds to
+avoid repeated probing and native marker blinking. Minimap zone and physical
+zone events still invalidate during that interval. Both objective spawns and
+questgivers use this shared projection. A stale 466.67-yard outdoor diameter
+on a 300-yard city minimap compresses offsets toward the player by about 36%,
+so the error changes as the player moves. This is consistent with the reported
+Undercity screenshot; live reproduction is still required to confirm the report.
+Runtime checks cover Undercity movement in both axes at all six zoom levels,
+both map modes, equal/unequal saved zooms, physical indoor disagreement, mode
+changes without physical zone changes, probe-event suppression, zoom restoration,
+and matching giver/objective positions. In game, reload, walk toward and past
+a known stationary NPC in Undercity with the map open and closed, change zoom,
+then enter/leave buildings and travel through a city entrance. Confirm the
+marker stays over its terrain location and native markers do not blink.
 
 HUD window layering (0.1.76): the HUD tracker uses BACKGROUND strata and frame
 level zero so ordinary overlapping windows take rendering and mouse priority.

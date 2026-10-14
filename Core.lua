@@ -1,5 +1,5 @@
 -- Questline 0.1: original Vanilla (Lua 5.0) client, English quest text.
-Questline = { version = "0.1.76", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
+Questline = { version = "0.1.77", quests = {}, byKey = {}, titleIndex = {}, dirty = true }
 local Q, DB = Questline, QuestlineDB
 local getn, insert = table.getn, table.insert
 local raceBits = { Human=1, Orc=2, Dwarf=4, NightElf=8, Scourge=16, Undead=16, Tauren=32, Gnome=64, Troll=128, Goblin=256, BloodElf=512 }
@@ -479,6 +479,8 @@ events:RegisterEvent("WORLD_MAP_UPDATE")
 events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 events:RegisterEvent("ZONE_CHANGED")
 events:RegisterEvent("ZONE_CHANGED_INDOORS")
+events:RegisterEvent("MINIMAP_ZONE_CHANGED")
+events:RegisterEvent("MINIMAP_UPDATE_ZOOM")
 events:SetScript("OnEvent",function()
   if event=="PLAYER_LOGIN" or (event=="PLAYER_ENTERING_WORLD" and not Q.ready) then
     QuestlineSettings=QuestlineSettings or {}
@@ -498,6 +500,12 @@ events:SetScript("OnEvent",function()
     Q:ApplyCompatibility()
     Q:Print("Loaded. /ql opens options and completed quests; /ql help shows commands.")
   elseif event=="WORLD_MAP_UPDATE" then Q.mapDirty=true
+  elseif event=="MINIMAP_UPDATE_ZOOM" then
+    if not Q.minimapZoomProbe and (not Q.minimapZoomProbeUntil or GetTime()>=Q.minimapZoomProbeUntil) then
+      Q.minimapDiameterKey=nil
+    end
+  elseif event=="MINIMAP_ZONE_CHANGED" then
+    Q.minimapDiameterKey=nil
   elseif event=="ZONE_CHANGED_NEW_AREA" or event=="ZONE_CHANGED" or event=="ZONE_CHANGED_INDOORS" then
     Q.minimapDiameterKey=nil
     if Q.ready then Q:RefreshTrackers() end

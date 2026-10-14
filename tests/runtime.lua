@@ -1531,6 +1531,60 @@ local function giverMapTests(Q)
   WorldMapFrame:Hide();Q:RefreshQuestGivers()
 end
 
+local function minimapScaleTests(Q)
+  local oldZone,oldMap,oldGivers,oldSpawns=Q.GetPlayerZone,Q.GetMapZone,Q.GetMinimapQuestNPCs,Q.SelectedSpawns
+  local oldIndoors,oldSetZoom=IsIndoors,Minimap.SetZoom
+  local oldX,oldY,oldIndoor=playerX,playerY,minimapIndoor
+  local oldOutside,oldInside=cvars.minimapZoom,cvars.minimapInsideZoom
+  local size=QuestlineDB.zones[1497].mapSize
+  local point={53.1,36.2,icon="interact",target={icon="interact"}}
+  Q.GetPlayerZone=function() return 1497 end;Q.GetMapZone=Q.GetPlayerZone
+  Q.GetMinimapQuestNPCs=function() return {{id=990099,name="City scale test",points={point},quests={},turnins={}}} end
+  Q.SelectedSpawns=function() return {point} end
+  Minimap.SetZoom=function(self,value) oldSetZoom(self,value);fire("MINIMAP_UPDATE_ZOOM") end
+  local spans={{466.6667,400,333.3333,266.6667,200,133.3333},{300,240,180,120,80,50}}
+  for mode=1,2 do for zoom=0,5 do
+    minimapIndoor=mode==2
+    -- Deliberately disagree with the minimap: physical indoors is not its scale.
+    IsIndoors=function() return not minimapIndoor end
+    cvars.minimapZoom=tostring(zoom);cvars.minimapInsideZoom=tostring(zoom)
+    playerX,playerY=.531-10/size[1],.362+10/size[2]
+    now=now+1;fire("MINIMAP_UPDATE_ZOOM")
+    local writes=zoomWrites
+    Q:RefreshQuestGivers()
+    expect(zoomWrites==writes+2 and Minimap:GetZoom()==zoom,"equal city zoom settings are probed once and restored at every zoom level")
+    local diameter=spans[mode][zoom+1]
+    local function positionCheck(distance)
+      local giver,spawn=Q.minimapGivers[1],Q.minimapSpawns[1]
+      expect(giver:IsShown() and spawn:IsShown(),"both marker types remain visible in the city")
+      expect(math.abs(giver.point[4]-distance*Minimap:GetWidth()/diameter)<.001 and
+        math.abs(giver.point[5]-10*Minimap:GetHeight()/diameter)<.001,"Undercity marker uses the active minimap scale in both axes")
+      expect(spawn.point[4]==giver.point[4] and spawn.point[5]==giver.point[5],"objectives and questgivers share the same city projection")
+    end
+    positionCheck(10)
+    fire("MINIMAP_UPDATE_ZOOM");Q:RefreshMinimapMotion()
+    expect(zoomWrites==writes+2,"queued probe zoom events do not cause repeated zoom writes")
+    playerX=playerX-5/size[1];Q:RefreshMinimapMotion();positionCheck(15)
+    expect(zoomWrites==writes+2,"moving through the city reuses the detected scale")
+  end end
+  -- A map-mode switch can leave both saved zoom values and the physical zone unchanged.
+  minimapIndoor=false;now=now+1;fire("MINIMAP_UPDATE_ZOOM");Q:RefreshMinimapMotion()
+  expect(Q.minimapSpawnContext.diameter==spans[1][6],"native mode event invalidates identical cached zoom values without a zone event")
+  minimapIndoor=true;fire("MINIMAP_ZONE_CHANGED");Q:RefreshMinimapMotion()
+  expect(Q.minimapSpawnContext.diameter==50,"minimap zone changes also invalidate scale during the probe suppression window")
+  -- Unequal saved zooms reveal the active mode without changing the user's zoom.
+  cvars.minimapZoom="2";cvars.minimapInsideZoom="1";now=now+1
+  local writes=zoomWrites;fire("MINIMAP_UPDATE_ZOOM");Q:RefreshMinimapMotion()
+  expect(Q.minimapSpawnContext.diameter==240 and zoomWrites==writes,"unequal indoor zoom values select the city scale without probing")
+  minimapIndoor=false;fire("MINIMAP_UPDATE_ZOOM");Q:RefreshMinimapMotion()
+  expect(Q.minimapSpawnContext.diameter==spans[1][3] and zoomWrites==writes,"unequal outdoor zoom values select the terrain scale without probing")
+  Q.GetPlayerZone,Q.GetMapZone,Q.GetMinimapQuestNPCs,Q.SelectedSpawns=oldZone,oldMap,oldGivers,oldSpawns
+  IsIndoors,Minimap.SetZoom=oldIndoors,oldSetZoom
+  playerX,playerY,minimapIndoor=oldX,oldY,oldIndoor
+  cvars.minimapZoom,cvars.minimapInsideZoom=oldOutside,oldInside
+  Q.minimapDiameterKey=nil;Q.minimapZoomProbeUntil=nil;Q:RefreshQuestGivers()
+end
+
 local function objectGiverTests(Q)
   local original,history,sources=Q.quests,QuestlineSettings.completedQuests,QuestlineSettings.completionSources
   local mapZone,physicalZone,offers=Q.GetMapZone,Q.GetPlayerZone,Q.npcOffers
@@ -2167,6 +2221,7 @@ function runTests()
   trackerClickTests(Q)
   npcQuestTests(Q)
   giverMapTests(Q)
+  minimapScaleTests(Q)
   objectGiverTests(Q)
   giverClusterTests(Q)
   questLevelAndRateTests(Q)
