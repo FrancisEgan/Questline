@@ -3,7 +3,7 @@ local Q,DB=Questline,QuestlineDB
 -- Match live counters by objective name, never by the database's target order.
 function Q:BuildTooltipProgress()
   self.tooltipProgress={};self.tooltipQuestTitles={}
-  for _,entry in ipairs(self.quests) do
+  for questOrder,entry in ipairs(self.quests) do
     self.tooltipQuestTitles[self:Normalize(entry.title)]=true
     if entry.data and not entry.failed then
       for objectiveIndex,objective in ipairs(entry.objectives) do
@@ -17,7 +17,7 @@ function Q:BuildTooltipProgress()
             local kind=objective.kind=="item" and "item" or (objective.kind=="object" and "object" or "unit")
             if target.kind==kind and self:Normalize(target.name)==name then
               local progress={text=target.name.." - "..current.."/"..required,name=name,
-                questKey=entry.key,questTitle=entry.title,questLevel=entry.level,questNumber=entry.number,objectiveIndex=objectiveIndex,
+                questKey=entry.key,questTitle=entry.title,questLevel=entry.level,questNumber=entry.number,questOrder=questOrder,objectiveIndex=objectiveIndex,
                 current=tonumber(current),required=tonumber(required),done=objective.done or tonumber(current)>=tonumber(required)}
               self.tooltipProgress[target.key]=self.tooltipProgress[target.key] or {}
               table.insert(self.tooltipProgress[target.key],progress)
@@ -37,7 +37,7 @@ function Q:GetMobProgress(name,object)
     for _,progress in ipairs((self.tooltipProgress or {})[key] or {}) do
       local group=byQuest[progress.questKey]
       if not group then
-        group={key=progress.questKey,title=progress.questTitle,level=progress.questLevel,number=progress.questNumber,objectives={},seen={}}
+        group={key=progress.questKey,title=progress.questTitle,level=progress.questLevel,number=progress.questNumber,order=progress.questOrder,objectives={},seen={}}
         byQuest[progress.questKey]=group;table.insert(groups,group)
       end
       if not group.seen[progress.objectiveIndex] then
@@ -53,7 +53,8 @@ function Q:GetMobProgress(name,object)
       end
     end
   end
-  table.sort(groups,function(a,b) return a.number<b.number end)
+  -- Completed quests have no badge number; retain the sorted quest-list order.
+  table.sort(groups,function(a,b) return a.order<b.order end)
   for _,group in ipairs(groups) do table.sort(group.objectives,function(a,b) return a.objectiveIndex<b.objectiveIndex end) end
   return groups
 end
@@ -63,7 +64,7 @@ function Q:GetVendorProgress(name)
     for _,progress in ipairs((self.tooltipProgress or {})[key] or {}) do
       local group=byQuest[progress.questKey]
       if not group then
-        group={key=progress.questKey,title=progress.questTitle,level=progress.questLevel,number=progress.questNumber,objectives={},seen={}}
+        group={key=progress.questKey,title=progress.questTitle,level=progress.questLevel,number=progress.questNumber,order=progress.questOrder,objectives={},seen={}}
         byQuest[progress.questKey]=group;table.insert(groups,group)
       end
       if not group.seen[progress.objectiveIndex] then
@@ -71,7 +72,7 @@ function Q:GetVendorProgress(name)
       end
     end
   end
-  table.sort(groups,function(a,b) return a.number<b.number end)
+  table.sort(groups,function(a,b) return a.order<b.order end)
   for _,group in ipairs(groups) do table.sort(group.objectives,function(a,b) return a.objectiveIndex<b.objectiveIndex end) end
   return groups
 end

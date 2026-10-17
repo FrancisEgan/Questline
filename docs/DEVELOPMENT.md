@@ -4,6 +4,15 @@ Standalone quest tracker and selected-quest map areas for the English OctoWoW / 
 
 Current version: **0.1.77**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
+Completed quest tooltip sorting: mob, world-object, and vendor progress groups
+retain their position in the level-sorted quest list independently of badge
+numbers. Completed quests intentionally have no badge number; comparing those
+numbers caused a nil comparison when multiple matching quests included a
+completed quest awaiting turn-in. Runtime checks cover unfinished, mixed,
+fully completed, and single completed groups across all three tooltip sources,
+preserving live counters and compact badge numbers. In game, hover a source
+shared by a completed quest and an unfinished quest before turning either in.
+
 City minimap scale (0.1.77): invalidate the cached diameter on
 `MINIMAP_UPDATE_ZOOM` and `MINIMAP_ZONE_CHANGED`, in addition to physical zone
 events. Native minimap mode changes can preserve both saved zoom values and

@@ -1795,6 +1795,43 @@ local function questLevelAndRateTests(Q)
   mouseoverName=nil;GameTooltip:Hide();WorldMapFrame:Hide()
 end
 
+local function completedTooltipSortTests(Q)
+  local original=Q.quests
+  local DB=QuestlineDB
+  local name,key="completed tooltip sort fixture","item:tooltip-sort-fixture"
+  local objectIndex=DB.objectObjectives
+  DB.objectObjectives=objectIndex or {}
+  DB.mobObjectives[name]={key};DB.objectObjectives[name]={key};DB.vendorObjectives[name]={key}
+  local target={kind="item",key=key,name="Tooltip sort item"}
+  local entries={}
+  for index=1,3 do
+    entries[index]={key="tooltip-sort-"..index,title="Tooltip sort "..index,level=index*10,
+      data={objectives={target},finishers={}},objectives={{text="Tooltip sort item: 0/1",kind="item",done=false}}}
+  end
+  for _,state in ipairs({"unfinished","mixed","completed","single"}) do
+    for index,entry in ipairs(entries) do
+      entry.complete=state=="completed" or state=="single" or (state=="mixed" and index==2)
+      entry.objectives[1].done=entry.complete
+      entry.objectives[1].text=entry.complete and "Tooltip sort item: 1/1" or "Tooltip sort item: 0/1"
+    end
+    local count=state=="single" and 1 or 3
+    if count==1 then Q:SetEntries({entries[2]}) else Q:SetEntries({entries[3],entries[1],entries[2]}) end
+    local sources={Q:GetMobProgress(name),Q:GetMobProgress(name,true),Q:GetVendorProgress(name)}
+    for _,groups in ipairs(sources) do
+      expect(#groups==count,"mob, object, and vendor tooltips retain every "..state.." quest")
+      for index,group in ipairs(groups) do
+        local entry=Q.quests[index]
+        expect(group.key==entry.key,"tooltip groups follow level-sorted quest order with "..state.." quests")
+        expect(group.number==entry.number and (not entry.complete or group.number==nil),"tooltip sorting preserves compact badge numbers and unnumbered completed quests")
+        expect(group.objectives[1].done==entry.complete,"completed tooltip objectives retain their live status")
+      end
+    end
+  end
+  DB.mobObjectives[name]=nil;DB.objectObjectives[name]=nil;DB.vendorObjectives[name]=nil
+  DB.objectObjectives=objectIndex
+  Q:SetEntries(original)
+end
+
 local function areaAnchorTests(Q)
   local original=Q.quests
   local point={key="anchor-point",name="Specialty supply",kind="item",icon="loot"}
@@ -2225,6 +2262,7 @@ function runTests()
   objectGiverTests(Q)
   giverClusterTests(Q)
   questLevelAndRateTests(Q)
+  completedTooltipSortTests(Q)
   eliteQuestTests(Q)
   partySyncTests(Q)
   areaAnchorTests(Q)
