@@ -99,7 +99,7 @@ const npcFixture={
   objects:{4:{name:'Wanted!',coordinates:[[60,50,17],[60,50,17]]}}
 };
 const npcIndex=npcQuests(npcFixture),giverIndex=questGivers(npcFixture);
-assert.deepEqual(npcIndex['quest giver'],{starters:[1,2],finishers:[2]});checks++;
+assert.deepEqual(npcIndex['quest giver'],{starters:[1,2],finishers:[2],factions:{1:'AH',2:'AH'}});checks++;
 assert.deepEqual(npcIndex['turn-in only'],{starters:[],finishers:[1]});checks++;
 assert.deepEqual(giverIndex.givers[1].quests,[1,2]);checks++;
 assert.deepEqual(giverIndex.givers[1].coordinates,[[52.2,31,17],[20,30,14]]);checks++;
@@ -109,6 +109,15 @@ check(!giverIndex.givers[2]&&!giverIndex.givers[4]&&!giverIndex.givers[999],'tur
 const giverData=questGivers({quests,units,objects:read('objects')});
 check(giverData.byZone[85].includes(-711)&&giverData.givers[-711].name==='Wanted!'&&giverData.givers[-711].quests.includes(398),'Maggot Eye wanted poster is compiled from upstream object starters');
 check(giverData.byZone[17].includes(3338)&&giverData.givers[3338].quests.includes(844),'real Barrens starter and its quest chain are compiled');
+for(const [id,quest] of [[1155,41905],[1156,41906],[62414,41850]]) {
+  check(quests[quest].raceMask===0&&giverData.givers[id].faction==='A','reported quest has no race mask but retains its Alliance starter: '+quest);
+  check(npcQuests({quests,units})[units[id].name.toLowerCase()].factions[quest]==='A','NPC tooltip index retains the reported starter faction: '+quest);
+}
+const factionFixture={quests:{1:{starters:[{kind:'unit',id:1},{kind:'unit',id:2}]},2:{starters:[{kind:'unit',id:1},{kind:'unit',id:3}]},3:{starters:[{kind:'object',id:1}]}},
+  units:{1:{name:'Same Name',faction:'A'},2:{name:'Same Name',faction:'H'},3:{name:'Same Name'}},
+  objects:{1:{name:'Alliance Poster',faction:'A',coordinates:[[10,20,17]]}}};
+assert.deepEqual(npcQuests(factionFixture)['same name'].factions,{1:'AH',2:'AH'},'same-name variants merge factions per quest and keep unknown factions permissive');checks++;
+check(questGivers(factionFixture).givers[-1].faction==='A','object starter factions are compiled separately from NPC IDs');
 const sources=JSON.parse(fs.readFileSync(path.join(root,'reports/import.json'),'utf8'));
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'database/manifest.json'),'utf8'));
 const lock=JSON.parse(fs.readFileSync(path.join(root,'database-source.json'),'utf8'));

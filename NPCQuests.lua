@@ -249,10 +249,17 @@ function Q:IsQuestAvailable(id)
   end
   return true
 end
+function Q:StarterFactionAllows(faction)
+  if not faction or faction=="" then return true end
+  local group=UnitFactionGroup and UnitFactionGroup("player")
+  if group=="Alliance" then return string.find(faction,"A",1,true)~=nil end
+  if group=="Horde" then return string.find(faction,"H",1,true)~=nil end
+  return true
+end
 -- Shared by NPC tooltips and both maps. Observed server offers take precedence
 -- over database predictions, including an explicitly empty list, until a
 -- quest-log, level, or skill change invalidates the session cache.
-function Q:GetAvailableNPCQuests(name,ids,kind)
+function Q:GetAvailableNPCQuests(name,ids,kind,faction)
   local available={}
   -- Objects often share generic names (Wanted!, Notice Board). NPC dialogue
   -- observations must not replace another object's own database quest list.
@@ -275,8 +282,12 @@ function Q:GetAvailableNPCQuests(name,ids,kind)
       if not hidden and (not known or count>0) and not (found and self.byKey[tostring(found)]) then insert(available,{id=found,title=q.title,level=q.level,objectives={}}) end
     end
   else
+    local profile=kind~="object" and DB.npcQuests[self:Normalize(name)]
     for _,id in ipairs(ids or {}) do
-      if self:IsQuestAvailable(id) then insert(available,{id=id,title=DB.quests[id].title,level=DB.quests[id].level,objectives={}}) end
+      local allowed=faction or (profile and profile.factions and profile.factions[id])
+      if self:StarterFactionAllows(allowed) and self:IsQuestAvailable(id) then
+        insert(available,{id=id,title=DB.quests[id].title,level=DB.quests[id].level,objectives={}})
+      end
     end
   end
   self:SortQuests(available)

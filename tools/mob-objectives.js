@@ -45,6 +45,13 @@ function npcQuests(db) {
       if(!name) continue;
       const entry=result[name]||(result[name]={starters:[],finishers:[]});
       if(!entry[role].includes(Number(id))) entry[role].push(Number(id));
+      if(role==='starters') {
+        // Same-name NPC variants may serve different factions. Unknown faction
+        // is permissive, just like an explicitly neutral starter.
+        const faction=db.units[target.id].faction||'AH';
+        const factions=entry.factions||(entry.factions={});
+        factions[id]=[...new Set((factions[id]||'')+faction)].sort().join('');
+      }
     }
   }
   return Object.fromEntries(Object.entries(result).sort(([a],[b])=>a<b?-1:a>b?1:0));
@@ -97,6 +104,7 @@ function questGivers(db) {
     // objects distinct while preserving existing numeric NPC identities.
     const key=target.kind==='object'?-target.id:target.id;
     const giver=givers[key]||(givers[key]={name:source.name,kind:target.kind,quests:[],coordinates:[]});
+    if(source.faction) giver.faction=source.faction;
     if(!giver.quests.includes(Number(id))) giver.quests.push(Number(id));
   }
   for(const [id,giver] of Object.entries(givers)) {

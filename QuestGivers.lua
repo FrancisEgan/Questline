@@ -16,7 +16,7 @@ function Q:GetAvailableGivers(zone)
   local entries={}
   for _,id in ipairs(DB.zoneGivers[zone] or {}) do
     local giver=DB.givers[id]
-    local quests=self:GetAvailableNPCQuests(giver.name,giver.quests,giver.kind)
+    local quests=self:GetAvailableNPCQuests(giver.name,giver.quests,giver.kind,giver.faction)
     if getn(quests)>0 then
       local points={}
       for _,point in ipairs(giver.coordinates) do if point[3]==zone then insert(points,point) end end

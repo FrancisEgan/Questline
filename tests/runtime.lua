@@ -714,6 +714,52 @@ local function availabilityRegressionTests(Q)
   QuestlineDB.quests[a]=nil;QuestlineDB.quests[b]=nil
   Q:SetEntries(original);Q.npcOffers={};Q:InvalidateQuestAvailability()
 end
+
+local function starterFactionTests(Q)
+  local DB=QuestlineDB
+  local original,oldLevel,oldOffers,oldFaction=Q.quests,playerLevel,Q.npcOffers,UnitFactionGroup
+  local oldCompleted,oldSources=QuestlineSettings.completedQuests,QuestlineSettings.completionSources
+  Q:SetEntries({});playerLevel=60;Q.npcOffers={}
+  QuestlineSettings.completedQuests={};QuestlineSettings.completionSources={}
+  local group="Horde"
+  UnitFactionGroup=function() return group end
+  local function hasGiver(entries,id)
+    for _,giver in ipairs(entries) do if giver.id==id then return true end end
+    return false
+  end
+  for _,case in ipairs({{1155,41905},{1156,41906},{62414,41850}}) do
+    local giver=DB.givers[case[1]]
+    expect(DB.quests[case[2]].raceMask==0 and giver.faction=="A","reported quest is restricted by its starter rather than race mask")
+    expect(#Q:GetAvailableNPCQuests(giver.name,{case[2]})==0,"Horde NPC tooltip excludes reported Alliance offer")
+  end
+  Q:InvalidateQuestAvailability()
+  expect(not hasGiver(Q:GetAvailableGivers(38),1155) and not hasGiver(Q:GetAvailableGivers(38),1156),"Loch Modan world-map pickup list excludes both Alliance NPCs for Horde")
+  expect(not hasGiver(Q:GetMinimapQuestNPCs(5602),62414),"Grim Reaches minimap pickup list excludes Alliance prospector for Horde")
+  group="Alliance";Q:InvalidateQuestAvailability()
+  expect(hasGiver(Q:GetAvailableGivers(38),1155) and hasGiver(Q:GetAvailableGivers(38),1156),"Alliance retains both Loch Modan pickups")
+  expect(hasGiver(Q:GetMinimapQuestNPCs(5602),62414),"Alliance retains Grim Reaches prospector pickup")
+  for _,case in ipairs({{1155,41905},{1156,41906},{62414,41850}}) do
+    expect(#Q:GetAvailableNPCQuests(DB.givers[case[1]].name,{case[2]})==1,"Alliance NPC tooltip retains reported offer")
+  end
+  expect(not Q:StarterFactionAllows("H") and Q:StarterFactionAllows("A"),"Alliance rejects Horde-only starters")
+  group="Horde"
+  expect(Q:StarterFactionAllows("H") and not Q:StarterFactionAllows("A"),"Horde rejects Alliance-only starters")
+  expect(Q:StarterFactionAllows("AH") and Q:StarterFactionAllows("") and Q:StarterFactionAllows(nil),"neutral and unspecified starter factions stay permissive")
+  expect(#Q:GetAvailableNPCQuests("Wanted!",{398},"object","A")==0,"hostile-faction object starters are filtered")
+  expect(#Q:GetAvailableNPCQuests("Wanted!",{398},"object","H")==1,"friendly-faction object starters remain available")
+  expect(#Q:GetAvailableNPCQuests("Same Name",{41905},"unit","H")==1,"a friendly variant is evaluated independently of other starters")
+  expect(#Q:GetAvailableNPCQuests("Same Name",{41905},"unit","A")==0,"an enemy variant cannot inherit another starter's eligibility")
+  local name=DB.givers[1155].name
+  Q.npcOffers[Q:Normalize(name)]={quests={{title=DB.quests[41905].title,level=18}}}
+  expect(#Q:GetAvailableNPCQuests(name,{41905},"unit","A")==1,"actual server offer takes precedence over predicted starter faction")
+  Q.npcOffers={};UnitFactionGroup=nil
+  expect(#Q:GetAvailableNPCQuests(name,{41905})==1,"missing faction API does not invent a restriction")
+  UnitFactionGroup=function() return nil end
+  expect(Q:StarterFactionAllows("A"),"unknown player faction stays permissive")
+  UnitFactionGroup=oldFaction;playerLevel=oldLevel;Q.npcOffers=oldOffers
+  QuestlineSettings.completedQuests=oldCompleted;QuestlineSettings.completionSources=oldSources
+  Q:SetEntries(original);Q:InvalidateQuestAvailability()
+end
 local function activePrerequisiteTests(Q)
   local original,history,sources,offers=Q.quests,QuestlineSettings.completedQuests,QuestlineSettings.completionSources,Q.npcOffers
   local mapZone,physicalZone,x,y=Q.GetMapZone,Q.GetPlayerZone,playerX,playerY
@@ -2271,6 +2317,7 @@ function runTests()
   trackerMapTests(Q)
   completionHistoryTests(Q)
   availabilityRegressionTests(Q)
+  starterFactionTests(Q)
   activePrerequisiteTests(Q)
   instantClassTurnInTests(Q)
   spawnDotTests(Q)

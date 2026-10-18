@@ -4,6 +4,19 @@ Standalone quest tracker and selected-quest map areas for the English OctoWoW / 
 
 Current version: **0.1.77**. The addon title and chat prefix use `#8cccff`, matching the tracker mode buttons. Player-facing documentation belongs in the root README; this file preserves implementation details and verification guidance.
 
+Starter faction filtering (2026-10-18): Dark Iron Aggression (41905), No Mercy
+For The Wicked (41906), and The Gemstone of Naraz (41850) have no quest race
+mask, but their shared-data starters 1155, 1156, and 62414 are Alliance-only.
+Questline previously discarded that faction when compiling pickup indexes.
+Retain individual giver factions for both maps, and per-quest faction unions
+for same-name NPC tooltip predictions. Race/class/level checks still apply;
+observed server offers keep their existing precedence. No shared data
+correction is needed for these reports. Regression checks cover the three
+reported offers for Horde and Alliance, objects, neutral/unknown factions,
+same-name variants, and observed server offers. In game, reload as Horde and
+browse Loch Modan and Grim Reaches; confirm these pickups are absent, then
+check that an Alliance character retains them when otherwise eligible.
+
 Completed quest tooltip sorting: mob, world-object, and vendor progress groups
 retain their position in the level-sorted quest list independently of badge
 numbers. Completed quests intentionally have no badge number; comparing those

@@ -71,6 +71,15 @@ Turn-in location keys are prefixed `turnin:` and always use point geometry. Ordi
 
 `QuestlineDB.givers[unitID] = {name, quests={questIDs}, coordinates={{x,y,zoneID}, ...}}` contains NPC starters and deduplicated recorded positions. `QuestlineDB.zoneGivers[zoneID] = {unitIDs}` limits lookup to the displayed zone. These are generated as `Data/QuestGivers.lua` and `Data/ZoneGivers.lua`. Unlocated NPCs can still have tooltip offers, but receive no invented map position. Multiple quests offered by one NPC share its marker.
 
+Givers also retain the source `faction` for both unit and object starters.
+The NPC name index includes `factions[questID]`, the union of allowed factions
+across same-name unit starters for that quest; unspecified factions allow both.
+Predicted map offers use the individual giver's faction, while NPC tooltip
+predictions use this per-quest name index. These restrictions supplement quest
+race masks, which may be zero even for a faction-specific starter. Neutral,
+unspecified, or unknown player factions remain permissive. Actual observed
+server offers retain precedence over predicted starter-faction restrictions.
+
 Runtime zones have an optional `mapSize = {widthYards,heightYards}`, extracted from `reference.minimap`, for converting zone percentages to minimap distance. These are map dimensions, not pixel sizes. Unknown dimensions disable minimap markers for that zone.
 
 `QuestlineSettings.completedQuests[questID] = true` is per-character history, separate from all generated database tables. Native server history, a one-time pfQuest history import, and confirmed quest-completion messages can add entries. Recent NPC offers and availability caches remain session-only.
